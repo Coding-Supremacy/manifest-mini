@@ -1,6 +1,7 @@
 import pandas as pd
 import streamlit as st
 import plotly.graph_objects as go
+import plotly.express as px
 from plotly.subplots import make_subplots
 
 # Streamlit 앱 설정 (전역 범위)
@@ -11,8 +12,11 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+
+
 # 함수 정의
 def run_eda():
+
     # 데이터 불러오기
     try:
         df = pd.read_csv("C:/ground/Github/manifest-mini/jisang/data/기아_지역별수출실적_전처리.csv")
@@ -105,6 +109,49 @@ def run_eda():
     # Streamlit에 그래프 표시
     st.plotly_chart(fig, use_container_width=True)
     st.markdown("Made by Your Name")
+
+
+# 차종별 판매 실적 함수
+def run_sales_dashboard():
+    # 데이터 불러오기
+    df = pd.read_csv("C:\ground\Github\manifest-mini\jisang\data\기아_차종별판매실적_전처리.csv")
+
+    # 차종 분류 예시
+    car_types = {
+        '세단': ['Morning', 'Ray', 'K3', 'K5', 'Stinger', 'K7 / K8', 'K9', 'K5 / Optima'],
+        'SUV': ['Seltos', 'Niro', 'Niro Plus', 'EV6', 'Sportage', 'Sorento', 'Mohave', 'EV9'],
+        '기타 차량': ['Bongo', 'Bus', 'Millitary', 'Morning / Picanto', 'Pride / Rio', 'K7 / K8 / Cadenza', 'Stonic', 'Soul', 'EV5', 'Mohave / Borrego', 'New Carens', 'Carnival / Sedona', 'Tasman', 'PV5']
+    }
+
+    # 데이터 전처리: 월별 데이터를 "long format"으로 변환
+    df_melted = df.melt(id_vars=['차종'], value_vars=['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+                        var_name='월', value_name='판매량')
+
+    # 월을 숫자로 변환
+    df_melted['월'] = df_melted['월'].map({
+        '1월': 1, '2월': 2, '3월': 3, '4월': 4, '5월': 5, '6월': 6, '7월': 7, '8월': 8, '9월': 9, '10월': 10, '11월': 11, '12월': 12
+    })
+
+    # 사용자 차종 선택을 위한 위젯 생성
+    selected_type = st.selectbox('차종 카테고리 선택', ['세단', 'SUV', '기타 차량'])
+
+    # 선택된 카테고리에 맞는 차종 필터링
+    filtered_types = car_types[selected_type]
+    df_filtered = df_melted[df_melted['차종'].isin(filtered_types)]
+
+    # plotly.express로 라인 그래프 생성
+    fig = px.line(df_filtered, x='월', y='판매량', color='차종', title=f'{selected_type} 차종의 월별 판매량', markers=True)
+
+    # 레이아웃 설정
+    fig.update_layout(
+        xaxis=dict(tickmode='array', tickvals=list(range(1, 13)), ticktext=['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']),
+        xaxis_title='월',
+        yaxis_title='판매량',
+        legend_title='차종'
+    )
+
+    # 그래프 출력
+    st.plotly_chart(fig)
 
 # Streamlit 앱 실행
 if __name__ == "__main__":
