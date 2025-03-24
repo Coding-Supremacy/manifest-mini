@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-from jisang.eda import run_eda
+from eda import run_eda
 
 def run_app():
 
