@@ -28,7 +28,7 @@ st.markdown("""
 @st.cache_data
 def load_data():
     df_export = pd.read_csv("../jisang/data/기아_지역별수출실적_전처리.csv")
-    df_sales = pd.read_csv("../jisang/data/기아_차종별판매실적_전처리.csv")
+    df_sales = pd.read_csv("../jisang/data/기아_차종별판매실적.csv")
     return df_export, df_sales
 
 df_export, df_sales = load_data()
@@ -141,7 +141,7 @@ def run_eda_기아():
         car_types = {
             '세단': ['Morning', 'Ray', 'K3', 'K5', 'Stinger', 'K7 / K8', 'K9', "Morning / Picanto", "K5 / Optima", 'K7 / K8 / Cadenza'],
             'SUV': ['Seltos', 'Niro', 'Sportage', 'Sorento', 'Mohave', 'EV6', 'EV9', "Mohave / Borrego"],
-            '기타': ['Bongo', 'Carnival', 'Bus', "Carnival / Sedona", "Millitary"]
+            '기타': ['Bongo', 'Carnival', 'Bus', "Carnival / Sedona", "Millitary", "Bongo (특수)", "Bus (특수)"]
         }
 
         selected_type = st.selectbox('차종 카테고리 선택', list(car_types.keys()))
