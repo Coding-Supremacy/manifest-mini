@@ -61,7 +61,7 @@ def run_eda_기아():
 
         if selected_countries:
             fig = make_subplots(specs=[[{"secondary_y": True}]])
-            
+
             for country in selected_countries:
                 country_data = df_export_filtered[df_export_filtered['국가명'] == country].copy()
 
@@ -84,7 +84,6 @@ def run_eda_기아():
 
                 # x축 날짜 생성 (연도-월 형태로 변경)
                 dates = pd.date_range(start='2023-01-01', periods=len(monthly_sales), freq='M')
-                # dates = dates[dates <= pd.to_datetime('2025-03-01')] # 이 줄은 삭제 또는 주석 처리
                 monthly_sales = monthly_sales[:len(dates)]
 
                 # NaN 값을 제외한 데이터만 플롯
@@ -104,11 +103,12 @@ def run_eda_기아():
                 legend_title='국가',
                 hovermode="closest",
                 xaxis=dict(
-                    # range=[valid_dates[0], valid_dates[-1]],  # x축의 범위를 데이터에 맞게 설정 # 이 줄은 삭제 또는 주석 처리
-                    range=['2023-01', '2025-01'],  # x축의 범위를 2023-01부터 2025-03으로 설정
+                    tickmode='array',  # x축의 눈금을 valid_dates로 맞추기
+                    tickvals=valid_dates,  # x축 레이블을 valid_dates로 설정
+                    tickangle=45,  # x축 레이블을 45도 기울임
                     showline=True,  # x축에 선을 추가
-                    showgrid=False,  # 그리드 표시를 없앰
-                    tickangle=45  # x축 레이블을 45도 기울임
+                    showgrid=True,  # 그리드 표시를 유지
+                    range=[valid_dates[0], valid_dates[-1]],  # x축의 범위를 valid_dates에 맞추기
                 ),
                 yaxis=dict(
                     showline=True,  # y축에 선을 추가
