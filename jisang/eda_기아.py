@@ -9,7 +9,7 @@ import os
 # 페이지 설정
 st.set_page_config(page_title="🚗 기아 수출실적 대시보드", layout="wide")
 
-# CSS 스타일링 (이전 스타일 코드 그대로 사용)
+# CSS 스타일링
 st.markdown("""
 <style>
     /* CSS 스타일 코드 (이전 예시와 동일) */
@@ -61,6 +61,7 @@ def run_eda_기아():
 
         if selected_countries:
             fig = make_subplots(specs=[[{"secondary_y": True}]])
+            
             for country in selected_countries:
                 country_data = df_export_filtered[df_export_filtered['국가명'] == country].copy()
 
@@ -81,22 +82,40 @@ def run_eda_기아():
                         else:
                             monthly_sales.append(None)
 
-                # x축 날짜 생성
+                # x축 날짜 생성 (연도-월 형태로 변경)
                 dates = pd.date_range(start='2023-01-01', periods=len(monthly_sales), freq='M')
-                dates = dates[dates <= pd.to_datetime('2025-03-01')]
+                # dates = dates[dates <= pd.to_datetime('2025-03-01')] # 이 줄은 삭제 또는 주석 처리
                 monthly_sales = monthly_sales[:len(dates)]
 
                 # NaN 값을 제외한 데이터만 플롯
                 valid_indices = [i for i, x in enumerate(monthly_sales) if pd.notna(x)]
-                valid_dates = dates[valid_indices]
+                valid_dates = dates[valid_indices].strftime('%Y-%m')  # 연도-월 형식으로 변경
                 valid_sales = [monthly_sales[i] for i in valid_indices]
 
                 fig.add_trace(
                     go.Scatter(x=valid_dates, y=valid_sales, mode='lines+markers', name=country,
-                               hovertemplate='%{x|%Y-%m-%d}<br>판매량: %{y:,.0f}<extra></extra>')
+                            hovertemplate='%{x}<br>판매량: %{y:,.0f}<extra></extra>')
                 )
-            
-            fig.update_layout(title='주요 시장별 수출량 변화', xaxis_title='날짜', yaxis_title='판매량', legend_title='국가', hovermode="closest")
+
+            fig.update_layout(
+                title='주요 시장별 수출량 변화',
+                xaxis_title='연도-월',
+                yaxis_title='판매량',
+                legend_title='국가',
+                hovermode="closest",
+                xaxis=dict(
+                    # range=[valid_dates[0], valid_dates[-1]],  # x축의 범위를 데이터에 맞게 설정 # 이 줄은 삭제 또는 주석 처리
+                    range=['2023-01', '2025-01'],  # x축의 범위를 2023-01부터 2025-03으로 설정
+                    showline=True,  # x축에 선을 추가
+                    showgrid=False,  # 그리드 표시를 없앰
+                    tickangle=45  # x축 레이블을 45도 기울임
+                ),
+                yaxis=dict(
+                    showline=True,  # y축에 선을 추가
+                    showgrid=True  # 그리드 표시를 유지
+                )
+            )
+
             st.plotly_chart(fig, use_container_width=True)
 
             st.markdown("""
@@ -120,21 +139,25 @@ def run_eda_기아():
         st.subheader("🚙 차종별 판매 실적")
 
         car_types = {
-            '세단': ['Morning', 'Ray', 'K3', 'K5', 'Stinger', 'K7 / K8', 'K9'],
-            'SUV': ['Seltos', 'Niro', 'Sportage', 'Sorento', 'Mohave', 'EV6', 'EV9'],
-            '기타': ['Bongo', 'Carnival', 'Bus']
+            '세단': ['Morning', 'Ray', 'K3', 'K5', 'Stinger', 'K7 / K8', 'K9', "Morning / Picanto", "K5 / Optima", 'K7 / K8 / Cadenza'],
+            'SUV': ['Seltos', 'Niro', 'Sportage', 'Sorento', 'Mohave', 'EV6', 'EV9', "Mohave / Borrego"],
+            '기타': ['Bongo', 'Carnival', 'Bus', "Carnival / Sedona", "Millitary"]
         }
 
         selected_type = st.selectbox('차종 카테고리 선택', list(car_types.keys()))
 
         df_filtered = df_sales[df_sales['차종'].isin(car_types[selected_type])]
 
+        # 데이터 확인 코드 추가 (디버깅용, 필요에 따라 주석 처리)
+        # st.write("df_sales:", df_sales.head())
+        # st.write("df_filtered:", df_filtered.head())
+
         # 거래유형을 기준으로 데이터 분리
         df_domestic = df_filtered[df_filtered['거래 유형'] == '국내']
         df_international = df_filtered[df_filtered['거래 유형'] != '국내']
 
         # 연도 및 월 컬럼 추가
-        years = range(2023, 2026)
+        years = df_sales['연도'].unique()
         months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
         month_mapping = {month: idx + 1 for idx, month in enumerate(months)}
 
@@ -157,6 +180,12 @@ def run_eda_기아():
             # "연도-월"을 datetime 객체로 변환
             df_melted['연도-월'] = pd.to_datetime(df_melted['연도'].astype(str) + '-' + df_melted['월'].astype(str), format='%Y-%m')
 
+            # 2023년 1월부터 2025년 3월까지만 필터링
+            df_melted = df_melted[(df_melted['연도-월'] >= pd.to_datetime('2023-01-01')) & (df_melted['연도-월'] <= pd.to_datetime('2025-03-01'))]
+
+            # 데이터 확인 코드 추가 (디버깅용, 필요에 따라 주석 처리)
+            # st.write("df_melted:", df_melted.head())
+
             return df_melted
 
         # 국내와 해외 데이터프레임 생성
@@ -164,13 +193,23 @@ def run_eda_기아():
         df_melted_international = create_melted_dataframe(df_international)
 
         # 그래프 그리기
-        fig_domestic = px.line(df_melted_domestic, x='연도-월', y='판매량', color='차종', 
-                            title=f'{selected_type} 차종의 국내 월별 판매량',
-                            labels={'연도-월': '연도-월 (Year-Month)', '판매량': '판매량 (Sales Volume)'})
+        fig_domestic = px.line(df_melted_domestic, x='연도-월', y='판매량', color='차종',
+                                title=f'{selected_type} 차종별 국내 월별 판매량',
+                                labels={'연도-월': '연도-월 (Year-Month)', '판매량': '판매량 (Sales Volume)'})
+        fig_domestic.update_xaxes(
+            range=['2023-01-01', '2025-03-01'],
+            dtick="M3",  # 3개월 간격으로 틱 표시
+            tickformat="%Y-%m"  # 틱 레이블 형식 지정
+        )
 
-        fig_international = px.line(df_melted_international, x='연도-월', y='판매량', color='차종', 
-                                    title=f'{selected_type} 차종의 해외 월별 판매량',
-                                    labels={'연도-월': '연도-월 (Year-Month)', '판매량': '판매량 (Sales Volume)'})
+        fig_international = px.line(df_melted_international, x='연도-월', y='판매량', color='차종',
+                                        title=f'{selected_type} 차종별 해외 월별 판매량',
+                                        labels={'연도-월': '연도-월 (Year-Month)', '판매량': '판매량 (Sales Volume)'})
+        fig_international.update_xaxes(
+            range=['2023-01-01', '2025-03-01'],
+            dtick="M3",  # 3개월 간격으로 틱 표시
+            tickformat="%Y-%m"  # 틱 레이블 형식 지정
+        )
 
         # 차트 출력
         st.plotly_chart(fig_domestic, use_container_width=True)
@@ -178,7 +217,7 @@ def run_eda_기아():
 
         st.markdown("""
         ### 분석 내용:
-                    
+
         - 선택한 차종 카테고리 내 각 모델의 국내 및 해외 판매 추이를 확인할 수 있습니다.
         - 국내와 해외 판매 추이를 비교하여 전략을 수립하는 데 도움을 줄 수 있습니다.
         - 특정 차종이 국내 및 해외 시장에서 어떻게 성과를 내고 있는지, 그리고 어떤 차종이 글로벌 트렌드에 따라 더 유망한지 확인할 수 있습니다.
@@ -193,8 +232,9 @@ def run_eda_기아():
         2. **시기별 판매 변화 분석**: 월별 판매 추이를 통해 시즌별, 프로모션 및 이벤트에 따른 판매 변화를 확인하고, 적절한 시점에 마케팅 전략을 세울 수 있습니다.
         3. **차종별 판매 성과 평가**: 각 차종의 성과를 평가하여, 강점을 극대화하고, 개선이 필요한 차종에 대해 집중할 수 있습니다.
         4. **국내외 판매 비교**: 국내와 해외의 판매 성과를 비교함으로써, 각 지역에서 어떤 차종이 인기가 있는지, 각 시장의 특성을 반영한 전략을 수립할 수 있습니다.
-    """)
+        """)
 
         st.markdown("</div>", unsafe_allow_html=True)
+
 if __name__ == "__main__":
     run_eda_기아()
