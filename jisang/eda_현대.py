@@ -7,7 +7,7 @@ from streamlit_option_menu import option_menu
 import os
 
 # 페이지 설정
-st.set_page_config(page_title="🚗 기아 수출실적 대시보드", layout="wide")
+st.set_page_config(page_title="🚗 현대 수출실적 대시보드", layout="wide")
 
 # CSS 스타일링 (이전 스타일 코드 그대로 사용)
 st.markdown("""
@@ -19,7 +19,7 @@ st.markdown("""
 
 # 메인 헤더
 st.markdown("""
-<h1 style='text-align: center; color: #2E86C1;'>🚗 기아 수출실적 대시보드</h1>
+<h1 style='text-align: center; color: #2E86C1;'>🚗 현대 수출실적 대시보드</h1>
 <h4 style='text-align: center;'>지역별 수출 실적 및 차종별 판매 분석</h4>
 <hr>
 """, unsafe_allow_html=True)
@@ -27,14 +27,14 @@ st.markdown("""
 # 데이터 로드 함수
 @st.cache_data
 def load_data():
-    df_export = pd.read_csv("../jisang/data/기아_지역별수출실적_전처리.csv")
+    df_export = pd.read_csv("../jisang/data/현대_지역별수출실적.csv")
     df_sales = pd.read_csv("../jisang/data/기아_차종별판매실적_전처리.csv")
     return df_export, df_sales
 
 df_export, df_sales = load_data()
 
 # 메인 함수
-def run_eda():
+def run_eda_현대():
     selected = option_menu(
         menu_title=None,
         options=["📊 지역별 수출 분석", "🚙 차종별 판매 분석"],
@@ -53,16 +53,17 @@ def run_eda():
         st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
         st.subheader("📊 지역별 수출 실적 변화")
         
-        # 데이터 전처리
-        df_export_filtered = df_export[df_export['차량 구분'] == '총합'].drop(columns=['차량 구분'])
-        countries = df_export_filtered['국가명'].unique()
+        # 데이터 전처리 (차량 구분을 고려하지 않고 모든 데이터를 사용)
+        df_export_filtered = df_export.copy()  # 차량 구분 없이 전체 데이터를 사용
+        countries = df_export_filtered['국가'].unique()
 
         selected_countries = st.multiselect("국가를 선택하세요:", options=list(countries), default=list(countries))
 
         if selected_countries:
             fig = make_subplots(specs=[[{"secondary_y": True}]])
+
             for country in selected_countries:
-                country_data = df_export_filtered[df_export_filtered['국가명'] == country].copy()
+                country_data = df_export_filtered[df_export_filtered['국가'] == country].copy()
 
                 # 연도별 월별 판매량 데이터를 하나의 Series로 만들기
                 monthly_sales = []
@@ -99,7 +100,7 @@ def run_eda():
             fig.update_layout(title='주요 시장별 수출량 변화', xaxis_title='날짜', yaxis_title='판매량', legend_title='국가', hovermode="closest")
             st.plotly_chart(fig, use_container_width=True)
 
-            st.markdown("""
+            st.markdown(""" 
             ### 분석 목적
             1. **시장 동향 파악**: 기아의 글로벌 시장에서의 성과를 시각화하여 전반적인 수출 동향을 파악합니다.
             2. **지역별 성과 비교**: 다양한 국가 및 지역의 수출 실적을 비교 분석하여 지역별 전략의 효과성을 평가합니다.
@@ -197,4 +198,4 @@ def run_eda():
 
         st.markdown("</div>", unsafe_allow_html=True)
 if __name__ == "__main__":
-    run_eda()
+    run_eda_현대()
