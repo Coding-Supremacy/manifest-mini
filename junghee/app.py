@@ -1,22 +1,38 @@
 import streamlit as st
-import pandas as pd
+from streamlit_option_menu import option_menu
 
-from home import run_home
-from Sales_analysis import run_analysis
+from eda_기아 import run_eda_기아
+from eda_현대 import run_eda_현대
 
+# 페이지 설정
+st.set_page_config(page_title="🚗 현대 & 기아 판매현황 관리 자동화 및 추천 시스템", layout="wide")
 
-def main():
+def run_app():
+
+    with st.sidebar:
+        
+        st.markdown("### ⚙️ 시스템 메뉴")
+        system_tab = option_menu(None, ['홈', '개발 과정'],
+                                icons=['house', 'code-slash'], key='sys')
+
+        st.markdown("### 🚗 브랜드 분석")
+        selected = option_menu(None, ['기아 자동차 분석', '현대 자동차 분석'],
+                            icons=['car-front', 'car-front-fill'], key='brand')
+
+        
+        
+        
+    if system_tab == '홈' :
+        pass
+
+    if system_tab == '개발 과정' :
+        pass 
     
-    st.sidebar.title('Navigation')
-    menu = ['🏠 홈', '📊 판매 분석', '🔮 수요 예측', '📍 마케팅 추천', '📈 경영진 리포트']
-    page = st.sidebar.radio('메뉴', menu)
-    
-    if page == '🏠 홈' :
-        run_home()
-    if page == '📊 판매 분석':
-        run_analysis()
-    
+    if selected == '기아 자동차 분석' :
+        run_eda_기아()
 
+    if selected == '현대 자동차 분석' :
+        run_eda_현대()     
 
-if __name__ == '__main__':
-    main()
+if __name__ == "__main__":
+    run_app()
