@@ -16,7 +16,7 @@ st.markdown("""
 
 # 메인 헤더
 st.markdown("""
-<h1 style='text-align: center; color: #2E86C1;'>🚗 기아 수출실적 대시보드</h1>
+<h1 style='text-align: center; color: #2E86C1;'>🚙 기아 수출실적 대시보드</h1>
 <h4 style='text-align: center;'>지역별 수출 실적 및 차종별 판매 분석</h4>
 <hr>
 """, unsafe_allow_html=True)
@@ -33,7 +33,7 @@ df_export, df_sales = load_data()
 # 메인 함수
 def run_eda_기아():
 
-    st.markdown("<h1 style='text-align: center;'>🚗 기아 수출실적 대시보드</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center;'>🚙 기아 수출실적 대시보드</h1>", unsafe_allow_html=True)
 
     selected = option_menu(
         menu_title=None,

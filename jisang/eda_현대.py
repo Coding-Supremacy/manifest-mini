@@ -16,7 +16,7 @@ st.markdown("""
 
 # 메인 헤더
 st.markdown("""
-<h1 style='text-align: center; color: #2E86C1;'>🚗 현대 수출실적 대시보드</h1>
+<h1 style='text-align: center; color: #2E86C1;'>🏎️ 현대 수출실적 대시보드</h1>
 <h4 style='text-align: center;'>지역별 수출 실적 및 차종별 판매 분석</h4>
 <hr>
 """, unsafe_allow_html=True)
@@ -33,11 +33,11 @@ df_export, df_sales = load_data()
 # 메인 함수
 def run_eda_현대():
 
-    st.markdown("<h1 style='text-align: center;'>🚗 현대 수출실적 대시보드</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center;'>🏎️ 현대 수출실적 대시보드</h1>", unsafe_allow_html=True)
 
     selected = option_menu(
         menu_title=None,
-        options=["📊 지역별 수출 분석", "🚙 차종별 판매 분석"],
+        options=["📊 지역별 수출 분석", "🏎️ 차종별 판매 분석"],
         icons=["globe", "car-front"],
         default_index=0,
         orientation="horizontal",
@@ -124,9 +124,9 @@ def run_eda_현대():
         
         st.markdown("</div>", unsafe_allow_html=True)
 
-    elif selected == "🚙 차종별 판매 분석":
+    elif selected == "🏎️ 차종별 판매 분석":
         st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
-        st.subheader("🚙 차종별 판매 실적")
+        st.subheader("🏎️ 차종별 판매 실적")
 
         car_types = {
             '세단': [
