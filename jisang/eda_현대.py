@@ -6,9 +6,6 @@ from plotly.subplots import make_subplots
 from streamlit_option_menu import option_menu
 import os
 
-# 페이지 설정
-st.set_page_config(page_title="🚗 현대 수출실적 대시보드", layout="wide")
-
 # CSS 스타일링 (이전 스타일 코드 그대로 사용)
 st.markdown("""
 <style>
@@ -35,6 +32,9 @@ df_export, df_sales = load_data()
 
 # 메인 함수
 def run_eda_현대():
+
+    st.markdown("<h1 style='text-align: center;'>🚗 현대 수출실적 대시보드</h1>", unsafe_allow_html=True)
+
     selected = option_menu(
         menu_title=None,
         options=["📊 지역별 수출 분석", "🚙 차종별 판매 분석"],
@@ -244,5 +244,7 @@ def run_eda_현대():
         """)
 
         st.markdown("</div>", unsafe_allow_html=True)
+
+
 if __name__ == "__main__":
     run_eda_현대()

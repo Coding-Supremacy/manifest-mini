@@ -6,6 +6,8 @@ from eda_현대 import run_eda_현대
 
 def run_app():
 
+    st.set_page_config(page_title="🚗 현대, 기아 수출실적 대시보드", layout="wide")
+
     menu = ['홈', '기아 자동차 분석', "현대 자동차 분석",'개발 과정']
 
     with st.sidebar:
