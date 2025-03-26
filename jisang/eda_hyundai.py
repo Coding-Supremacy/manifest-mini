@@ -11,6 +11,29 @@ st.markdown("""
 <style>
     /* CSS 스타일 코드 (이전 예시와 동일) */
     /* 이 부분은 현대차 대시보드 스타일을 그대로 가져와서 사용하시면 됩니다. */
+    /* .button-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .year-button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.1s ease-in-out;
+        }
+        .year-button:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        .year-button:active {
+            background-color: #003f7f;
+            transform: scale(0.95);
+        } */
 </style>
 """, unsafe_allow_html=True)
 
@@ -128,89 +151,161 @@ def run_eda_현대():
         st.subheader("🏎️ 차종별 판매 실적")
 
         car_types = {
-            '세단': ['Avante (CN7)', 'Avante (CN7 HEV)', 'Avante (CN7 N)', 'IONIQ (AE HEV)', 
-                   'IONIQ (AE PHEV)', 'IONIQ (AE EV)', 'Sonata (LF)', 'Sonata (DN8)', 'Sonata (DN8 HEV)', 
-                   'Grandeur (IG)', 'Grandeur (IG HEV)', 'Grandeur (GN7)', 'Grandeur (GN7 HEV)', 
-                   'IONIQ 6 (CE)', 'G70 (IK)', 'G80 (RG3)', 'G80 (RG3 EV)', 'G90 (HI)', 'G90 (RS4)', 
-                   'Xcent (AI3 4DR)', 'Verna (Hci)', 'Verna (BN7i)', 'Elantra (CN7c)', 'Sonata (DN8c)', 
-                   'La festa (SQ)', 'Verna (YC)', 'Celesta (ID)', 'Mistra (DU2)', 'Elantra (CN7a)', 'Sonata (DN8a)'
-                   , 'Solaris (HCr)', 'Accent (HCv)', 'Accent (BN7v)', 'Elantra (CN7v)'],
-
-            'SUV': ['Venue (QX)', 'Kona (OS)', 'Kona (OS HEV)', 'Kona (OS EV)', 'Kona (OS N)', 'Kona (SX2)', 'Kona (SX2 HEV)', 
-                    'Kona (SX2 EV)', 'Tucson (TL)', 'Tucson (NX4)', 'Tucson (NX4 HEV)', 'NEXO (FE)', 'IONIQ 5 (NE)', 
-                    'IONIQ 5 N (NE N)', 'Santa-Fe (TM)', 'Santa-Fe (TM HEV)', 'Santa-Fe (MX5)', 'Santa-Fe (MX5 HEV)', 
-                    'Palisade (LX2)', 'GV60 (JW)', 'GV70 (JK)', 'GV70 (JK EV)', 'GV80 (JX)', 'Kona N (OS N)', 'Tucson (NX4 PHEV)', 
-                    'Santa-Fe (TM PHEV)', 'Santa-Fe (MX5 PHEV)', 'GV70 EV (JK EV)', 'Exter (AI3 SUV)', 'Venue (QXi)', 'Creta (SU2i)', 
-                    'Creta (SU2i LWB)', 'Kona EV (OSi EV)', 'IONIQ5 (NEi)', 'Tucson (NX4i)', 'Exter(AI3 SUV)', 'Venue(QXi)', 'Creta(SU2i)', 
-                    'Creta(SU2i LWB)', 'Bayon (BC3 CUV)', 'Mufasa (NU2)', 'Tucson (NX4c)', 'Tucson HEV (NX4c HEV)', 'ix35 (NU)', 
-                    'Santa Fe (MX5c)', 'Santa Fe (TMc)', 'Tucson (NX4a)', 'Tucson OB (NX4a OB)', 'Santa-Fe (TMa)', 'Santa-Fe HEV (TMa HEV)', 
-                    'Santa-Fe (MX5a)', 'Santa-Fe (MX5a HEV)', 'GV70 (JKa)', 'GV70 EV (Jka EV)', 'Ioniq5 (NEa)', 'Kona EV (OSe EV)', 
-                    'Kona EV (SX2e EV)', 'Tucson (TLe)', 'Tucson (NX4e)', 'Tucson HEV (NX4e HEV)', 'Tucson PHEV (NX4e PHEV)', 'Creta (SU2r)', 
-                    'Creta (GSb)', 'Creta (SU2b)', 'Kona EV (SX2id EV)', 'IONIQ5 (NE)', 'IONIQ5 (NEid N)', 'Santa-Fe (TMid)', 'Santa-Fe (MX5id)', 
-                    'Santa-Fe (MX5id HEV)', 'Creta (SU2id)', 'Creta (SU2v)', 'Tucson (NX4v)', 'Santa Fe (TMv)', 'Santa Fe HEV (TMv HEV)', 'Palisade (LX2v)', 
-                    'IONIQ5 (NEv)', 'Santa Fe (MX5v)', 'Palisade (LX3)', 'Palisade (LX3 HEV)', 'GV80 Coupe (JX Coupe)'],
-
-            '기타': ['Veloster (JS N)', 'G70 S/B (IK S/B)', 'Casper (AX)', 'LCV', 'HCV', 'i30 (PD)', 'Grand i10 (AI3 5DR)', 
-                   'i20 (BI3 5DR)', 'i10 (AC3)', 'i20 (BC3)', 'i20 N (BC3 N)', 'Custo (KU)', 'BHMC', 'i30 (PDe)', 'i30 (Pde N)', 
-                   'HB20 (BR2)', 'Stargazer (KS)', 'HTBC', 'NX4m', 'HCm', 'Others', 'CV', 'i10(AI3v 4DR)', 'i10(AI3v 5DR)', 'Kusto (KUv)', 
-                   'Porter (HRv)', 'Mighty (LTv)', 'Mighty (VTv)', 'Mighty (QTv)', 'Mighty (QTc)', 'Truck', 'IONIQ6 (CE)', 'IONIQ5 Robotaxi (NE R)', 
-                   'PV', 'G90', 'Casper (AX EV)', 'Casper EV (AX EV)', 'IONIQ New Car (ME)']
+            '세단 내연기관': [
+                'Avante (CN7)', 'Sonata (LF)', 'Sonata (DN8)',
+                'Grandeur (IG)', 'Grandeur (GN7)', 'G70 (IK)',
+                'G80 (RG3)', 'G90 (HI)',  'Verna (Hci)', 'Verna (BN7i)',
+                'Elantra (CN7c)', 'La festa (SQ)', 'Verna (YC)',
+                'Celesta (ID)', 'Mistra (DU2)', 'Elantra (CN7a)',
+                'Sonata (DN8a)', 'Solaris (HCr)', 'Accent (HCv)',
+                'Accent (BN7v)', 'Elantra (CN7v)'
+            ],
+            '세단 하이브리드': [
+                'Avante (CN7 HEV)', 'IONIQ (AE HEV)', 'Sonata (DN8 HEV)',
+                'Grandeur (IG HEV)', 'Grandeur (GN7 HEV)'
+            ],
+            '세단 전기차': [
+                'IONIQ (AE EV)', 'IONIQ 6 (CE)', 'G80 (RG3 EV)'
+            ],
+            'SUV 내연기관': [
+                'Venue (QX)', 'Kona (OS)',  'Kona (SX2)', 'Tucson (TL)',
+                'Tucson (NX4)', 'Santa-Fe (TM)', 'Santa-Fe (MX5)',
+                'Palisade (LX2)', 'GV80 (JX)', 'Exter (AI3 SUV)', 'Venue (QXi)',
+                'Creta (SU2i)', 'Creta(SU2i)', 'Bayon (BC3 CUV)',
+                'Mufasa (NU2)', 'Tucson (NX4c)', 'ix35 (NU)',
+                'Santa Fe (MX5c)', 'Santa Fe (TMc)', 'Tucson (NX4a)',
+                'Tucson OB (NX4a OB)', 'Santa-Fe (TMa)', 'GV70 (JKa)',
+                'Tucson (TLe)', 'Tucson (NX4e)',  'Creta (SU2r)',
+                'Creta (GSb)', 'Creta (SU2b)', 'Santa-Fe (TMid)',
+                'Santa-Fe (MX5id)',  'Creta (SU2id)',
+                'Creta (SU2v)', 'Tucson (NX4v)', 'Santa Fe (TMv)',
+                'Santa Fe (MX5v)', 'Palisade (LX3)',
+                'GV80 Coupe (JX Coupe)'
+            ],
+            'SUV 하이브리드': [
+                'Kona (OS HEV)', 'Kona (SX2 HEV)', 'Tucson (NX4 HEV)',
+                'Santa-Fe (TM HEV)', 'Santa-Fe (MX5 HEV)',
+                'Santa Fe HEV (TMa HEV)', 'Tucson HEV (NX4c HEV)',
+                'Santa-Fe HEV (MX5a HEV)',  'Tucson HEV (NX4e HEV)',
+                'Santa Fe HEV (TMv HEV)', 'Santa-Fe (MX5id HEV)'
+            ],
+            'SUV 전기차': [
+                'Kona (OS EV)', 'Kona (OS N)', 'Kona (SX2 EV)', 'NEXO (FE)',
+                'IONIQ 5 (NE)', 'IONIQ 5 N (NE N)', 'Kona N (OS N)',
+                'Tucson (NX4 PHEV)', 'Santa-Fe (TM PHEV)',
+                'Santa-Fe (MX5 PHEV)', 'GV70 EV (JK EV)',
+                'Kona EV (OSi EV)', 'IONIQ5 (NEi)', 'Tucson (NX4i)',
+                'Exter(AI3 SUV)', 'Venue(QXi)', 'Creta(SU2i)',
+                'Creta(SU2i LWB)', 'Tucson OB (NX4a OB)',  'Ioniq5 (NEa)',
+                'Kona EV (OSe EV)', 'Kona EV (SX2e EV)',
+                'Tucson PHEV (NX4e PHEV)',  'Kona EV (SX2id EV)',
+                'IONIQ5 (NE)', 'IONIQ5 (NEid N)', 'GV70 (JKa)',
+                'GV70 EV (Jka EV)', 'IONIQ5 (NEv)', 'GV60 (JW)',
+                'Palisade (LX3 HEV)', 'Palisade (LX2v)', 'Santa Fe (TMv)'
+            ],
+            '기타': [
+                'Veloster (JS N)', 'G70 S/B (IK S/B)', 'Casper (AX)', 'LCV',
+                'HCV', 'i30 (PD)', 'Grand i10 (AI3 5DR)', 'i20 (BI3 5DR)',
+                'i10 (AC3)', 'i20 (BC3)', 'i20 N (BC3 N)', 'Custo (KU)',
+                'BHMC', 'i30 (PDe)', 'i30 (Pde N)', 'HB20 (BR2)',
+                'Stargazer (KS)', 'HTBC', 'NX4m', 'HCm', 'Others', 'CV',
+                'i10(AI3v 4DR)', 'i10(AI3v 5DR)', 'Kusto (KUv)', 'Porter (HRv)',
+                'Mighty (LTv)', 'Mighty (VTv)', 'Mighty (QTv)',
+                'Mighty (QTc)', 'Truck',  'IONIQ5 Robotaxi (NE R)',
+                'PV', 'G90', 'Casper (AX EV)', 'Casper EV (AX EV)',
+                'IONIQ New Car (ME)', 'Palisade (LX3 HEV)', 'Santa Fe (TMv)', 'Santa Fe (MX5v)'
+            ]
                    
         }
 
-        selected_type = st.selectbox('차종 카테고리 선택', list(car_types.keys()))
+        
 
-        df_filtered = df_sales[df_sales['차량 모델'].isin(car_types[selected_type])]
+        # 연도 선택 UI 개선
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            year_2023 = st.button("2023년")
+        with col2:
+            year_2024 = st.button("2024년")
+        with col3:
+            year_all = st.button("전체")
 
-        # 거래유형을 기준으로 데이터 분리
-        df_domestic = df_filtered[df_filtered['판매 구분'] == '내수용']
-        df_international = df_filtered[df_filtered['판매 구분'] != '내수용']
+        if year_2023:
+            year_filter = '2023년'
+        elif year_2024:
+            year_filter = '2024년'
+        else:
+            year_filter = '전체'
+            
+        # 데이터 필터링 로직
+        if year_filter == '2023년':
+            available_models = df_sales[df_sales['연도'] == 2023]['차량 모델'].unique()
+            df_filtered = df_sales[df_sales['연도'] == 2023].copy()
+        elif year_filter == '2024년':
+            available_models = df_sales[df_sales['연도'] >= 2024]['차량 모델'].unique()
+            df_filtered = df_sales[df_sales['연도'] >= 2024].copy()
+        else:
+            available_models = df_sales['차량 모델'].unique()
+            df_filtered = df_sales.copy()
 
-        # 연도 및 월 컬럼 추가
-        years = df_sales['연도'].unique()
-        months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
-        month_mapping = {month: idx + 1 for idx, month in enumerate(months)}
+        # 선택 가능한 차종 카테고리 필터링
+        filtered_car_types = {
+            category: [model for model in models if model in available_models]
+            for category, models in car_types.items()
+        }
+        
+        selectable_categories = [
+            category for category, models in filtered_car_types.items() if models
+        ]
 
-        # 데이터프레임 생성 함수
-        def create_melted_dataframe(df):
-            df_melted = pd.DataFrame()
-            for year in years:
-                year_data = df[df['연도'] == year]
-                for month in months:
-                    if month in year_data.columns:
-                        temp_df = year_data[['차량 모델', month]].copy()
-                        temp_df.rename(columns={month: '판매량'}, inplace=True)
-                        temp_df['연도'] = year
-                        temp_df['월'] = month
-                        df_melted = pd.concat([df_melted, temp_df], ignore_index=True)
+        # 선택 가능한 카테고리가 없는 경우 메시지 표시
+        if not selectable_categories:
+            st.warning(f"{year_filter}에는 해당 데이터가 없습니다.")
+        else:
+            selected_type = st.selectbox('차종 카테고리 선택', selectable_categories)
 
-            # "월" 컬럼을 숫자로 변환
-            df_melted['월'] = df_melted['월'].map(month_mapping)
+            df_filtered = df_filtered[df_filtered['차량 모델'].isin(filtered_car_types[selected_type])].copy()
 
-            # "연도-월"을 datetime 객체로 변환
-            df_melted['연도-월'] = pd.to_datetime(df_melted['연도'].astype(str) + '-' + df_melted['월'].astype(str), format='%Y-%m')
+            df_domestic = df_filtered[df_filtered['판매 구분'] == '내수용']
+            df_international = df_filtered[df_filtered['판매 구분'] != '내수용']
 
-            # 2025년 1월까지만 필터링
-            df_melted = df_melted[df_melted['연도-월'] <= pd.to_datetime('2025-01')]
+            months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
+            month_mapping = {month: idx + 1 for idx, month in enumerate(months)}
 
-            return df_melted
+            # 데이터프레임 생성 함수
+            def create_melted_dataframe(df):
+                df_melted = pd.DataFrame()
+                for year in df['연도'].unique():
+                    year_data = df[df['연도'] == year]
+                    for month in months:
+                        if month in year_data.columns:
+                            temp_df = year_data[['차량 모델', month]].copy()
+                            temp_df.rename(columns={month: '판매량'}, inplace=True)
+                            temp_df['연도'] = year
+                            temp_df['월'] = month
+                            df_melted = pd.concat([df_melted, temp_df], ignore_index=True)
 
-        # 국내와 해외 데이터프레임 생성
-        df_melted_domestic = create_melted_dataframe(df_domestic)
-        df_melted_international = create_melted_dataframe(df_international)
+                df_melted['월'] = df_melted['월'].map(month_mapping)
+                df_melted['연도-월'] = pd.to_datetime(df_melted['연도'].astype(str) + '-' + df_melted['월'].astype(str), format='%Y-%m')
+                df_melted = df_melted[df_melted['연도-월'] <= pd.to_datetime('2025-01')]
+                return df_melted
 
-        # 그래프 그리기
-        fig_domestic = px.line(df_melted_domestic, x='연도-월', y='판매량', color='차량 모델', 
-                                title=f'{selected_type} 차량 모델별 국내 월별 판매량',
-                                labels={'연도-월': '연도-월 (Year-Month)', '판매량': '판매량 (Sales Volume)'})
+            df_melted_domestic = create_melted_dataframe(df_domestic)
+            df_melted_international = create_melted_dataframe(df_international)
 
-        fig_international = px.line(df_melted_international, x='연도-월', y='판매량', color='차량 모델', 
-                                        title=f'{selected_type} 차량 모델별 해외 월별 판매량',
+            # 데이터가 없는 경우 메시지 표시
+            if df_melted_domestic.empty and df_melted_international.empty:
+                st.warning(f"{year_filter}에는 해당 차종 카테고리의 판매 데이터가 없습니다.")
+            else:
+                fig_domestic = px.line(df_melted_domestic, x='연도-월', y='판매량', color='차량 모델', 
+                                        title=f'{selected_type} 차량 모델별 국내 월별 판매량',
                                         labels={'연도-월': '연도-월 (Year-Month)', '판매량': '판매량 (Sales Volume)'})
 
-        # 차트 출력
-        st.plotly_chart(fig_domestic, use_container_width=True)
-        st.plotly_chart(fig_international, use_container_width=True)
+                fig_international = px.line(df_melted_international, x='연도-월', y='판매량', color='차량 모델', 
+                                            title=f'{selected_type} 차량 모델별 해외 월별 판매량',
+                                            labels={'연도-월': '연도-월 (Year-Month)', '판매량': '판매량 (Sales Volume)'})
+
+                st.plotly_chart(fig_domestic, use_container_width=True)
+                st.plotly_chart(fig_international, use_container_width=True)
 
         st.markdown("""
         ### 분석 내용:
