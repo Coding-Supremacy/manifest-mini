@@ -6,7 +6,7 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 
-def main():
+def run_export_and_production():
     df = pd.read_csv('yeseul/현대_모델별_생산_판매.csv')
 
     # 1) 특정 모델(Santa-Fe (TMa), Santa-Fe (MX5a))만 별도 분류, 나머지는 '기타'
