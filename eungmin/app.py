@@ -12,10 +12,10 @@ from matplotlib import font_manager, rc
 sentiment_pipeline = pipeline("sentiment-analysis")
 
 # NewsAPI.org API 키 (자신의 API 키로 교체)
-news_api_key = "deb8b639f29843d99075751190ea2f93"
+news_api_key = ""
 
 # 주가 API 키 (API Ninjas)
-stock_api_key = "qitTzHoWmP3nH3ABAK21Ow==9vevwgX6GA3BH8mJ"
+stock_api_key = ""
 
 # 현대기아차 관련 키워드 목록
 hyundai_kia_keywords = ["현대", "기아", "현대자동차", "기아자동차", "전기차", "SUV"]
