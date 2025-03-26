@@ -53,8 +53,8 @@ def run_eda_현대():
         st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
         st.subheader("📊 지역별 수출 실적 변화")
 
-        # 데이터 전처리 (차량 구분을 고려하지 않고 모든 데이터를 사용)
-        df_export_filtered = df_export.copy()  # 차량 구분 없이 전체 데이터를 사용
+        # 데이터 전처리
+        df_export_filtered = df_export.copy()
         countries = df_export_filtered['국가'].unique()
 
         selected_countries = st.multiselect("국가를 선택하세요:", options=list(countries), default=list(countries))
@@ -62,49 +62,66 @@ def run_eda_현대():
         if selected_countries:
             fig = make_subplots(specs=[[{"secondary_y": True}]])
 
+            all_dates = []  # 모든 날짜를 저장할 리스트
+
             for country in selected_countries:
                 country_data = df_export_filtered[df_export_filtered['국가'] == country].copy()
+                
+                dates = []
+                sales_values = []
+                
+                # 연도와 월 정보를 조합해 실제 날짜 생성
+                for idx, row in country_data.iterrows():
+                    year = row['연도']
+                    for month in range(1, 13):
+                        month_col = f"{month}월"
+                        if month_col in row:
+                            date = pd.to_datetime(f"{year}-{month}-01")
+                            dates.append(date)
+                            sales_values.append(row[month_col])
 
-                # 연도별 월별 판매량 데이터를 하나의 Series로 만들기
-                monthly_sales = []
-                years = country_data['연도'].unique()
+                # 2025-03-01 이후 데이터 필터링
+                df_plot = pd.DataFrame({'date': dates, 'sales': sales_values})
+                df_plot = df_plot[df_plot['date'] <= pd.to_datetime('2025-03-01')]
 
-                for year in years:
-                    year_data = country_data[country_data['연도'] == year]
-                    month_cols = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
-                    for month in month_cols:
-                        if month in year_data.columns:
-                            sales = year_data[month].values
-                            if len(sales) > 0:
-                                monthly_sales.append(sales[0])
-                            else:
-                                monthly_sales.append(None)
-                        else:
-                            monthly_sales.append(None)
+                # NaN 제거
+                df_plot = df_plot.dropna()
+                
+                all_dates.extend(df_plot['date'])  # 모든 날짜 저장
+                
+                if not df_plot.empty:
+                    fig.add_trace(
+                        go.Scatter(
+                            x=df_plot['date'], 
+                            y=df_plot['sales'], 
+                            mode='lines+markers', 
+                            name=country,
+                            hovertemplate='%{x|%Y-%m}<br>판매량: %{y:,.0f}<extra></extra>'
+                        )
+                    )
 
-                # x축 날짜 생성 및 2025-03-01 이후 데이터 제거
-                dates = pd.date_range(start='2023-01-01', periods=len(monthly_sales), freq='M')
-                dates = dates[dates <= pd.to_datetime('2025-03-01')]
-                monthly_sales = monthly_sales[:len(dates)]
+            # x축 범위 설정
+            if all_dates:
+                min_date = min(all_dates)
+                max_date = max(all_dates)
+            else:
+                min_date = pd.to_datetime('2023-01-01')
+                max_date = pd.to_datetime('2025-03-01')
 
-                # NaN 값을 제외한 데이터만 플롯
-                valid_indices = [i for i, x in enumerate(monthly_sales) if pd.notna(x)]
-                valid_dates = [dates[i] for i in valid_indices]  # Use list comprehension
-                valid_sales = [monthly_sales[i] for i in valid_indices]  # Use list comprehension
-
-                fig.add_trace(
-                    go.Scatter(x=valid_dates, y=valid_sales, mode='lines+markers', name=country,
-                            hovertemplate='%{x|%Y-%m-%d}<br>판매량: %{y:,.0f}<extra></extra>')
-                )
-            
-            # x축 범위를 데이터에 맞게 조정
+            # 레이아웃 설정
             fig.update_layout(
-                title='주요 시장별 수출량 변화', 
-                xaxis_title='날짜', 
-                yaxis_title='판매량', 
-                legend_title='국가', 
+                title='주요 시장별 수출량 변화',
+                xaxis_title='날짜',
+                yaxis_title='판매량',
+                legend_title='국가',
                 hovermode="closest",
-                xaxis_range=[min(valid_dates), max(valid_dates)] if valid_dates else None  # 데이터가 있는 경우에만 범위 설정
+                xaxis=dict(
+                    range=[min_date, max_date],
+                    type="date"
+                ),
+                margin=dict(l=50, r=50, t=50, b=50),  # 마진 조정
+                width=800,  # 그래프 너비 설정
+                height=500  # 그래프 높이 설정
             )
             st.plotly_chart(fig, use_container_width=True)
 
