@@ -14,13 +14,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 메인 헤더
-st.markdown("""
-<h1 style='text-align: center; color: #2E86C1;'>🚙 기아 수출실적 대시보드</h1>
-<h4 style='text-align: center;'>지역별 수출 실적 및 차종별 판매 분석</h4>
-<hr>
-""", unsafe_allow_html=True)
-
 # 데이터 로드 함수
 @st.cache_data
 def load_data():

@@ -68,7 +68,8 @@ def plot_forecast(df_actual, forecast, selected_market):
         template="plotly_white"
     )
     fig.update_xaxes(
-        tickformat="%Y-%m", dtick="M1", tickangle=45
+        tickformat="%Y-%m", dtick="M1", tickangle=45,
+        range=["2024-10-01", forecast["ds"].max().strftime("%Y-%m-%d")]
     )
 
     return fig
