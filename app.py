@@ -29,7 +29,7 @@ def run_app():
             options=[
                 "홈", "개발 과정",
                 "기아 자동차 분석", "현대 자동차 분석",
-                "현대 자동차 판매량 예측", "수출 및 생산량 분석"
+                "현대 자동차 판매량 예측", "기후별 자동차 판매량 예측"
             ],
             icons=[
                 "house", "code-slash",
@@ -56,7 +56,7 @@ def run_app():
     elif menu == "현대 자동차 판매량 예측":
         run_prediction_hyundai()
 
-    elif menu == "수출 및 생산량 분석":
+    elif menu == "기후별 자동차 판매량 예측":
         st.warning("📦 수출 및 생산량 분석 페이지는 아직 준비 중입니다.")
 
 if __name__ == "__main__":
