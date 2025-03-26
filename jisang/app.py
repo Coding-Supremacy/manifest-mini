@@ -1,8 +1,8 @@
 import streamlit as st
 from streamlit_option_menu import option_menu
 
-from eda_기아 import run_eda_기아
-from eda_현대 import run_eda_현대
+from eda_kia import run_eda_기아
+from eda_hyundai import run_eda_현대
 
 # 페이지 설정
 st.set_page_config(page_title="🚗 현대 & 기아 판매현황 관리 자동화 및 추천 시스템", layout="wide")
