@@ -53,8 +53,8 @@ def run_eda_기아():
         st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
         st.subheader("📊 지역별 수출 실적 변화")
         
-        # 데이터 전처리
-        df_export_filtered = df_export[df_export['차량 구분'] == '총합'].drop(columns=['차량 구분'])
+        # 데이터 전처리 (차량 구분을 고려하지 않고 모든 데이터를 사용)
+        df_export_filtered = df_export.copy()  # 차량 구분 없이 전체 데이터를 사용
         countries = df_export_filtered['국가명'].unique()
 
         selected_countries = st.multiselect("국가를 선택하세요:", options=list(countries), default=list(countries))
@@ -82,40 +82,34 @@ def run_eda_기아():
                         else:
                             monthly_sales.append(None)
 
-                # x축 날짜 생성 (연도-월 형태로 변경)
-                dates = pd.date_range(start='2023-01-01', periods=len(monthly_sales), freq='M')
+                # x축 날짜 생성 및 2025-03-01 이후 데이터 제거
+                dates = pd.date_range(start='2023-01-01', periods=len(monthly_sales), freq='MS')
+                dates = dates[dates <= pd.to_datetime('2025-03-01')]
                 monthly_sales = monthly_sales[:len(dates)]
 
                 # NaN 값을 제외한 데이터만 플롯
                 valid_indices = [i for i, x in enumerate(monthly_sales) if pd.notna(x)]
-                valid_dates = dates[valid_indices].strftime('%Y-%m')  # 연도-월 형식으로 변경
-                valid_sales = [monthly_sales[i] for i in valid_indices]
+                valid_dates = [dates[i] for i in valid_indices]  # Use list comprehension
+                valid_sales = [monthly_sales[i] for i in valid_indices]  # Use list comprehension
 
                 fig.add_trace(
                     go.Scatter(x=valid_dates, y=valid_sales, mode='lines+markers', name=country,
-                            hovertemplate='%{x}<br>판매량: %{y:,.0f}<extra></extra>')
+                            hovertemplate='%{x|%Y-%m-%d}<br>판매량: %{y:,.0f}<extra></extra>')
                 )
-
+            
+            # x축 범위를 데이터에 맞게 조정
             fig.update_layout(
-                title='주요 시장별 수출량 변화',
-                xaxis_title='연도-월',
-                yaxis_title='판매량',
-                legend_title='국가',
+                title='주요 시장별 수출량 변화', 
+                xaxis_title='날짜', 
+                yaxis_title='판매량', 
+                legend_title='국가', 
                 hovermode="closest",
                 xaxis=dict(
-                    tickmode='array',  # x축의 눈금을 valid_dates로 맞추기
-                    tickvals=valid_dates,  # x축 레이블을 valid_dates로 설정
-                    tickangle=45,  # x축 레이블을 45도 기울임
-                    showline=True,  # x축에 선을 추가
-                    showgrid=True,  # 그리드 표시를 유지
-                    range=[valid_dates[0], valid_dates[-1]],  # x축의 범위를 valid_dates에 맞추기
+                    tickformat='%b %Y',  # 월, 연도 형식으로 표시 (예: Jan 2023)
+                    dtick="M3",  # 3개월 간격으로 눈금 표시
                 ),
-                yaxis=dict(
-                    showline=True,  # y축에 선을 추가
-                    showgrid=True  # 그리드 표시를 유지
-                )
+                xaxis_range=[min(valid_dates), max(valid_dates)] if valid_dates else None  # 데이터가 있는 경우에만 범위 설정
             )
-
             st.plotly_chart(fig, use_container_width=True)
 
             st.markdown("""
