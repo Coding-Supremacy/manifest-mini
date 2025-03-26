@@ -3,35 +3,37 @@ from streamlit_option_menu import option_menu
 
 from eda_기아 import run_eda_기아
 from eda_현대 import run_eda_현대
+from home import run_home
 
 # 페이지 설정
-st.set_page_config(page_title="🚗 현대 & 기아 판매현황 관리 자동화 및 추천 시스템", layout="wide")
+st.set_page_config(page_title="홈 | 판매현황 분석 시스템", layout="wide")
 
 def run_app():
-
     with st.sidebar:
-        
-        st.markdown("### ⚙️ 시스템 메뉴")
-        system_tab = option_menu(None, ['홈', '개발 과정'],
-                                icons=['house', 'code-slash'], key='sys')
+        st.markdown("### 전체 메뉴")
 
-        st.markdown("### 🚗 브랜드 분석")
-        selected = option_menu(None, ['기아 자동차 분석', '현대 자동차 분석'],
-                            icons=['car-front', 'car-front-fill'], key='brand')
+        # 전체 메뉴를 한 번에 통합
+        active_page = option_menu(
+            menu_title=None,
+            options=[
+                "🏠 홈", "⚙️ 개발 과정",
+                "🚗 기아 자동차 분석", "🚙 현대 자동차 분석"
+            ],
+            default_index=0
+        )
 
-        
-        
-        
-    if system_tab == '홈' :
-        pass
+    # 페이지 선택 분기
+    if active_page == "🏠 홈":
+        run_home()
 
-    if system_tab == '개발 과정' :
-        pass 
-    
-    if selected == '기아 자동차 분석' :
+    elif active_page == "⚙️ 개발 과정":
+        st.title("개발 과정 페이지")
+        # 개발 과정 내용
+
+    elif active_page == "🚗 기아 자동차 분석":
         run_eda_기아()
 
-    if selected == '현대 자동차 분석' :
+    elif active_page == "🚙 현대 자동차 분석":
         run_eda_현대()     
 
 if __name__ == "__main__":
