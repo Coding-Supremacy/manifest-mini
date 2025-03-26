@@ -14,12 +14,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# 메인 헤더
-st.markdown("""
-<h1 style='text-align: center; color: #2E86C1;'>🏎️ 현대 수출실적 대시보드</h1>
-<h4 style='text-align: center;'>지역별 수출 실적 및 차종별 판매 분석</h4>
-<hr>
-""", unsafe_allow_html=True)
+
 
 # 데이터 로드 함수
 @st.cache_data
@@ -32,18 +27,22 @@ df_export, df_sales = load_data()
 
 # 메인 함수
 def run_eda_현대():
+    # 메인 헤더
+    st.markdown("""
+    <h1 style='text-align: center; color: #2E86C1;'>🏎️ 현대 수출실적 대시보드</h1>
+    <h4 style='text-align: center;'>지역별 수출 실적 및 차종별 판매 분석</h4>
+    <hr>
+    """, unsafe_allow_html=True)
 
     st.markdown("<h1 style='text-align: center;'>🏎️ 현대 수출실적 대시보드</h1>", unsafe_allow_html=True)
 
     selected = option_menu(
         menu_title=None,
-        options=["📊 지역별 수출 분석", "🏎️ 차종별 판매 분석"],
-        icons=["globe", "car-front"],
+        options=["📊 지역별 수출 분석", "🏎️ 차종별 판매 분석", "📈 생산·판매량 간 관계 분석"],
         default_index=0,
         orientation="horizontal",
         styles={
             "container": {"padding": "0!important", "background-color": "#f9f9f9"},
-            "icon": {"color": "#2E86C1", "font-size": "20px"},
             "nav-link": {"font-size": "16px", "text-align": "center", "margin": "0px", "padding": "10px"},
             "nav-link-selected": {"background-color": "#2E86C1", "color": "white"},
         }
@@ -53,8 +52,8 @@ def run_eda_현대():
         st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
         st.subheader("📊 지역별 수출 실적 변화")
 
-        # 데이터 전처리
-        df_export_filtered = df_export.copy()
+        # 데이터 전처리 (차량 구분을 고려하지 않고 모든 데이터를 사용)
+        df_export_filtered = df_export.copy()  # 차량 구분 없이 전체 데이터를 사용
         countries = df_export_filtered['국가'].unique()
 
         selected_countries = st.multiselect("국가를 선택하세요:", options=list(countries), default=list(countries))
@@ -62,66 +61,49 @@ def run_eda_현대():
         if selected_countries:
             fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-            all_dates = []  # 모든 날짜를 저장할 리스트
-
             for country in selected_countries:
                 country_data = df_export_filtered[df_export_filtered['국가'] == country].copy()
-                
-                dates = []
-                sales_values = []
-                
-                # 연도와 월 정보를 조합해 실제 날짜 생성
-                for idx, row in country_data.iterrows():
-                    year = row['연도']
-                    for month in range(1, 13):
-                        month_col = f"{month}월"
-                        if month_col in row:
-                            date = pd.to_datetime(f"{year}-{month}-01")
-                            dates.append(date)
-                            sales_values.append(row[month_col])
 
-                # 2025-03-01 이후 데이터 필터링
-                df_plot = pd.DataFrame({'date': dates, 'sales': sales_values})
-                df_plot = df_plot[df_plot['date'] <= pd.to_datetime('2025-03-01')]
+                # 연도별 월별 판매량 데이터를 하나의 Series로 만들기
+                monthly_sales = []
+                years = country_data['연도'].unique()
 
-                # NaN 제거
-                df_plot = df_plot.dropna()
-                
-                all_dates.extend(df_plot['date'])  # 모든 날짜 저장
-                
-                if not df_plot.empty:
-                    fig.add_trace(
-                        go.Scatter(
-                            x=df_plot['date'], 
-                            y=df_plot['sales'], 
-                            mode='lines+markers', 
-                            name=country,
-                            hovertemplate='%{x|%Y-%m}<br>판매량: %{y:,.0f}<extra></extra>'
-                        )
-                    )
+                for year in years:
+                    year_data = country_data[country_data['연도'] == year]
+                    month_cols = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
+                    for month in month_cols:
+                        if month in year_data.columns:
+                            sales = year_data[month].values
+                            if len(sales) > 0:
+                                monthly_sales.append(sales[0])
+                            else:
+                                monthly_sales.append(None)
+                        else:
+                            monthly_sales.append(None)
 
-            # x축 범위 설정
-            if all_dates:
-                min_date = min(all_dates)
-                max_date = max(all_dates)
-            else:
-                min_date = pd.to_datetime('2023-01-01')
-                max_date = pd.to_datetime('2025-03-01')
+                # x축 날짜 생성 및 2025-03-01 이후 데이터 제거
+                dates = pd.date_range(start='2023-01-01', periods=len(monthly_sales), freq='M')
+                dates = dates[dates <= pd.to_datetime('2025-03-01')]
+                monthly_sales = monthly_sales[:len(dates)]
 
-            # 레이아웃 설정
+                # NaN 값을 제외한 데이터만 플롯
+                valid_indices = [i for i, x in enumerate(monthly_sales) if pd.notna(x)]
+                valid_dates = [dates[i] for i in valid_indices]  # Use list comprehension
+                valid_sales = [monthly_sales[i] for i in valid_indices]  # Use list comprehension
+
+                fig.add_trace(
+                    go.Scatter(x=valid_dates, y=valid_sales, mode='lines+markers', name=country,
+                            hovertemplate='%{x|%Y-%m-%d}<br>판매량: %{y:,.0f}<extra></extra>')
+                )
+            
+            # x축 범위를 데이터에 맞게 조정
             fig.update_layout(
-                title='주요 시장별 수출량 변화',
-                xaxis_title='날짜',
-                yaxis_title='판매량',
-                legend_title='국가',
+                title='주요 시장별 수출량 변화', 
+                xaxis_title='날짜', 
+                yaxis_title='판매량', 
+                legend_title='국가', 
                 hovermode="closest",
-                xaxis=dict(
-                    range=[min_date, max_date],
-                    type="date"
-                ),
-                margin=dict(l=50, r=50, t=50, b=50),  # 마진 조정
-                width=800,  # 그래프 너비 설정
-                height=500  # 그래프 높이 설정
+                xaxis_range=[min(valid_dates), max(valid_dates)] if valid_dates else None  # 데이터가 있는 경우에만 범위 설정
             )
             st.plotly_chart(fig, use_container_width=True)
 
@@ -146,46 +128,34 @@ def run_eda_현대():
         st.subheader("🏎️ 차종별 판매 실적")
 
         car_types = {
-            '세단': [
-                'Avante (CN7)', 'Avante (CN7 HEV)', 'Avante (CN7 N)', 
-                'Sonata (LF)', 'Sonata (DN8)', 'Sonata (DN8 HEV)', 
-                'Grandeur (IG)', 'Grandeur (IG HEV)', 'Grandeur (GN7)', 
-                'Grandeur (GN7 HEV)', 'G70 (IK)', 'G70 S/B (IK S/B)', 
-                'G80 (RG3)', 'G80 (RG3 EV)', 'G90 (HI)', 'G90 (RS4)', 
-                'i30 (PD)', 'i20 (BI3 5DR)', 'i20 N (BC3 N)', 'Elantra (CN7)', 
-                'Elantra (CN7c)', 'Elantra (CN7a)', 'Elantra (CN7v)'
-            ],
-            'SUV': [
-                'Kona (OS)', 'Kona (OS HEV)', 'Kona (OS EV)', 'Kona (OS N)', 
-                'Kona (SX2)', 'Kona (SX2 HEV)', 'Kona (SX2 EV)', 'Tucson (TL)', 
-                'Tucson (NX4)', 'Tucson (NX4 HEV)', 'NEXO (FE)', 'IONIQ 5 (NE)', 
-                'IONIQ 5 N (NE N)', 'Santa-Fe (TM)', 'Santa-Fe (TM HEV)', 
-                'Santa-Fe (MX5)', 'Santa-Fe (MX5 HEV)', 'Palisade (LX2)', 
-                'GV60 (JW)', 'GV70 (JK)', 'GV70 (JK EV)', 'GV80 (JX)', 
-                'GV70 (JKa)', 'GV70 EV (Jka EV)', 'Kona EV (OSi EV)', 
-                'Kona EV (SX2e EV)', 'Santa-Fe (MX5c)', 'Santa-Fe (TMc)', 
-                'Santa-Fe (TMa)', 'Santa-Fe HEV (TMa HEV)', 'Santa-Fe (MX5a)', 
-                'Santa-Fe (MX5a HEV)', 'Kona EV (OSe EV)', 'IONIQ5 (NE)', 
-                'IONIQ5 (NEid N)', 'Santa-Fe (TMid)', 'Santa-Fe (MX5id)', 
-                'Santa-Fe (MX5id HEV)', 'Creta (SU2i)', 'Creta (SU2i LWB)', 
-                'Creta (SU2r)', 'Creta (GSb)', 'Creta (SU2b)', 'Creta (SU2id)', 
-                'Exter (AI3 SUV)', 'Venue (QXi)', 'Venue (QX)', 'Bayon (BC3 CUV)', 
-                'Stargazer (KS)', 'Tucson (NX4 PHEV)', 'Santa-Fe (MX5 PHEV)', 
-                'Santa-Fe (TM PHEV)'
-            ],
-            '기타': [
-                'Casper (AX)', 'Casper (AX EV)', 'Mighty (LTv)', 'Mighty (VTv)', 
-                'Mighty (QTv)', 'Mighty (QTc)', 'Porter (HRv)', 'Truck', 
-                'CV', 'HB20 (BR2)', 'Xcent (AI3 4DR)', 'Grand i10 (AI3 5DR)', 
-                'Verna (Hci)', 'Verna (BN7i)', 'Exter(AI3 SUV)', 'IONIQ New Car (ME)', 
-                'HTBC', 'NX4m', 'HCm', 'Others', 'i10 (AC3)', 'i10 (AI3v 4DR)', 
-                'i10 (AI3v 5DR)', 'Accent (HCv)', 'Accent (BN7v)', 'Elantra (CN7v)', 
-                'Santa Fe (TMv)', 'Santa Fe HEV (TMv HEV)', 'Palisade (LX2v)', 
-                'IONIQ5 (NEv)', 'Palisade (LX3)', 'Palisade (LX3 HEV)', 
-                'GV80 Coupe (JX Coupe)', 'Casper EV (AX EV)', 'IONIQ6 (CE)', 
-                'IONIQ5 Robotaxi (NE R)', 'PV', 'G90', 'Casper (AX EV)', 
-                'Palisade (LX3)', 'Palisade (LX3 HEV)', 'GV80 Coupe (JX Coupe)'
-            ]
+            '세단': ['Avante (CN7)', 'Avante (CN7 HEV)', 'Avante (CN7 N)', 'IONIQ (AE HEV)', 
+                   'IONIQ (AE PHEV)', 'IONIQ (AE EV)', 'Sonata (LF)', 'Sonata (DN8)', 'Sonata (DN8 HEV)', 
+                   'Grandeur (IG)', 'Grandeur (IG HEV)', 'Grandeur (GN7)', 'Grandeur (GN7 HEV)', 
+                   'IONIQ 6 (CE)', 'G70 (IK)', 'G80 (RG3)', 'G80 (RG3 EV)', 'G90 (HI)', 'G90 (RS4)', 
+                   'Xcent (AI3 4DR)', 'Verna (Hci)', 'Verna (BN7i)', 'Elantra (CN7c)', 'Sonata (DN8c)', 
+                   'La festa (SQ)', 'Verna (YC)', 'Celesta (ID)', 'Mistra (DU2)', 'Elantra (CN7a)', 'Sonata (DN8a)'
+                   , 'Solaris (HCr)', 'Accent (HCv)', 'Accent (BN7v)', 'Elantra (CN7v)'],
+
+            'SUV': ['Venue (QX)', 'Kona (OS)', 'Kona (OS HEV)', 'Kona (OS EV)', 'Kona (OS N)', 'Kona (SX2)', 'Kona (SX2 HEV)', 
+                    'Kona (SX2 EV)', 'Tucson (TL)', 'Tucson (NX4)', 'Tucson (NX4 HEV)', 'NEXO (FE)', 'IONIQ 5 (NE)', 
+                    'IONIQ 5 N (NE N)', 'Santa-Fe (TM)', 'Santa-Fe (TM HEV)', 'Santa-Fe (MX5)', 'Santa-Fe (MX5 HEV)', 
+                    'Palisade (LX2)', 'GV60 (JW)', 'GV70 (JK)', 'GV70 (JK EV)', 'GV80 (JX)', 'Kona N (OS N)', 'Tucson (NX4 PHEV)', 
+                    'Santa-Fe (TM PHEV)', 'Santa-Fe (MX5 PHEV)', 'GV70 EV (JK EV)', 'Exter (AI3 SUV)', 'Venue (QXi)', 'Creta (SU2i)', 
+                    'Creta (SU2i LWB)', 'Kona EV (OSi EV)', 'IONIQ5 (NEi)', 'Tucson (NX4i)', 'Exter(AI3 SUV)', 'Venue(QXi)', 'Creta(SU2i)', 
+                    'Creta(SU2i LWB)', 'Bayon (BC3 CUV)', 'Mufasa (NU2)', 'Tucson (NX4c)', 'Tucson HEV (NX4c HEV)', 'ix35 (NU)', 
+                    'Santa Fe (MX5c)', 'Santa Fe (TMc)', 'Tucson (NX4a)', 'Tucson OB (NX4a OB)', 'Santa-Fe (TMa)', 'Santa-Fe HEV (TMa HEV)', 
+                    'Santa-Fe (MX5a)', 'Santa-Fe (MX5a HEV)', 'GV70 (JKa)', 'GV70 EV (Jka EV)', 'Ioniq5 (NEa)', 'Kona EV (OSe EV)', 
+                    'Kona EV (SX2e EV)', 'Tucson (TLe)', 'Tucson (NX4e)', 'Tucson HEV (NX4e HEV)', 'Tucson PHEV (NX4e PHEV)', 'Creta (SU2r)', 
+                    'Creta (GSb)', 'Creta (SU2b)', 'Kona EV (SX2id EV)', 'IONIQ5 (NE)', 'IONIQ5 (NEid N)', 'Santa-Fe (TMid)', 'Santa-Fe (MX5id)', 
+                    'Santa-Fe (MX5id HEV)', 'Creta (SU2id)', 'Creta (SU2v)', 'Tucson (NX4v)', 'Santa Fe (TMv)', 'Santa Fe HEV (TMv HEV)', 'Palisade (LX2v)', 
+                    'IONIQ5 (NEv)', 'Santa Fe (MX5v)', 'Palisade (LX3)', 'Palisade (LX3 HEV)', 'GV80 Coupe (JX Coupe)'],
+
+            '기타': ['Veloster (JS N)', 'G70 S/B (IK S/B)', 'Casper (AX)', 'LCV', 'HCV', 'i30 (PD)', 'Grand i10 (AI3 5DR)', 
+                   'i20 (BI3 5DR)', 'i10 (AC3)', 'i20 (BC3)', 'i20 N (BC3 N)', 'Custo (KU)', 'BHMC', 'i30 (PDe)', 'i30 (Pde N)', 
+                   'HB20 (BR2)', 'Stargazer (KS)', 'HTBC', 'NX4m', 'HCm', 'Others', 'CV', 'i10(AI3v 4DR)', 'i10(AI3v 5DR)', 'Kusto (KUv)', 
+                   'Porter (HRv)', 'Mighty (LTv)', 'Mighty (VTv)', 'Mighty (QTv)', 'Mighty (QTc)', 'Truck', 'IONIQ6 (CE)', 'IONIQ5 Robotaxi (NE R)', 
+                   'PV', 'G90', 'Casper (AX EV)', 'Casper EV (AX EV)', 'IONIQ New Car (ME)']
+                   
         }
 
         selected_type = st.selectbox('차종 카테고리 선택', list(car_types.keys()))
@@ -262,6 +232,75 @@ def run_eda_현대():
 
         st.markdown("</div>", unsafe_allow_html=True)
 
+    if selected == "📈 생산·판매량 간 관계 분석":
+        st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+        st.subheader("📈 생산·판매량 간 관계 분석")
+        df = pd.read_csv('data/현대_모델별_생산_판매.csv')
+
+        # 1) 특정 모델(Santa-Fe (TMa), Santa-Fe (MX5a))만 별도 분류, 나머지는 '기타'
+        df['특별모델'] = '기타'
+        df.loc[df['차량 모델'] == 'Santa-Fe (TMa)', '특별모델'] = 'Santa-Fe (TMa)'
+        df.loc[df['차량 모델'] == 'Santa-Fe (MX5a)', '특별모델'] = 'Santa-Fe (MX5a)'
+
+        # 2) Plotly Scatter: color='특별모델'로 지정, color_discrete_map으로 색상 매핑
+        fig = px.scatter(
+            df,
+            x="총생산량",
+            y="총판매량",
+            color='특별모델',  # 이 열을 기준으로 색이 달라짐
+            color_discrete_map={
+                'Santa-Fe (TMa)': 'red',     # 빨강
+                'Santa-Fe (MX5a)': 'green', # 초록
+                '기타': 'blue'               # 그 외 모델은 파랑
+            },
+            hover_name="차량 모델",
+            hover_data={"총생산량": True, "총판매량": True, "특별모델": False},
+            title="모델별 총생산량 vs 총판매량"
+        )
+        fig.update_layout(showlegend=False)
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.markdown("""
+        ### 모델별 공장 생산량 vs. 판매 실적 분석
+
+        이 산점도는 각 차량 모델의 <b>공장 생산량(가로축)</b>과 **판매 실적(세로축)** 간의 관계를 시각화한 그래프입니다.
+
+        - **양의 선형 관계**<br>
+        대부분의 모델은 생산량이 증가할수록 판매량도 함께 증가하는 경향을 보여주어<br>**23년~24년간의 생산 계획이 시장 수요를 잘 반영**하고 있음을 시사합니다.
+
+        - **조정이 필요한 특이 모델(Outlier)**
+            - **생산 대비 판매량이 극단적으로 낮은 모델**: 생산이 많음에도 판매가 저조해, **과잉 생산**이나 **시장 수요 부족** 등의 문제가 있을 수 있습니다. 예를 들어, Santa-Fe (TMa)가 이 범주에 속해 재고 누적 위험이 있을 수 있습니다.
+            - **생산 대비 판매량이 예측보다 높은 모델**: 시장에서 좋은 반응을 얻어, **추가 생산 확대**나 **마케팅 지원**을 고려해볼 만한 모델입니다. Santa-Fe (MX5a)가 이 범주에 해당합니다.
+
+                    """, unsafe_allow_html=True)
+
+        data = {
+        '특징': ['세대', '출시 시기', '디자인', '플랫폼', '실내 공간', '주요 특징'],
+        'Santa-Fe (TMa) (4세대)': [
+            '4세대', 
+            '2018년 ~ 2023년', 
+            '곡선 위주', 
+            '이전 세대 플랫폼', 
+            '실용적', 
+            '다양한 파워트레인, 첨단 안전/편의 사양'
+        ],
+        'Santa-Fe (MX5a) (5세대)': [
+            '5세대', 
+            '2023년 하반기 ~ 현재', 
+            '각진 형태', 
+            '현대 N3 플랫폼', 
+            '넓음', 
+            '넓은 공간, 최신 기술, 새로운 디자인'
+        ]
+        }
+        st.markdown(""" 
+        - **특이 모델(Outlier) 분석**
+        - <b><span style="color: red;">Santa-Fe (TMa) (4세대)</b></span>: 생산량에 비해 판매량이 크게 낮은 모델이였습니다.
+        - <b><span style="color: green;">Santa-Fe (MX5a) (5세대)</b></span>: 5세대 출시 이후 수요가 크게 늘어 생산량을 늘리는 것이 필요해 보입니다.
+                    <br> 고객에게 큰 인기를 끌고 있는 모델로, 4세대와의 차이점을 분석하여 다른 차종에도 적용가능한 포인트를 찾아보는 것이 좋을 것 같습니다.
+                    """, unsafe_allow_html=True)
+        df_specs = pd.DataFrame(data)
+        st.dataframe(df_specs,hide_index=True,use_container_width=True)
 
 if __name__ == "__main__":
     run_eda_현대()
