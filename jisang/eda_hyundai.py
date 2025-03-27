@@ -189,59 +189,51 @@ def run_eda_현대():
                    
         }
 
-        # 연도 선택 UI 개선
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            year_2023 = st.button("2023년")
-        with col2:
-            year_2024 = st.button("2024년")
-        with col3:
-            year_all = st.button("전체")
+        # 연도 선택 UI
+        year_filter = st.radio(
+            "연도 선택",
+            ["2023년", "2024년", "전체"],
+            horizontal=True,
+            key="year_selection"
+        )
 
-        if year_2023:
-            year_filter = '2023년'
-        elif year_2024:
-            year_filter = '2024년'
-        else:
-            year_filter = '전체'
-            
-        # 데이터 필터링 로직
+        # 데이터 필터링 로직 (수정된 부분)
         if year_filter == '2023년':
             available_models = df_sales[df_sales['연도'] == 2023]['차량 모델'].unique()
             df_filtered = df_sales[df_sales['연도'] == 2023].copy()
+            max_date = pd.to_datetime('2023-12')  # 2023년 12월까지만 표시
         elif year_filter == '2024년':
-            available_models = df_sales[df_sales['연도'] >= 2024]['차량 모델'].unique()
-            df_filtered = df_sales[df_sales['연도'] >= 2024].copy()
+            available_models = df_sales[df_sales['연도'] == 2024]['차량 모델'].unique()
+            df_filtered = df_sales[df_sales['연도'] == 2024].copy()
+            max_date = pd.to_datetime('2024-12')  # 2024년 12월까지만 표시
         else:
             available_models = df_sales['차량 모델'].unique()
             df_filtered = df_sales.copy()
+            max_date = pd.to_datetime('2025-01')  # 전체 선택 시 2025-01까지
 
-        # 선택 가능한 차종 카테고리 필터링
+        # 차종 카테고리 필터링
         filtered_car_types = {
             category: [model for model in models if model in available_models]
             for category, models in car_types.items()
         }
-        
-        selectable_categories = [
-            category for category, models in filtered_car_types.items() if models
-        ]
+        selectable_categories = [category for category, models in filtered_car_types.items() if models]
 
-        # 선택 가능한 카테고리가 없는 경우 메시지 표시
+        # 선택 가능한 카테고리가 없는 경우
         if not selectable_categories:
             st.warning(f"{year_filter}에는 해당 데이터가 없습니다.")
         else:
             selected_type = st.selectbox('차종 카테고리 선택', selectable_categories)
-
             df_filtered = df_filtered[df_filtered['차량 모델'].isin(filtered_car_types[selected_type])].copy()
 
+            # 내수용/수출용 분리
             df_domestic = df_filtered[df_filtered['판매 구분'] == '내수용']
             df_international = df_filtered[df_filtered['판매 구분'] != '내수용']
 
+            # 월별 데이터 변환 (수정된 함수)
             months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
             month_mapping = {month: idx + 1 for idx, month in enumerate(months)}
 
-            # 데이터프레임 생성 함수
-            def create_melted_dataframe(df):
+            def create_melted_dataframe(df, max_date):
                 df_melted = pd.DataFrame()
                 for year in df['연도'].unique():
                     year_data = df[df['연도'] == year]
@@ -252,27 +244,45 @@ def run_eda_현대():
                             temp_df['연도'] = year
                             temp_df['월'] = month
                             df_melted = pd.concat([df_melted, temp_df], ignore_index=True)
-
+                
                 df_melted['월'] = df_melted['월'].map(month_mapping)
-                df_melted['연도-월'] = pd.to_datetime(df_melted['연도'].astype(str) + '-' + df_melted['월'].astype(str), format='%Y-%m')
-                df_melted = df_melted[df_melted['연도-월'] <= pd.to_datetime('2025-01')]
+                df_melted['연도-월'] = pd.to_datetime(
+                    df_melted['연도'].astype(str) + '-' + df_melted['월'].astype(str), 
+                    format='%Y-%m'
+                )
+                df_melted = df_melted[df_melted['연도-월'] <= max_date]  # 핵심 수정 부분
                 return df_melted
 
-            df_melted_domestic = create_melted_dataframe(df_domestic)
-            df_melted_international = create_melted_dataframe(df_international)
+            df_melted_domestic = create_melted_dataframe(df_domestic, max_date)
+            df_melted_international = create_melted_dataframe(df_international, max_date)
 
-            # 데이터가 없는 경우 메시지 표시
+            # 그래프 생성
             if df_melted_domestic.empty and df_melted_international.empty:
-                st.warning(f"{year_filter}에는 해당 차종 카테고리의 판매 데이터가 없습니다.")
+                st.warning(f"{year_filter}에는 {selected_type} 카테고리의 판매 데이터가 없습니다.")
             else:
-                fig_domestic = px.line(df_melted_domestic, x='연도-월', y='판매량', color='차량 모델', 
-                                        title=f'{selected_type} 차량 모델별 국내 월별 판매량',
-                                        labels={'연도-월': '연도-월 (Year-Month)', '판매량': '판매량 (Sales Volume)'})
+                # 국내 판매량 그래프
+                fig_domestic = px.line(
+                    df_melted_domestic,
+                    x='연도-월',
+                    y='판매량',
+                    color='차량 모델',
+                    title=f'{selected_type} 국내 월별 판매량 ({year_filter})',
+                    labels={'판매량': '판매량 (대)'}
+                )
+                fig_domestic.update_layout(xaxis_title='연도-월', yaxis_title='판매량')
 
-                fig_international = px.line(df_melted_international, x='연도-월', y='판매량', color='차량 모델', 
-                                            title=f'{selected_type} 차량 모델별 해외 월별 판매량',
-                                            labels={'연도-월': '연도-월 (Year-Month)', '판매량': '판매량 (Sales Volume)'})
+                # 해외 판매량 그래프
+                fig_international = px.line(
+                    df_melted_international,
+                    x='연도-월',
+                    y='판매량',
+                    color='차량 모델',
+                    title=f'{selected_type} 해외 월별 판매량 ({year_filter})',
+                    labels={'판매량': '판매량 (대)'}
+                )
+                fig_international.update_layout(xaxis_title='연도-월', yaxis_title='판매량')
 
+                # 그래프 표시
                 st.plotly_chart(fig_domestic, use_container_width=True)
                 st.plotly_chart(fig_international, use_container_width=True)
 
