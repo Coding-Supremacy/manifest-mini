@@ -8,7 +8,6 @@ from matplotlib import font_manager, rc
 plt.rcParams['font.family'] = 'Malgun Gothic'
 plt.rcParams['axes.unicode_minus'] = False
 
-# 데이터 로드 함수 (캐싱 강화)
 @st.cache_data(ttl=3600, show_spinner="데이터 로드 중...")
 def load_data():
     months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
@@ -44,7 +43,17 @@ def load_data():
                                  value_name='판매량')
     melt_factory['월'] = melt_factory['월'].str.replace('월', '').astype(int)
     
-    return df_export, melt_export, df_sales, melt_sales, df_factory, melt_factory
+    # 해외현지판매 데이터
+    df_overseas = pd.read_csv("eungmin/기아_해외현지판매_전처리.CSV")
+    df_overseas['월별합계'] = df_overseas[months].sum(axis=1)
+    
+    melt_overseas = df_overseas.melt(id_vars=['국가명', '공장명(국가)', '차종', '연도'],
+                                    value_vars=months,
+                                    var_name='월',
+                                    value_name='판매량')
+    melt_overseas['월'] = melt_overseas['월'].str.replace('월', '').astype(int)
+    
+    return df_export, melt_export, df_sales, melt_sales, df_factory, melt_factory, df_overseas, melt_overseas
 
 # 차트 생성 함수 (캐싱 적용)
 @st.cache_data(ttl=600, show_spinner=False)
@@ -52,7 +61,24 @@ def create_plot(_fig):
     return _fig
 
 # 데이터 로드
-df_export, melt_export, df_sales, melt_sales, df_factory, melt_factory = load_data()
+df_export, melt_export, df_sales, melt_sales, df_factory, melt_factory, df_overseas, melt_overseas = load_data()
+
+
+powertrain_types = {
+    '내연기관': ['Bongo', 'K3', 'K5', 'Carnival', 'Seltos', 'Sportage', 'Sorento'],
+    '전기차': ['EV6', 'EV9', 'Niro EV', 'Soul EV', 'EV5'],
+    '하이브리드': ['Niro', 'Sorento Hybrid', 'Sportage Hybrid']
+}
+
+# 파워트레인 유형 결정 함수
+def get_powertrain_type(model):
+    for ptype, models in powertrain_types.items():
+        if any(m in model for m in models):
+            return ptype
+    return '내연기관'  # 기본값
+
+# 데이터 전처리
+df_overseas['파워트레인'] = df_overseas['차종'].apply(get_powertrain_type)
 
 st.title("🚗 기아 자동차 통합 분석 대시보드 (최적화 버전)")
 
@@ -65,7 +91,7 @@ def on_tab_change():
     st.session_state.current_tab = st.session_state.tab_key
 
 # 메인 탭 구성 (수정)
-main_tabs = st.tabs(["🌍 지역별 수출 분석", "🚘 차종별 판매 분석", "🏭 해외공장 판매 분석"])
+main_tabs = st.tabs(["🌍 지역별 수출 분석", "🚘 차종별 판매 분석", "🏭 해외공장 판매 분석", "📊 해외현지 판매 분석"])
 
 # 현재 활성 탭 확인
 current_tab = st.session_state.current_tab
@@ -384,19 +410,73 @@ with main_tabs[2] if current_tab == "🏭 해외공장 판매 분석" else main_
         fig4 = get_model_trend(melt_factory, selected_year_factory, selected_model)
         st.pyplot(fig4)
 
-# 사이드바
-st.sidebar.header("📁 데이터 탐색")
-with st.sidebar.expander("수출 데이터 보기"):
-    st.dataframe(df_export.head())
+with main_tabs[3]:
+    sub_tab1, sub_tab2 = st.tabs(["📈 판매 추이 분석", "🏭 공장 및 지역 분석"])
 
-with st.sidebar.expander("판매 데이터 보기"):
-    st.dataframe(df_sales.head())
+    selected_year = st.selectbox(
+        "연도 선택",
+        options=sorted(df_overseas['연도'].unique()),
+        index=len(df_overseas['연도'].unique())-1,
+        key='overseas_year'
+    )
 
-with st.sidebar.expander("해외공장 데이터 보기"):
-    st.dataframe(df_factory.head())
+    # 첫 번째 서브탭
+    with sub_tab1:
+        st.subheader(f"{selected_year}년 지역별 차종 판매량 Top 10")
+        fig1, ax1 = plt.subplots(figsize=(10, 6))
+        top_regions = df_overseas[df_overseas['연도'] == selected_year].groupby('국가명')['월별합계'].sum().nlargest(10)
+        sns.barplot(x=top_regions.values, y=top_regions.index, ax=ax1)
+        ax1.set_title(f"Top 10 Regions by Sales in {selected_year}")
+        ax1.set_xlabel("Total Sales")
+        ax1.set_ylabel("Region")
+        st.pyplot(fig1)
 
-st.sidebar.caption("""
-💡 분석 팁:
-- 모든 차트는 5분간 캐시되어 빠르게 로드됩니다.
-- 연도 변경 시 해당 연도 데이터만 재계산됩니다.
-""")
+        st.subheader(f"{selected_year}년 지역별 월별 판매량")
+        fig2, ax2 = plt.subplots(figsize=(12, 8))
+        monthly_sales = df_overseas[df_overseas['연도'] == selected_year].groupby('국가명')[['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']].sum()
+        
+        for country in monthly_sales.index:
+            ax2.plot(monthly_sales.columns, monthly_sales.loc[country], label=country, marker='o')
+        
+        ax2.set_title(f"Monthly Sales by Region in {selected_year}")
+        ax2.set_xlabel("Month")
+        ax2.set_ylabel("Sales")
+        ax2.legend(title="Region", bbox_to_anchor=(1.05, 1), loc='upper left')
+        plt.xticks(rotation=45)
+        plt.tight_layout()
+        st.pyplot(fig2)
+
+    # 두 번째 서브탭
+    with sub_tab2:
+        st.subheader("공장별 총 판매량")
+        fig3, ax3 = plt.subplots(figsize=(10, 6))
+        factory_sales = df_overseas.groupby('공장명(국가)')['월별합계'].sum().sort_values(ascending=False)
+        sns.barplot(x=factory_sales.values, y=factory_sales.index, ax=ax3)
+        ax3.set_title("Total Sales by Factory")
+        ax3.set_xlabel("Total Sales")
+        ax3.set_ylabel("Factory")
+        st.pyplot(fig3)
+
+        selected_powertrain = st.selectbox(
+            "파워트레인 유형 선택",
+            options=['내연기관', '전기차', '하이브리드'],
+            key='powertrain_type'
+        )
+
+        top_regions_powertrain = df_overseas[(df_overseas['파워트레인'] == selected_powertrain) & (df_overseas['연도'] == selected_year)].groupby('국가명')['월별합계'].sum().nlargest(5)
+
+        if not top_regions_powertrain.empty:
+            fig5, ax5 = plt.subplots(figsize=(10, 6))
+            sns.barplot(x=top_regions_powertrain.values, y=top_regions_powertrain.index, ax=ax5)
+            ax5.set_title(f"{selected_year}년 Top 5 Regions for {selected_powertrain} Vehicles")
+            ax5.set_xlabel("Total Sales")
+            ax5.set_ylabel("Region")
+            st.pyplot(fig5)
+        else:
+            st.warning(f"{selected_powertrain} 차량의 판매 데이터가 없습니다.")
+
+
+
+        
+        
+
