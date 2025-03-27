@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import requests
 from prophet import Prophet
 from openai import OpenAI
+from streamlit_option_menu import option_menu
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
@@ -94,7 +95,24 @@ def run_prediction_region():
     }
     st.write("")
     st.write("")
-    channel = st.selectbox("분석할 채널을 선택하세요", ["현대", "기아"])
+    channel = option_menu(
+        menu_title=None,
+        options=["현대", "기아"],
+        default_index=0,
+        orientation="horizontal",
+        icons=["car-front-fill", "truck-front-fill"],
+        styles={
+            "container": {"padding": "0!important", "background-color": "#f9f9f9"},
+            "icon": {"color": "#2E86C1", "font-size": "20px"},
+            "nav-link": {
+                "font-size": "16px",
+                "text-align": "center",
+                "margin": "0px",
+                "padding": "10px",
+            },
+            "nav-link-selected": {"background-color": "#2E86C1", "color": "white"},
+        }
+    )
 
     market_label_map = {
         "미국": "북미-미국",
