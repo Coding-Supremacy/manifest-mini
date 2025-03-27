@@ -6,15 +6,23 @@ import plotly.graph_objects as go
 import requests
 from prophet import Prophet
 from openai import OpenAI
+from streamlit_option_menu import option_menu
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 def load_model(channel, selected_market, model_dir):
-    filename = f"{channel.lower()}_{selected_market}_prophet.pkl"
+    channel_key_map = {
+        "현대": "hyundai",
+        "기아": "kia"
+    }
+    channel_key = channel_key_map[channel]  # "hyundai" or "kia"
+    filename = f"{channel_key}_{selected_market}_prophet.pkl"
     model_path = os.path.join(model_dir, filename)
+    
     if not os.path.exists(model_path):
         st.error(f"❌ 해당 모델 파일이 존재하지 않습니다: {filename}")
         return None
+
     with open(model_path, "rb") as f:
         model = pickle.load(f)
     return model
@@ -78,15 +86,33 @@ def fetch_news(query, display=5):
     else:
         return []
 
-def run_prediction():
+def run_prediction_region():
     CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
     MODEL_DIR = os.path.join(CURRENT_DIR, "..", "models")
     CSV_PATH_MAP = {
         "현대": os.path.join(CURRENT_DIR, "..", "data", "현대_시장구분별_수출실적.csv"),
         "기아": os.path.join(CURRENT_DIR, "..", "data", "기아_시장구분별_수출실적.csv")
     }
-
-    channel = st.selectbox("분석할 채널을 선택하세요", ["현대", "기아"])
+    st.write("")
+    st.write("")
+    channel = option_menu(
+        menu_title=None,
+        options=["현대", "기아"],
+        default_index=0,
+        orientation="horizontal",
+        icons=["car-front-fill", "truck-front-fill"],
+        styles={
+            "container": {"padding": "0!important", "background-color": "#f9f9f9"},
+            "icon": {"color": "#2E86C1", "font-size": "20px"},
+            "nav-link": {
+                "font-size": "16px",
+                "text-align": "center",
+                "margin": "0px",
+                "padding": "10px",
+            },
+            "nav-link-selected": {"background-color": "#2E86C1", "color": "white"},
+        }
+    )
 
     market_label_map = {
         "미국": "북미-미국",
@@ -99,13 +125,13 @@ def run_prediction():
         "중동·아프리카": "중동·아프리카"
     }
     market_labels = list(market_label_map.keys())
-    selected_label = st.selectbox("시장 구분을 선택하세요", market_labels)
+    selected_label = st.selectbox("국가를 선택하세요", market_labels)
     selected_market = market_label_map[selected_label]
 
-    st.title(f"{channel} - 시장구분별 수출실적 예측")
-    st.markdown("""
+    st.title(f"{channel} - 국가별 수출실적 예측")
+    st.markdown(f"""
 ### 📈 수출 실적 예측 대시보드
-이 페이지는 현대차의 **시장구분별 수출 실적** 데이터를 기반으로,  
+이 페이지는 {channel}차의 **2021년~2025년 1월 까지의 국가별 수출 실적** 데이터를 기반으로,  
 **향후 18개월간 예측된 수출 추세**를 시각화하고,
 **관련 뉴스 기사**를 통해 최근 이슈와 전망을 함께 제공합니다.
 """)
@@ -127,8 +153,8 @@ def run_prediction():
         **연한 녹색 영역**: 예측의 신뢰 구간을 의미합니다.
         """)
 
-        st.subheader(f"📰 [{selected_market}] 관련 최신 뉴스")
-        query = f"{selected_market} 자동차 수출"
+        st.subheader(f"📰 [{selected_label}] 관련 최신 뉴스")
+        query = f"{selected_label} 자동차 수출"
         news_items = fetch_news(query)
         if news_items:
             cols = st.columns(len(news_items))
@@ -150,48 +176,57 @@ def run_prediction():
             st.info("뉴스 데이터를 불러올 수 없습니다.")
 
         st.subheader("🧐 AI 분석가의 시장 해석")
-        try:
-            forecast_start = forecast["yhat"].iloc[0]
-            forecast_end = forecast["yhat"].iloc[-1]
-            forecast_trend = "증가세" if forecast_end > forecast_start else "감소세"
-            news_keywords = ", ".join([n["title"].replace("<b>", "").replace("</b>", "") for n in news_items[:3]])
+        if st.button("AI 예측실행"):
+            try:
+                forecast_start = forecast["yhat"].iloc[0]
+                forecast_end = forecast["yhat"].iloc[-1]
+                forecast_trend = "증가세" if forecast_end > forecast_start else "감소세"
+                news_keywords = ", ".join([n["title"].replace("<b>", "").replace("</b>", "") for n in news_items[:3]])
 
-            prompt = f"""
-            당신은 자동차 수출 시장을 분석하는 전문 보고서 작성자입니다. 아래 정보를 바탕으로, [시장 분석 보고서]를 작성해주세요.
+                # 최근 12개월 실제 수출 데이터 추출
+                recent_actual = df_actual.sort_values('ds').tail(12)
+                actual_trend_str = ", ".join([
+                    f"{row['ds'].strftime('%Y-%m')}: {int(row['y'])}" for _, row in recent_actual.iterrows()
+                ])
 
-            - 브랜드: {channel}
-            - 시장명: {selected_market}
-            - 향후 18개월 예측: {forecast_trend}
-            - 최근 뉴스 키워드: {news_keywords}
+                prompt = f"""
+                당신은 자동차 수출 시장을 분석하는 전문 보고서 작성자입니다. 아래 정보를 바탕으로, [시장 분석 보고서]를 작성해주세요.
 
-            보고서 형식은 다음과 같이 작성해주세요:
+                - 브랜드: {channel}
+                - 시장명: {selected_label}
+                - 최근 12개월간 실제 수출 실적: {actual_trend_str}
+                - 향후 18개월 예측: {forecast_trend}
+                - 최근 뉴스 키워드: {news_keywords}
 
-            1. **{selected_market} 시장 예측 분석**  
-            {selected_market} 시장의 특징과 현재 상황을 분석 합니다.
+                보고서 형식은 다음과 같이 작성해주세요:
 
-            2. **최근 동향 요약**  
-            뉴스 키워드를 바탕으로 최근 이슈 및 자동차 수출과 관련된 주요 변화 사항을 서술합니다.
+                1. **{selected_label} 시장 예측 분석**  
+                {selected_label} 시장의 특징과 현재 상황을 분석 합니다.
 
-            3. **수출 예측 분석**  
-            Prophet 모델 예측 결과를 바탕으로 수출량의 변화를 분석합니다. 왜 증가세/감소세가 예상되는지 해석합니다.
+                2. **최근 동향 요약**  
+                뉴스 키워드를 바탕으로 최근 이슈 및 자동차 수출과 관련된 주요 변화 사항을 서술합니다.
 
-            4. **전략적 제언**  
-            자동차 제조업체 또는 관련 산업이 향후 어떻게 대응하면 좋을지 구체적이고 현실적인 전략을 제시해주세요.
+                3. **수출 예측 분석**  
+                Prophet 모델 예측 결과를 바탕으로 수출량의 변화를 분석합니다.  
+                특히 최근 12개월간 실제 수출 실적 흐름과 비교하여 예측의 신뢰도와 특이사항을 설명해주세요.
 
-            보고서는 **전문적이지만 이해하기 쉽게**, **한글로** 작성해주세요.
-            """
+                4. **전략적 제언**  
+                자동차 제조업체 또는 관련 산업이 향후 어떻게 대응하면 좋을지 구체적이고 현실적인 전략을 제시해주세요.
 
-            with st.spinner("GPT-4 Turbo가 분석 중입니다..."):
-                response = client.chat.completions.create(
-                    model="gpt-4-0125-preview",
-                    messages=[
-                        {"role": "system", "content": "당신은 자동차 수출 시장 전문 보고서를 작성하는 전문가입니다."},
-                        {"role": "user", "content": prompt}
-                    ],
-                    temperature=0.7,
-                    max_tokens=1024
-                )
-            st.success(response.choices[0].message.content.strip())
-        except Exception as e:
-            st.warning("AI 해석 생성 실패")
-            st.text(f"에러: {e}")
+                보고서는 **전문적이지만 이해하기 쉽게**, **한글로** 작성해주세요.
+                """
+
+                with st.spinner("GPT-4 Turbo가 분석 중입니다..."):
+                    response = client.chat.completions.create(
+                        model="gpt-4-0125-preview",
+                        messages=[
+                            {"role": "system", "content": "당신은 자동차 수출 시장 전문 보고서를 작성하는 전문가입니다."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        temperature=0.7,
+                        max_tokens=1024
+                    )
+                st.success(response.choices[0].message.content.strip())
+            except Exception as e:
+                st.warning("AI 해석 생성 실패")
+                st.text(f"에러: {e}")
