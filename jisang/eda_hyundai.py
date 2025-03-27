@@ -190,21 +190,13 @@ def run_eda_현대():
         }
 
         # 연도 선택 UI 개선
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            year_2023 = st.button("2023년")
-        with col2:
-            year_2024 = st.button("2024년")
-        with col3:
-            year_all = st.button("전체")
+        year_filter = st.radio(
+            "연도 선택",
+            ["2023년", "2024년", "전체"],
+            horizontal=True,
+            key="year_selection"
+        )
 
-        if year_2023:
-            year_filter = '2023년'
-        elif year_2024:
-            year_filter = '2024년'
-        else:
-            year_filter = '전체'
-            
         # 데이터 필터링 로직
         if year_filter == '2023년':
             available_models = df_sales[df_sales['연도'] == 2023]['차량 모델'].unique()
