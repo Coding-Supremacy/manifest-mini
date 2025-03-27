@@ -335,6 +335,3 @@ def run_eda_기아():
 
 
         st.markdown("</div>", unsafe_allow_html=True)
-
-if __name__ == "__main__":
-    run_eda_기아()

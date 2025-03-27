@@ -423,7 +423,3 @@ def run_eda_현대():
         df_specs = pd.DataFrame(data)
 
         st.dataframe(df_specs,hide_index=True,use_container_width=True)
-
-
-if __name__ == "__main__":
-    run_eda_현대()
