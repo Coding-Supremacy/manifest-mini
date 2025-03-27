@@ -11,29 +11,6 @@ st.markdown("""
 <style>
     /* CSS 스타일 코드 (이전 예시와 동일) */
     /* 이 부분은 현대차 대시보드 스타일을 그대로 가져와서 사용하시면 됩니다. */
-    /* .button-container {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-        .year-button {
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.3s ease, transform 0.1s ease-in-out;
-        }
-        .year-button:hover {
-            background-color: #0056b3;
-            transform: scale(1.05);
-        }
-        .year-button:active {
-            background-color: #003f7f;
-            transform: scale(0.95);
-        } */
 </style>
 """, unsafe_allow_html=True)
 
@@ -50,12 +27,6 @@ df_export, df_sales = load_data()
 
 # 메인 함수
 def run_eda_현대():
-    # 메인 헤더
-    st.markdown("""
-    <h1 style='text-align: center; color: #2E86C1;'>🏎️ 현대 수출실적 대시보드</h1>
-    <h4 style='text-align: center;'>지역별 수출 실적 및 차종별 판매 분석</h4>
-    <hr>
-    """, unsafe_allow_html=True)
 
     st.markdown("<h1 style='text-align: center;'>🏎️ 현대 수출실적 대시보드</h1>", unsafe_allow_html=True)
 
@@ -217,8 +188,6 @@ def run_eda_현대():
             ]
                    
         }
-
-        
 
         # 연도 선택 UI 개선
         col1, col2, col3 = st.columns(3)
