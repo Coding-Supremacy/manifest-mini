@@ -1,4 +1,14 @@
 import streamlit as st
+
+# set_page_config는 반드시 첫 번째 Streamlit 명령이어야 함
+st.set_page_config(
+    page_title="자동차 판매 분석 시스템",
+    page_icon="🚗",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# 나머지 임포트
 from streamlit_option_menu import option_menu
 import warnings
 
@@ -37,7 +47,7 @@ def main_menu():
             menu_title=None,
             options=["🏠 홈", "📝 프로젝트 개요", 
                     "🚗 기아 분석", "🚙 현대 분석",
-                    "📈 시장 트렌드", "🔮 지역별 예측", "기후별 예측"],
+                    "📈 시장 트렌드", "🔮 지역별 예측", "🌦️ 기후별 예측"],
             icons=["house", "file-earmark-text",
                   "car-front", "car-front",
                   "graph-up", "globe"],
@@ -57,7 +67,7 @@ def route_pages(selected_page):
         "🚙 현대 분석": run_eda_hyundai,
         "📈 시장 트렌드": run_trend,
         "🔮 지역별 예측": run_prediction_region,
-        "기후별 예측": run_ho
+        "🌦️ 기후별 예측": run_ho
     }
     
     if selected_page in page_functions:
@@ -65,25 +75,18 @@ def route_pages(selected_page):
     else:
         st.warning("페이지를 찾을 수 없습니다")
 
+# 데이터 로딩 캐싱 설정
+@st.cache_data(ttl=3600)
+def load_all_data():
+    # 모든 데이터 로딩 함수 통합
+    return True
+
 def main():
-    """메인 애플리케이션 실행"""
-    st.set_page_config(
-        page_title="자동차 판매 분석 시스템",
-        page_icon="🚗",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
-    
+    """메인 애플리케션 실행"""
+    load_all_data()
     configure_page()
     selected_page = main_menu()
     route_pages(selected_page)
 
 if __name__ == "__main__":
-    # 데이터 로딩 캐싱 설정
-    @st.cache_data(ttl=3600)
-    def load_all_data():
-        # 모든 데이터 로딩 함수 통합
-        return True
-    
-    load_all_data()
     main()
