@@ -10,6 +10,7 @@ from prophet import Prophet
 from openai import OpenAI
 from streamlit_option_menu import option_menu
 import datetime
+from pathlib import Path
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
@@ -318,7 +319,7 @@ def run_prediction_region():
                 pdf.set_auto_page_break(auto=True, margin=15)
                 
                 base_dir = os.path.dirname(os.path.abspath(__file__))
-                FONT_PATH = os.path.join(base_dir, "..", "custom_fonts", "NanumGothic.ttf")
+                FONT_PATH = Path("/app/manifest-mini/custom_fonts/NanumGothic.ttf")
                 
                 if os.path.exists(FONT_PATH):
                     pdf.add_font("NanumGothic", "", FONT_PATH, uni=True)
