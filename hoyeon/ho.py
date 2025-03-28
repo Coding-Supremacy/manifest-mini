@@ -9,6 +9,7 @@ import requests
 from PIL import Image
 import yfinance as yf
 import matplotlib.colors as mcolors
+import pydeck as pdk
 
 # 페이지 설정
 st.set_page_config(
@@ -18,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS 스타일
+# CSS 스타일 (최종 버전)
 st.markdown("""
 <style>
     .main {
@@ -47,7 +48,7 @@ st.markdown("""
         background-color: #dee2e6;
     }
     .tab-button.active {
-        background-color: #3a4f6f;
+        background-color: #4a6fa5;
         color: white;
         font-weight: bold;
     }
@@ -87,17 +88,17 @@ st.markdown("""
         color: #dc3545;
     }
     .neutral {
-        color: #6c757d;
+        color: #ffc107;
     }
     .chart-guide {
-        background-color: #e6f2ff;
+        background-color: #f5f5f5;
         padding: 1.2rem;
         border-radius: 10px;
         margin-top: 1rem;
         font-size: 0.9rem;
         color: #333;
         line-height: 1.6;
-        border-left: 4px solid #3a6ea5;
+        border-left: 4px solid #6c757d;
     }
     .country-info-card {
         background-color: white;
@@ -107,7 +108,7 @@ st.markdown("""
         margin-bottom: 1.5rem;
     }
     .summary-box {
-        background-color: #e6f2ff;
+        background-color: #f8f9fa;
         border-radius: 12px;
         padding: 1.5rem;
         margin-bottom: 2rem;
@@ -142,13 +143,29 @@ st.markdown("""
         padding: 1.5rem;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
-    .reason-box {
-        background-color: #e6f2ff;
+    .reason-box-positive {
+        background-color: #e6f7e6;
         border-radius: 12px;
         padding: 1.5rem;
         margin-top: 1.5rem;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        border-left: 4px solid #3a6ea5;
+        border-left: 4px solid #28a745;
+    }
+    .reason-box-negative {
+        background-color: #fce8e8;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #dc3545;
+    }
+    .reason-box-neutral {
+        background-color: #fff8e1;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #ffc107;
     }
     .key-metrics-box {
         background-color: #f0f7ff;
@@ -156,7 +173,7 @@ st.markdown("""
         padding: 1.5rem;
         margin-bottom: 1.5rem;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        border-left: 4px solid #2a3f5f;
+        border-left: 4px solid #4a6fa5;
     }
     .chart-columns {
         display: flex;
@@ -171,14 +188,14 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     .stButton>button {
-        background-color: #3a6ea5;
+        background-color: #4a6fa5;
         color: white;
         border-radius: 8px;
         padding: 0.75rem 1.5rem;
         font-size: 1rem;
     }
     .stButton>button:hover {
-        background-color: #2a5e95;
+        background-color: #3a5f95;
         color: white;
     }
     .section-title {
@@ -194,7 +211,26 @@ st.markdown("""
         padding: 1.5rem;
         margin-top: 1rem;
         margin-bottom: 1.5rem;
-        border-left: 4px solid #3a6ea5;
+        border-left: 4px solid #4a6fa5;
+    }
+    .header-box {
+        background-color: #2a3f5f;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+        color: white;
+    }
+    .flag-img {
+        width: 40px;
+        height: 25px;
+        object-fit: cover;
+        border: 1px solid #ddd;
+        margin-right: 10px;
+    }
+    .country-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -202,24 +238,61 @@ st.markdown("""
 def reset_form():
     st.session_state.clear()
 
+def get_country_flag(country_name):
+    """국가명으로 국기 이미지 URL 가져오기"""
+    flag_mapping = {
+        '미국': 'https://flagcdn.com/w320/us.png',
+        '중국': 'https://flagcdn.com/w320/cn.png',
+        '일본': 'https://flagcdn.com/w320/jp.png',
+        '독일': 'https://flagcdn.com/w320/de.png',
+        '영국': 'https://flagcdn.com/w320/gb.png',
+        '프랑스': 'https://flagcdn.com/w320/fr.png',
+        '한국': 'https://flagcdn.com/w320/kr.png',
+        '인도': 'https://flagcdn.com/w320/in.png',
+        '브라질': 'https://flagcdn.com/w320/br.png',
+        '캐나다': 'https://flagcdn.com/w320/ca.png',
+        '호주': 'https://flagcdn.com/w320/au.png',
+        '이탈리아': 'https://flagcdn.com/w320/it.png',
+        '스페인': 'https://flagcdn.com/w320/es.png',
+        '멕시코': 'https://flagcdn.com/w320/mx.png',
+        '인도네시아': 'https://flagcdn.com/w320/id.png',
+        '터키': 'https://flagcdn.com/w320/tr.png',
+        '네덜란드': 'https://flagcdn.com/w320/nl.png',
+        '스위스': 'https://flagcdn.com/w320/ch.png',
+        '사우디아라비아': 'https://flagcdn.com/w320/sa.png',
+        '아르헨티나': 'https://flagcdn.com/w320/ar.png'
+    }
+    return flag_mapping.get(country_name, None)
+
 def fetch_country_info(country_name):
-    """REST Countries API에서 국가 정보 가져오기"""
-    try:
-        response = requests.get(f"https://restcountries.com/v3.1/name/{country_name}")
-        if response.status_code == 200:
-            data = response.json()[0]
-            return {
-                'capital': data.get('capital', ['정보 없음'])[0],
-                'population': f"{data.get('population', 0):,}",
-                'currency': list(data.get('currencies', {}).values())[0]['name'] if data.get('currencies') else '정보 없음',
-                'region': data.get('region', '정보 없음'),
-                'subregion': data.get('subregion', '정보 없음'),
-                'languages': ', '.join(data.get('languages', {}).values()) if data.get('languages') else '정보 없음',
-                'timezones': ', '.join(data.get('timezones', ['정보 없음']))
-            }
-    except:
-        return None
-    return None
+    """국가 정보 가져오기 (수정된 버전)"""
+    country_unions = {
+        '미국': '북미자유무역협정(NAFTA), G7, G20',
+        '중국': 'G20, BRICS, 상하이협력기구',
+        '일본': 'G7, G20, 아시아태평양경제협력체(APEC)',
+        '독일': '유럽연합(EU), G7, G20',
+        '영국': 'G7, G20, 유럽연합(탈퇴)',
+        '프랑스': '유럽연합(EU), G7, G20',
+        '한국': 'G20, 아시아태평양경제협력체(APEC)',
+        '인도': 'G20, BRICS, 상하이협력기구',
+        '브라질': 'G20, BRICS, 남미국가연합',
+        '캐나다': '북미자유무역협정(NAFTA), G7, G20',
+        '호주': 'G20, 아시아태평양경제협력체(APEC)',
+        '이탈리아': '유럽연합(EU), G7, G20',
+        '스페인': '유럽연합(EU), G20',
+        '멕시코': '북미자유무역협정(NAFTA), G20',
+        '인도네시아': 'G20, 아세안(ASEAN)',
+        '터키': 'G20',
+        '네덜란드': '유럽연합(EU)',
+        '스위스': '유럽자유무역연합(EFTA)',
+        '사우디아라비아': 'G20, OPEC',
+        '아르헨티나': 'G20, 남미국가연합'
+    }
+    
+    return {
+        'union': country_unions.get(country_name, '정보 없음'),
+        'flag': get_country_flag(country_name)
+    }
 
 def fetch_gdp_data(country_name):
     """World Bank API에서 GDP 데이터 가져오기"""
@@ -259,17 +332,6 @@ def fetch_gdp_data(country_name):
             pass
     return None
 
-def fetch_exchange_rate(base_currency="USD", target_currency="KRW"):
-    """환율 정보 가져오기 (기본값: USD to KRW)"""
-    try:
-        url = f"https://api.exchangerate-api.com/v4/latest/{base_currency}"
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            return data['rates'].get(target_currency, None)
-    except:
-        return None
-
 def get_change_reason(change_rate):
     """변화율에 따른 원인 분석 반환 (더 세분화된 분석)"""
     if change_rate > 30:
@@ -287,7 +349,8 @@ def get_change_reason(change_rate):
                 "📌 현지 서비스 네트워크 강화 필요",
                 "📌 가격 인상 가능성 검토"
             ],
-            "color": "#2e7d32"  # 진한 녹색
+            "color": "#2e7d32",
+            "box_class": "reason-box-positive"
         }
     elif 15 < change_rate <= 30:
         return {
@@ -304,7 +367,8 @@ def get_change_reason(change_rate):
                 "📌 지속적인 마케팅 투자 유지",
                 "📌 고객 만족도 조사 실시"
             ],
-            "color": "#4caf50"  # 중간 녹색
+            "color": "#4caf50",
+            "box_class": "reason-box-positive"
         }
     elif 5 < change_rate <= 15:
         return {
@@ -321,7 +385,8 @@ def get_change_reason(change_rate):
                 "📌 고객 피드백 수집 강화",
                 "📌 경쟁사 동향 모니터링"
             ],
-            "color": "#8bc34a"  # 연한 녹색
+            "color": "#8bc34a",
+            "box_class": "reason-box-positive"
         }
     elif -5 <= change_rate <= 5:
         return {
@@ -338,7 +403,8 @@ def get_change_reason(change_rate):
                 "📌 고객 설문조사를 통한 만족도 점검",
                 "📌 마케팅 전략 재검토"
             ],
-            "color": "#9e9e9e"  # 회색
+            "color": "#ffc107",
+            "box_class": "reason-box-neutral"
         }
     elif -15 <= change_rate < -5:
         return {
@@ -355,7 +421,8 @@ def get_change_reason(change_rate):
                 "📌 가격 경쟁력 분석 필요",
                 "📌 모델 업데이트 계획 수립"
             ],
-            "color": "#ff9800"  # 주황색
+            "color": "#ff9800",
+            "box_class": "reason-box-neutral"
         }
     elif -30 <= change_rate < -15:
         return {
@@ -373,7 +440,8 @@ def get_change_reason(change_rate):
                 "📌 긴급 마케팅 전략 수립",
                 "📌 본사 지원 필요"
             ],
-            "color": "#f44336"  # 빨간색
+            "color": "#f44336",
+            "box_class": "reason-box-negative"
         }
     else:
         return {
@@ -391,7 +459,8 @@ def get_change_reason(change_rate):
                 "📌 본사 차원의 구조 조정 검토",
                 "📌 시장 철수 가능성 검토"
             ],
-            "color": "#b71c1c"  # 진한 빨간색
+            "color": "#b71c1c",
+            "box_class": "reason-box-negative"
         }
 
 def create_tab_buttons():
@@ -408,34 +477,16 @@ def create_tab_buttons():
                         type="primary" if st.session_state.current_tab == tab else "secondary",
                         use_container_width=True):
                 st.session_state.current_tab = tab
+                
     
     return st.session_state.current_tab
 
-def run_ho():
-    # 모델 및 데이터 로드
-    model = joblib.load("hoyeon/lgbm_tuned_model.pkl")
-    scaler = joblib.load("hoyeon/scaler.pkl")
-    model_columns = joblib.load("hoyeon/model_columns.pkl")  
-    df = pd.read_csv("hoyeon/기아.csv")
+def create_pydeck_map(data, selected_country):
+    """PyDeck을 사용한 지도 생성"""
+    # 모든 국가에 대한 데이터 준비
+    all_countries = data.groupby("국가명")["수출량"].sum().reset_index()
     
-    # 페이지 헤더
-    st.markdown("""
-    <div style="background-color:#2a3f5f;padding:2rem;border-radius:12px;margin-bottom:2rem;color:white;">
-        <h1 style="color:white;text-align:center;margin-bottom:0.5rem;">🚗 기아 자동차 수출량 분석 대시보드</h1>
-        <p style="color:white;text-align:center;font-size:1.2rem;margin-bottom:0;">국가별 수출량 데이터 분석 및 미래 예측 시스템</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # 데이터 전처리
-    id_vars = ['국가명', '연도', '기후대', 'GDP', '차종 구분', '차량 구분']
-    month_cols = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
-    df_long = pd.melt(df, id_vars=id_vars, value_vars=month_cols, var_name='월', value_name='수출량')
-    df_long['월'] = df_long['월'].str.replace('월', '').astype(int)
-    df_long['날짜'] = pd.to_datetime(df_long['연도'].astype(str) + '-' + df_long['월'].astype(str) + '-01')
-    df_long['날짜'] = pd.to_datetime(df_long['날짜'])
-    df_long = df_long.sort_values(by=['국가명', '날짜'])
-    
-    # 국가별 좌표 데이터
+    # 국가 좌표 데이터
     country_coords = {
         '미국': {'lat': 37.0902, 'lon': -95.7129},
         '중국': {'lat': 35.8617, 'lon': 104.1954},
@@ -459,6 +510,76 @@ def run_ho():
         '아르헨티나': {'lat': -38.4161, 'lon': -63.6167}
     }
     
+    # 데이터프레임에 좌표 추가
+    all_countries['lat'] = all_countries['국가명'].map(lambda x: country_coords.get(x, {}).get('lat', 0))
+    all_countries['lon'] = all_countries['국가명'].map(lambda x: country_coords.get(x, {}).get('lon', 0))
+    all_countries['radius'] = all_countries['수출량'] / all_countries['수출량'].max() * 500000
+    all_countries['color'] = all_countries['국가명'].apply(lambda x: [255, 0, 0, 200] if x == selected_country else [0, 0, 255, 120])
+    
+    # 초기 뷰포트 설정 (선택 국가에 초점)
+    selected_lat = country_coords.get(selected_country, {}).get('lat', 0)
+    selected_lon = country_coords.get(selected_country, {}).get('lon', 0)
+    view_state = pdk.ViewState(
+        latitude=selected_lat,
+        longitude=selected_lon,
+        zoom=3,
+        pitch=50
+    )
+    
+    # 레이어 생성
+    layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=all_countries,
+        get_position=['lon', 'lat'],
+        get_radius='radius',
+        get_fill_color='color',
+        pickable=True,
+        auto_highlight=True
+    )
+    
+    # 툴팁 설정
+    tooltip = {
+        "html": "<b>국가:</b> {국가명}<br><b>수출량:</b> {수출량:,.0f}",
+        "style": {
+            "backgroundColor": "white",
+            "color": "black"
+        }
+    }
+    
+    # 지도 생성
+    r = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        tooltip=tooltip,
+        map_style="mapbox://styles/mapbox/light-v9"
+    )
+    
+    return r
+
+def run_ho():
+    # 모델 및 데이터 로드
+    model = joblib.load("hoyeon/lgbm_tuned_model.pkl")
+    scaler = joblib.load("hoyeon/scaler.pkl")
+    model_columns = joblib.load("hoyeon/model_columns.pkl")  
+    df = pd.read_csv("hoyeon/기아.csv")
+    
+    # 페이지 헤더
+    st.markdown("""
+    <div class="header-box">
+        <h1 style="color:white;text-align:center;margin-bottom:0.5rem;">🚗 기아 자동차 수출량 분석 대시보드</h1>
+        <p style="color:white;text-align:center;font-size:1.2rem;margin-bottom:0;">국가별 수출량 데이터 분석 및 미래 예측 시스템</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # 데이터 전처리
+    id_vars = ['국가명', '연도', '기후대', 'GDP', '차종 구분', '차량 구분']
+    month_cols = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
+    df_long = pd.melt(df, id_vars=id_vars, value_vars=month_cols, var_name='월', value_name='수출량')
+    df_long['월'] = df_long['월'].str.replace('월', '').astype(int)
+    df_long['날짜'] = pd.to_datetime(df_long['연도'].astype(str) + '-' + df_long['월'].astype(str) + '-01')
+    df_long['날짜'] = pd.to_datetime(df_long['날짜'])
+    df_long = df_long.sort_values(by=['국가명', '날짜'])
+    
     # 최신 연도 데이터
     latest_year = df_long["날짜"].dt.year.max()
     
@@ -474,6 +595,7 @@ def run_ho():
     if current_tab == "📊 단일 국가 예측":
         st.header("📊 단일 국가 수출량 예측")
         
+         
         # 기능 설명 추가
         with st.container():
             st.markdown("""
@@ -484,9 +606,10 @@ def run_ho():
                     <li>특정 국가의 수출 전략 수립 전 예측이 필요할 때</li>
                     <li>특정 차종의 수요 예측이 필요할 때</li>
                     <li>전년 대비 성장률 분석이 필요할 때</li>
+                    <li>새로운 유입 국가 추가시 수출모델델 예측이 필요할때</li>
                 </ul>
                 <p><b>사용 방법:</b> 왼쪽에서 국가, 차종, 예측 연도/월을 선택한 후 "예측 실행" 버튼을 클릭하세요.</p>
-                <p><b>결과 해석:</b> 예측 결과는 지도, 차트, 수치로 표시되며, 전년 대비 변화율과 원인 분석도 제공됩니다.</p>
+                <p><b>결과 해석:</b> 예측 결과는 지도 히트맵, 차트, 수치로 표시되며, 전년 대비 변화율과 원인 분석도 제공됩니다.</p>
             </div>
             """, unsafe_allow_html=True)
         
@@ -519,19 +642,6 @@ def run_ho():
                 else:
                     filtered_car_options = sorted(df[df["차종 구분"] == selected_car_type]["차량 구분"].unique())
                 selected_car = st.selectbox("🚗 차량 구분", filtered_car_options, key='car_select')
-                
-                # 국가 정보 카드 (국기 제거)
-                with st.container():
-                    country_info = fetch_country_info(selected_country)
-                    if country_info:
-                        st.markdown('<div class="country-info-card">', unsafe_allow_html=True)
-                        st.write(f"**대륙**: {country_info['region']}")
-                        st.write(f"**수도**: {country_info['capital']}")
-                        st.write(f"**인구**: {country_info['population']}")
-                        st.write(f"**통화**: {country_info['currency']}")
-                        st.write(f"**언어**: {country_info['languages']}")
-                        st.write(f"**시간대**: {country_info['timezones']}")
-                        st.markdown('</div>', unsafe_allow_html=True)
         
         # 버튼 영역
         col1, col2 = st.columns([4,1])
@@ -624,90 +734,75 @@ def run_ho():
                 # GDP 데이터 가져오기
                 gdp_value = fetch_gdp_data(selected_country) or df[df["국가명"] == selected_country]["GDP"].iloc[0]
                 
-                # 1. 지도 및 인포박스 컨테이너
-                st.markdown("### 🌍 전년도 & 예측 수출량 분석")
+                # 국가 연합 정보 가져오기
+                country_info = fetch_country_info(selected_country)
+                
+                # 1. 지도 히트맵 및 인포박스 컨테이너
+                
                 col1, col2 = st.columns(2)
                 
                 with col1:
-                    # 지도 컨테이너
+                     # 3. 기후대별 차량 판매량 차트 (맨 아래로 이동)
+                    st.write("")
+                    st.markdown("### 🌦️ 기후대별 차량 수출량 분석")
                     with st.container():
-                        st.markdown('<div class="map-container">', unsafe_allow_html=True)
+                        st.write("")
                         
-                        # 전년도 데이터 (모든 국가)
-                        prev_year_data_map = df_long[
-                            (df_long["날짜"].dt.year == target_year-1) |
-                            (df_long["차종 구분"] == selected_car_type) &
-                            (df_long["차량 구분"] == selected_car)
-                        ].groupby("국가명")["수출량"].sum().reset_index()
-                        prev_year_data_map['기준'] = '전년도'
+                        # 전년도 기후대별 차량 수출량 데이터
+                        climate_data = df_long[
+                            (df_long["차종 구분"] == selected_car_type) |
+                            (df_long["차량 구분"] == selected_car) &
+                            (df_long["날짜"].dt.year == target_year-1)
+                        ].groupby("기후대")["수출량"].sum().reset_index()
                         
-                        # 예측 데이터 (현재 선택 국가만)
-                        prediction_data_map = pd.DataFrame({
-                            '국가명': [selected_country],
-                            '수출량': [prediction],
-                            '기준': ['예측']
-                        })
-                        
-                        # 데이터 병합
-                        map_data = pd.concat([prev_year_data_map, prediction_data_map])
-                        
-                        # 국가 좌표 추가
-                        map_data['lat'] = map_data['국가명'].apply(lambda x: country_coords.get(x, {}).get('lat', 0))
-                        map_data['lon'] = map_data['국가명'].apply(lambda x: country_coords.get(x, {}).get('lon', 0))
-                        
-                        # 지도 생성 (해시맵 스타일)
-                        if not map_data.empty:
-                            fig_map = px.scatter_geo(
-                                map_data,
-                                lat='lat',
-                                lon='lon',
-                                size='수출량',
-                                hover_name='국가명',
-                                hover_data={'수출량': True, 'lat': False, 'lon': False, '기준': True},
-                                title=f"{selected_car_type} - {selected_car} 국가별 수출량 (전년도 vs 예측)",
-                                projection="natural earth",
-                                color='기준',
-                                color_discrete_map={'전년도': 'blue', '예측': 'red'},
-                                scope='world',
-                                height=600
+                        if not climate_data.empty:
+                            fig_climate = px.bar(
+                                climate_data,
+                                x="기후대",
+                                y="수출량",
+                                title=f"{selected_car_type} - {selected_car} 기후대별 총 수출량 ({target_year-1}년)",
+                                labels={"수출량": "총 수출량", "기후대": "기후대"},
+                                height=500,
+                                color="기후대",
+                                color_discrete_sequence=px.colors.qualitative.Pastel
                             )
                             
-                            fig_map.update_layout(
-                                margin={"r":0,"t":40,"l":0,"b":0},
-                                geo=dict(
-                                    showland=True,
-                                    landcolor="rgb(243, 243, 243)",
-                                    countrycolor="rgb(204, 204, 204)",
-                                    showcountries=True,
-                                    showsubunits=True
-                                ),
-                                legend=dict(
-                                    orientation="h",
-                                    yanchor="bottom",
-                                    y=1.02,
-                                    xanchor="right",
-                                    x=1
-                                )
+                            fig_climate.update_layout(
+                                plot_bgcolor='rgba(0,0,0,0)',
+                                paper_bgcolor='rgba(0,0,0,0)',
+                                xaxis=dict(gridcolor='lightgray'),
+                                yaxis=dict(gridcolor='lightgray'),
+                                showlegend=False,
+                                margin=dict(l=20, r=20, t=40, b=20)
                             )
-                            
-                            st.plotly_chart(fig_map, use_container_width=True)
+                            st.plotly_chart(fig_climate, use_container_width=True)
                             
                             st.markdown("""
                             <div class="chart-guide">
-                                <b>🌍 지도 해석 방법:</b><br>
-                                - 파란색 점: 전년도 수출량을 나타냅니다. 점이 클수록 수출량이 많습니다.<br>
-                                - 빨간색 점: 예측 수출량을 나타냅니다. 선택한 국가에만 표시됩니다.<br>
-                                - 마우스를 점 위에 올리면 국가명과 정확한 수출량을 확인할 수 있습니다.
+                                <b>🌦️ 차트 해석 방법:</b><br>
+                                - 가로축은 기후대를, 세로축은 총 수출량을 나타냅니다.<br>
+                                - 각 막대는 해당 기후대에서의 차량 총 수출량을 보여줍니다.<br>
+                                - 선택한 차량이 어떤 기후대에서 잘 팔리는지 비교할 수 있습니다.<br>
+                                - 마우스를 막대 위에 올리면 정확한 수치를 확인할 수 있습니다.
                             </div>
                             """, unsafe_allow_html=True)
                         else:
-                            st.warning(f"{target_year-1}년도 {selected_car_type} - {selected_car} 모델의 수출량 데이터가 없습니다.")
-                        st.markdown('</div>', unsafe_allow_html=True)  # map-container 닫기
+                            st.warning(f"{target_year-1}년도 {selected_car_type} - {selected_car} 모델의 기후대별 수출량 데이터가 없습니다.")
+                        st.markdown('</div>', unsafe_allow_html=True)  # chart-column 닫기
                 
                 with col2:
                     # 인포박스 컨테이너
                     with st.container():
-                        st.markdown('<div class="info-container">', unsafe_allow_html=True)
+                        st.write("")
+                        st.write("")
+                        st.write("")
+                        st.write("")
+                        st.write("")
+                        st.write("")
+                        st.write("")
+                        st.write("")
+                        st.write("")
+                        
                         
                         # 변화율 분석 정보 가져오기
                         change_info = get_change_reason(yearly_change)
@@ -717,9 +812,11 @@ def run_ho():
                         change_icon = "📈" if yearly_change >= 5 else ("📉" if yearly_change <= -5 else "➡️")
                         change_text = "증가" if yearly_change >= 5 else ("감소" if yearly_change <= -5 else "유지")
                         
-                        # 예측 결과 요약
+                        # 예측 결과 요약 (색상 변경)
                         st.markdown(f"""
-                        <div style="background-color:#e6f2ff; border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; border-left: 4px solid #3a6ea5;">
+                        <div style="background-color:{'#e6f7e6' if yearly_change >=5 else ('#fce8e8' if yearly_change <=-5 else '#fff8e1')}; 
+                                    border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; 
+                                    border-left: 4px solid {'#28a745' if yearly_change >=5 else ('#dc3545' if yearly_change <=-5 else '#ffc107')};">
                             <div style="font-size:1.2rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
                                 {selected_country} {target_year}년 {target_month}월 예측 수출량
                             </div>
@@ -774,9 +871,9 @@ def run_ho():
                             auto_current_export
                         ), unsafe_allow_html=True)
                         
-                        # 변화 원인 분석
+                        # 변화 원인 분석 (색상 변경)
                         st.markdown(f"""
-                        <div class="reason-box">
+                        <div class="{change_info['box_class']}">
                             <div style="font-size:1.1rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
                                 📌 변화 원인 분석 ({change_info['text']})
                             </div>
@@ -793,14 +890,15 @@ def run_ho():
                         
                         st.markdown('</div>', unsafe_allow_html=True)  # info-container 닫기
                 
-                # 2. 차트 컬럼 레이아웃
+                # 2. 국가별 차량 수출량 비교 & 차량 종류별 수출량 비교
+                st.write()
                 st.markdown("### 📊 추가 분석 차트")
                 col1, col2 = st.columns(2)
                 
                 with col1:
                     # 선택 차량의 국가별 수출량 비교
                     with st.container():
-                        st.markdown('<div class="chart-column">', unsafe_allow_html=True)
+                        st.write("")
                         st.subheader("국가별 수출량 비교")
                         
                         # 데이터 필터링 (최근 1년 데이터)
@@ -848,7 +946,7 @@ def run_ho():
                 with col2:
                     # 선택 국가의 차량 종류별 수출량 비율
                     with st.container():
-                        st.markdown('<div class="chart-column">', unsafe_allow_html=True)
+                        st.write("")
                         st.subheader("차량 종류별 수출량 비율")
                         
                         # 선택 국가의 모든 차량 데이터 필터링 (최근 1년)
@@ -891,6 +989,8 @@ def run_ho():
                         else:
                             st.warning(f"{selected_country}의 차량 수출량 데이터가 없습니다.")
                         st.markdown('</div>', unsafe_allow_html=True)  # chart-column 닫기
+                
+               
     
     elif current_tab == "🌍 다중 국가 비교":
         st.header("🌍 다중 국가 비교 분석")
@@ -906,7 +1006,7 @@ def run_ho():
                     <li>시장별 성장 추세 분석이 필요할 때</li>
                     <li>차종별 국가별 선호도 비교가 필요할 때</li>
                 </ul>
-                <p><b>사용 방법:</b> 왼쪽에서 비교할 국가(2~5개)와 차종을 선택한 후 "비교하기" 버튼을 클릭하세요.</p>
+                <p><b>사용 방법:</b> 왼쪽에서 비교할 국가와 차종을 선택한 후 "비교하기" 버튼을 클릭하세요.</p>
                 <p><b>결과 해석:</b> 비교 결과는 라인 차트, 막대 차트, 히트맵 등 다양한 시각화로 제공되며, 국가 간 차이를 쉽게 파악할 수 있습니다.</p>
             </div>
             """, unsafe_allow_html=True)
@@ -915,10 +1015,9 @@ def run_ho():
             col1, col2 = st.columns(2)
             with col1:
                 selected_countries = st.multiselect(
-                    "비교할 국가 선택 (최대 5개)",
+                    "비교할 국가 선택",
                     sorted(df["국가명"].unique()),
                     default=sorted(df["국가명"].unique())[:3],
-                    max_selections=5,
                     key='multi_country_select'
                 )
                 
@@ -974,52 +1073,15 @@ def run_ho():
                     selected_car_type = result['selected_car_type']
                     selected_car = result['selected_car']
                 
-                # 국가별 월별 수출량 추이
-                st.markdown("### 📈 국가별 월별 수출량 추이")
-                with st.container():
-                    st.markdown('<div class="chart-column">', unsafe_allow_html=True)
-                    
-                    monthly_data = filtered_data.groupby(['국가명', '월'])['수출량'].mean().reset_index()
-                    
-                    fig_line = px.line(
-                        monthly_data,
-                        x="월",
-                        y="수출량",
-                        color="국가명",
-                        title=f"{selected_car_type} - {selected_car} 국가별 월별 수출량 추이 (최근 1년)",
-                        labels={"수출량": "평균 수출량", "월": "월"},
-                        height=500,
-                        color_discrete_sequence=px.colors.qualitative.Plotly
-                    )
-                    
-                    fig_line.update_layout(
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        xaxis=dict(gridcolor='lightgray'),
-                        yaxis=dict(gridcolor='lightgray'),
-                        margin=dict(l=20, r=20, t=40, b=20)
-                    )
-                    st.plotly_chart(fig_line, use_container_width=True)
-                    
-                    st.markdown("""
-                    <div class="chart-guide">
-                        <b>📈 라인 차트 해석 방법:</b><br>
-                        - 가로축은 월을, 세로축은 수출량을 나타냅니다.<br>
-                        - 색상별로 다른 국가를 구분할 수 있습니다.<br>
-                        - 선의 기울기로 증가/감소 추세를 파악할 수 있습니다.<br>
-                        - 마우스를 선 위에 올리면 정확한 수치를 확인할 수 있습니다.
-                    </div>
-                    """, unsafe_allow_html=True)
-                    st.markdown('</div>', unsafe_allow_html=True)  # chart-column 닫기
-                
                 # 연간 수출량 비교 & 차량 종류별 수출량 비교
-                st.markdown("### 📊 추가 비교 분석")
+                st.write("")
                 col1, col2 = st.columns(2)
                 
                 with col1:
                     # 국가별 연간 수출량 비교
                     with st.container():
-                        st.markdown('<div class="chart-column">', unsafe_allow_html=True)
+                        st.write("")
+                        st.write("")
                         st.subheader("연간 수출량 비교")
                         
                         # 이번년도 제외한 과거 3개년 데이터만 필터링
@@ -1070,7 +1132,8 @@ def run_ho():
                 with col2:
                     # 국가별 차량 종류별 수출량 비교
                     with st.container():
-                        st.markdown('<div class="chart-column">', unsafe_allow_html=True)
+                        st.write("")
+                        st.write("")
                         st.subheader("차량 종류별 수출량 비교")
                         
                         # 데이터 준비
@@ -1110,6 +1173,45 @@ def run_ho():
                         else:
                             st.warning("히트맵 생성에 필요한 데이터가 없습니다.")
                         st.markdown('</div>', unsafe_allow_html=True)  # chart-column 닫기
+                
+                # 국가별 월별 수출량 추이 (맨 아래로 이동)
+                st.write("")
+                st.markdown("### 📈 국가별 월별 수출량 추이")
+                with st.container():
+                    st.write("")
+                    
+                    monthly_data = filtered_data.groupby(['국가명', '월'])['수출량'].mean().reset_index()
+                    
+                    fig_line = px.line(
+                        monthly_data,
+                        x="월",
+                        y="수출량",
+                        color="국가명",
+                        title=f"{selected_car_type} - {selected_car} 국가별 월별 수출량 추이 (최근 1년)",
+                        labels={"수출량": "평균 수출량", "월": "월"},
+                        height=500,
+                        color_discrete_sequence=px.colors.qualitative.Plotly
+                    )
+                    
+                    fig_line.update_layout(
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        xaxis=dict(gridcolor='lightgray'),
+                        yaxis=dict(gridcolor='lightgray'),
+                        margin=dict(l=20, r=20, t=40, b=20)
+                    )
+                    st.plotly_chart(fig_line, use_container_width=True)
+                    
+                    st.markdown("""
+                    <div class="chart-guide">
+                        <b>📈 라인 차트 해석 방법:</b><br>
+                        - 가로축은 월을, 세로축은 수출량을 나타냅니다.<br>
+                        - 색상별로 다른 국가를 구분할 수 있습니다.<br>
+                        - 선의 기울기로 증가/감소 추세를 파악할 수 있습니다.<br>
+                        - 마우스를 선 위에 올리면 정확한 수치를 확인할 수 있습니다.
+                    </div>
+                    """, unsafe_allow_html=True)
+                    st.markdown('</div>', unsafe_allow_html=True)  # chart-column 닫기
 
 if __name__ == "__main__":
     run_ho()
