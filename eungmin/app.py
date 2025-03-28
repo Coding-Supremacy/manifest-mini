@@ -59,8 +59,8 @@ def clean_html(text):
 
 # 네이버 뉴스 API 함수
 def fetch_news(query):
-    client_id = ""
-    client_secret = ""
+    client_id = st.secrets["X-Naver-Client-Id"]
+    client_secret = st.secrets["X-Naver-Client-Secret"]
     url = "https://openapi.naver.com/v1/search/news.json"
     
     headers = {
