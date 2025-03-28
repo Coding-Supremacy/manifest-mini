@@ -40,7 +40,6 @@ def configure_page():
 def main_menu():
     """사이드바 메뉴 구성"""
     with st.sidebar:
-        st.image("https://via.placeholder.com/150x50?text=Car+Analytics", width=150)
         st.markdown("## 메뉴 선택")
         
         return option_menu(
