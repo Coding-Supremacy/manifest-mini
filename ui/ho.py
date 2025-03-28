@@ -215,32 +215,6 @@ st.markdown("""
         align-items: center;
         margin-bottom: 1rem;
     }
-    .prediction-result-box {
-        background-color: #f0f7ff;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        border-left: 4px solid #4a6fa5;
-    }
-    .prediction-header {
-        font-size: 1.2rem;
-        font-weight: bold;
-        color: #2a3f5f;
-        margin-bottom: 1rem;
-    }
-    .prediction-value {
-        font-size: 2.5rem;
-        font-weight: bold;
-        text-align: center;
-        margin: 1rem 0;
-        color: #2a3f5f;
-    }
-    .prediction-change {
-        font-size: 1.1rem;
-        text-align: center;
-        margin-bottom: 1rem;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -706,75 +680,80 @@ def run_ho():
                     st.plotly_chart(bubble_fig, use_container_width=True)
                 
                 with col2:
-                    # 예측 결과 박스 - CSS 클래스 직접 적용
-                    change_info = get_change_reason(yearly_change)
-                    change_class = "positive" if yearly_change >= 5 else ("negative" if yearly_change <= -5 else "neutral")
-                    
-                    st.markdown(f"""
-                    <div class="prediction-result-box" style="border-left: 4px solid {change_info['color']}; background-color: {'#e6f7e6' if yearly_change >=5 else ('#fce8e8' if yearly_change <=-5 else '#fff8e1')}">
-                        <div class="prediction-header">
-                            {selected_country} {target_year}년 {target_month}월 예측 수출량
-                        </div>
-                        <div class="prediction-value">
-                            {prediction:,.2f}
-                        </div>
-                        <div class="prediction-change">
-                            전년 동월 대비 <span class="{change_class}" style="font-weight:bold;">{abs(yearly_change):.2f}% {"증가" if yearly_change >= 5 else ("감소" if yearly_change <= -5 else "유지")}</span> {"📈" if yearly_change >= 5 else ("📉" if yearly_change <= -5 else "➡️")}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # 주요 지표 박스
-                    st.markdown(f"""
-                    <div class="key-metrics-box">
-                        <div style="font-size:1.1rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
-                            주요 지표
-                        </div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                            <div>
-                                <div style="color:#666; font-size:0.9rem;">차종/차량</div>
-                                <div style="font-weight:bold; font-size:1rem;">{selected_car_type} - {selected_car}</div>
+                    with st.container():
+                        st.markdown(f"""
+                        <div style="background-color:{'#e6f7e6' if yearly_change >=5 else ('#fce8e8' if yearly_change <=-5 else '#fff8e1')}; 
+                                    border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; 
+                                    border-left: 4px solid {'#28a745' if yearly_change >=5 else ('#dc3545' if yearly_change <=-5 else '#ffc107')};">
+                            <div style="font-size:1.2rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
+                                {selected_country} {target_year}년 {target_month}월 예측 수출량
                             </div>
-                            <div>
-                                <div style="color:#666; font-size:0.9rem;">기후대</div>
-                                <div style="font-weight:bold; font-size:1rem;">{selected_climate}</div>
+                            <div style="font-size:2.5rem; font-weight:bold; text-align:center; margin:1rem 0; color:#2a3f5f;">
+                                {prediction:,.2f}
                             </div>
-                            <div>
-                                <div style="color:#666; font-size:0.9rem;">국가 GDP</div>
-                                <div style="font-weight:bold; font-size:1rem;">{gdp_value:,.2f} (10억 달러)</div>
-                            </div>
-                            <div>
-                                <div style="color:#666; font-size:0.9rem;">전월 수출량</div>
-                                <div style="font-weight:bold; font-size:1rem;">{auto_prev_export:,.2f}</div>
-                            </div>
-                            <div>
-                                <div style="color:#666; font-size:0.9rem;">전년 동월 수출량</div>
-                                <div style="font-weight:bold; font-size:1rem;">{prev_year_export:,.2f}</div>
-                            </div>
-                            <div>
-                                <div style="color:#666; font-size:0.9rem;">최근 수출량</div>
-                                <div style="font-weight:bold; font-size:1rem;">{auto_current_export:,.2f}</div>
+                            <div style="font-size:1.1rem; text-align:center; margin-bottom:1rem;">
+                                전년 동월 대비 <span class="{ 'positive' if yearly_change >= 5 else ('negative' if yearly_change <= -5 else 'neutral') }" style="font-weight:bold;">{abs(yearly_change):.2f}% {"증가" if yearly_change >= 5 else ("감소" if yearly_change <= -5 else "유지")}</span> {"📈" if yearly_change >= 5 else ("📉" if yearly_change <= -5 else "➡️")}
                             </div>
                         </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # 변화 원인 분석 박스
-                    st.markdown(f"""
-                    <div class="{change_info['box_class']}">
-                        <div style="font-size:1.1rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
-                            📌 변화 원인 분석 ({change_info['text']})
+                        """, unsafe_allow_html=True)
+                        
+                        st.markdown("""
+                        <div class="key-metrics-box">
+                            <div style="font-size:1.1rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
+                                주요 지표
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                                <div>
+                                    <div style="color:#666; font-size:0.9rem;">차종/차량</div>
+                                    <div style="font-weight:bold; font-size:1rem;">{} - {}</div>
+                                </div>
+                                <div>
+                                    <div style="color:#666; font-size:0.9rem;">기후대</div>
+                                    <div style="font-weight:bold; font-size:1rem;">{}</div>
+                                </div>
+                                <div>
+                                    <div style="color:#666; font-size:0.9rem;">국가 GDP</div>
+                                    <div style="font-weight:bold; font-size:1rem;">{:,.2f} (10억 달러)</div>
+                                </div>
+                                <div>
+                                    <div style="color:#666; font-size:0.9rem;">전월 수출량</div>
+                                    <div style="font-weight:bold; font-size:1rem;">{:,.2f}</div>
+                                </div>
+                                <div>
+                                    <div style="color:#666; font-size:0.9rem;">전년 동월 수출량</div>
+                                    <div style="font-weight:bold; font-size:1rem;">{:,.2f}</div>
+                                </div>
+                                <div>
+                                    <div style="color:#666; font-size:0.9rem;">최근 수출량</div>
+                                    <div style="font-weight:bold; font-size:1rem;">{:,.2f}</div>
+                                </div>
+                            </div>
                         </div>
-                        <div style="font-size:0.95rem; margin-bottom:1rem;">
-                            <b>주요 원인:</b><br>
-                            {''.join([f'• {reason}<br>' for reason in change_info['reason']])}
+                        """.format(
+                            selected_car_type, selected_car, 
+                            selected_climate, 
+                            gdp_value, 
+                            auto_prev_export,
+                            prev_year_export,
+                            auto_current_export
+                        ), unsafe_allow_html=True)
+                        
+                        st.markdown(f"""
+                        <div class="{ get_change_reason(yearly_change)['box_class'] }">
+                            <div style="font-size:1.1rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
+                                📌 변화 원인 분석 ({ get_change_reason(yearly_change)['text'] })
+                            </div>
+                            <div style="font-size:0.95rem; margin-bottom:1rem;">
+                                <b>주요 원인:</b><br>
+                                {''.join([f'• {reason}<br>' for reason in get_change_reason(yearly_change)['reason']])}
+                            </div>
+                            <div style="font-size:0.95rem;">
+                                <b>제안 사항:</b><br>
+                                {''.join([f'• {suggestion}<br>' for suggestion in get_change_reason(yearly_change)['suggestion']])}
+                            </div>
                         </div>
-                        <div style="font-size:0.95rem;">
-                            <b>제안 사항:</b><br>
-                            {''.join([f'• {suggestion}<br>' for suggestion in change_info['suggestion']])}
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                        """, unsafe_allow_html=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
                 
                 with col3:
                     with st.container():
@@ -816,6 +795,7 @@ def run_ho():
                             """, unsafe_allow_html=True)
                         else:
                             st.warning(f"{selected_country}의 차량 수출량 데이터가 없습니다.")
+                    st.markdown('</div>', unsafe_allow_html=True)
                 
                 st.write("")
                 st.markdown("### 📊 추가 분석 차트")
@@ -859,6 +839,10 @@ def run_ho():
                     """, unsafe_allow_html=True)
                 else:
                     st.warning("선택한 차량의 수출량 데이터가 없습니다.")
+                st.markdown('</div>', unsafe_allow_html=True)
+        
+                
+                   
     
     elif current_tab == "🌍 다중 국가 비교":
         st.header("🌍 다중 국가 비교 분석")
@@ -977,6 +961,7 @@ def run_ho():
                         """, unsafe_allow_html=True)
                     else:
                         st.warning("연간 수출량 데이터가 없습니다.")
+                    st.markdown('</div>', unsafe_allow_html=True)
             
             with col2:
                 with st.container():
@@ -1015,6 +1000,7 @@ def run_ho():
                         """, unsafe_allow_html=True)
                     else:
                         st.warning("히트맵 생성에 필요한 데이터가 없습니다.")
+                    st.markdown('</div>', unsafe_allow_html=True)
             
             st.write("")
             st.markdown("### 📈 국가별 월별 수출량 추이")
@@ -1048,3 +1034,7 @@ def run_ho():
                     - 마우스를 선 위에 올리면 정확한 수치를 확인할 수 있습니다.
                 </div>
                 """, unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+
+if __name__ == "__main__":
+    run_ho()
