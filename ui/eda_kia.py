@@ -8,10 +8,19 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
+import platform
 
-# 한글 폰트 설정
-plt.rcParams['font.family'] = 'Malgun Gothic'
+# 폰트 설정
 plt.rcParams['axes.unicode_minus'] = False
+
+if platform.system() == 'Darwin':
+    rc('font', family='AppleGothic')
+elif platform.system() == 'Windows':
+    path = "c:/Windows/Fonts/malgun.ttf"
+    font_name = font_manager.FontProperties(fname=path).get_name()
+    rc('font', family=font_name)
+else:
+    print('Unknown system... sorry~~~~')
 
 months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
 
