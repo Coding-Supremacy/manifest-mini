@@ -399,7 +399,8 @@ def run_ho():
                 </div>
                 """, unsafe_allow_html=True)
             
-
+            st.write("")
+            st.write("")
             st.write("")
             st.write("")
             # 분석 인사이트 섹션
@@ -413,7 +414,8 @@ def run_ho():
                     <p><strong>제안 사항:</strong> {change_info['suggestion']}</p>
                 </div>
                 """, unsafe_allow_html=True)
-            
+            st.write("")
+            st.write("")
             # 차트 분석 섹션
             st.write("")
             st.write("")
