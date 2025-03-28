@@ -44,7 +44,7 @@ def main_menu():
         
         return option_menu(
             menu_title=None,
-            options=["홈", "기아 분석", "현대 분석","시장 트렌드", "지역별 예측", "기후별 예측","프로젝트 개발과정"],
+            options=["홈","지역별 예측", "기후별 예측", "기아 분석", "현대 분석","시장 트렌드", "프로젝트 개발과정"],
             icons=["house", "file-earmark-text",
                   "car-front", "car-front",
                   "graph-up", "globe"],
