@@ -38,53 +38,6 @@ def load_sales_data(csv_path, selected_market):
     df = df[df["국가"] == selected_market][["ds", "y"]].copy()
     return df
 
-def save_report_to_pdf(report_text, filename="시장_예측_보고서.pdf"):
-    try:
-        # PDF 객체 생성 및 설정
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_auto_page_break(auto=True, margin=15)
-        
-        # 폰트 경로 설정 (절대 경로)
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        FONT_PATH = os.path.join(base_dir, "..", "custom_fonts", "NanumGothic.ttf")
-        
-        if not os.path.exists(FONT_PATH):
-            st.warning(f"❌ 한글 폰트 파일을 찾을 수 없습니다: {FONT_PATH}")
-            return None
-
-        # 한글 폰트 추가 및 설정
-        pdf.add_font("NanumGothic", "", FONT_PATH, uni=True)
-        pdf.set_font("NanumGothic", size=10)  # 폰트 크기 10으로 줄임
-        
-        # 페이지 여백 설정
-        pdf.set_left_margin(10)
-        pdf.set_right_margin(10)
-        
-        # 텍스트 처리
-        lines = report_text.split('\n')
-        for line in lines:
-            try:
-                # 라인을 60자 단위로 분할
-                for i in range(0, len(line), 60):
-                    chunk = line[i:i+60]
-                    # multi_cell 대신 cell 사용 (너비 190mm로 고정)
-                    pdf.cell(190, 10, chunk, ln=1)
-            except Exception as e:
-                st.error(f"텍스트 처리 오류 (해당 라인 생략): {str(e)}")
-                continue
-
-        # 임시 파일 저장
-        temp_dir = tempfile.gettempdir()
-        pdf_path = os.path.join(temp_dir, filename)
-        pdf.output(pdf_path)
-        
-        return pdf_path
-        
-    except Exception as e:
-        st.error(f"PDF 생성 중 심각한 오류 발생: {str(e)}")
-        return None
-
 def create_forecast(model, periods=18, freq="ME"):
     future = model.make_future_dataframe(periods=periods, freq=freq)
     forecast = model.predict(future)
@@ -315,8 +268,9 @@ def run_prediction_region():
                 pdf.add_page()
                 pdf.set_auto_page_break(auto=True, margin=15)
                 
-                FONT_PATH ="custom_fonts/NanumGothicCoding.ttf"
-                
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                FONT_PATH = os.path.join(base_dir, "custom_fonts", "NanumGothic.ttf")
+                st.write(FONT_PATH)
                 if os.path.exists(FONT_PATH):
                     pdf.add_font("NanumGothic", "", FONT_PATH, uni=True)
                     pdf.set_font("NanumGothic", size=10)
