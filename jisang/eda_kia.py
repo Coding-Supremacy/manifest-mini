@@ -448,17 +448,15 @@ with main_tab3:
     # 해외공장 분석 내부 서브 탭 구성
     sub_tab1, sub_tab2 = st.tabs(["🏗️ 공장별 분석", "🚙 차종별 분석"])
     
-    # 연도 선택 (세션 상태 사용)
-    selected_year_factory = st.selectbox(
-        "연도 선택",
-        options=sorted(df_factory['연도'].unique()),
-        index=len(df_factory['연도'].unique())-1,
-        key='factory_year'
-    )
-    st.session_state.selected_year_factory = selected_year_factory
-    
     with sub_tab1:
-        st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+        # 연도 선택 (세션 상태 사용)
+        selected_year_factory = st.selectbox(
+            "연도 선택",
+            options=sorted(df_factory['연도'].unique()),
+            index=len(df_factory['연도'].unique())-1,
+            key='factory_year_sub_tab1'
+        )
+        st.session_state.selected_year_factory = selected_year_factory
         
         # 1. 공장별 총 판매량
         st.subheader("공장별 연간 총 판매량")
@@ -494,7 +492,14 @@ with main_tab3:
         st.markdown("</div>", unsafe_allow_html=True)
     
     with sub_tab2:
-        st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+        # 연도 선택 (세션 상태 사용)
+        selected_year_factory = st.selectbox(
+            "연도 선택",
+            options=sorted(df_factory['연도'].unique()),
+            index=len(df_factory['연도'].unique())-1,
+            key='factory_year_sub_tab2'
+        )
+        st.session_state.selected_year_factory = selected_year_factory
         
         # 3. 차종별 공장 분포
         st.subheader("차종별 생산 공장 분포 (Top 10)")
