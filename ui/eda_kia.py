@@ -717,7 +717,7 @@ def run_eda_kia():
             plt.tight_layout()
             return fig
 
-        st.subheader("상위 5개 차종 월별 추이 (겹쳐진 막대그래프)")
+        st.subheader("상위 5개 차종 월별 추이")
         fig3 = get_monthly_trend_top5(melt_sales, selected_year, top_models)
         st.pyplot(fig3)
 
