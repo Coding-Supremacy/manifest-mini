@@ -10,17 +10,16 @@ from plotly.subplots import make_subplots
 import os
 import platform
 
-# 폰트 설정
-plt.rcParams['axes.unicode_minus'] = False
+import os
+import matplotlib.font_manager as fm
 
-if platform.system() == 'Darwin':
-    rc('font', family='AppleGothic')
-elif platform.system() == 'Windows':
-    path = "c:/Windows/Fonts/malgun.ttf"
-    font_name = font_manager.FontProperties(fname=path).get_name()
-    rc('font', family=font_name)
-else:
-    print('Unknown system... sorry~~~~')
+@st.cache_data
+def fontRegistered():
+    font_dirs = [os.getcwd() + '/custom_fonts']
+    font_files = fm.findSystemFonts(fontpaths=font_dirs)
+    for font_file in font_files:
+        fm.fontManager.addfont(font_file)
+    fm._load_fontmanager(try_read_cache=False)
 
 months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
 
@@ -192,6 +191,10 @@ st.title("🚗 기아 자동차 통합 분석 대시보드 (최적화 버전)")
 
 
 def run_eda_kia():
+
+    fontRegistered()
+    plt.rc('font', family='NanumGothic')
+    
     # 세션 상태 초기화
     if 'current_tab' not in st.session_state:
         st.session_state.current_tab = "🌍 지역별 수출 분석"
