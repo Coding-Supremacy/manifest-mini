@@ -1,5 +1,6 @@
 import os
 import tempfile
+import unicodedata
 from fpdf import FPDF
 import streamlit as st
 import pandas as pd
@@ -314,25 +315,34 @@ def run_prediction_region():
             st.markdown("#### 📀 보고서를 PDF로 저장하기")
             
             def generate_pdf():
-                pdf = FPDF()
-                pdf.add_page()
-                pdf.set_auto_page_break(auto=True, margin=15)
-                
-                base_dir = os.path.dirname(os.path.abspath(__file__))
-                FONT_PATH = Path("/app/manifest-mini/custom_fonts/NanumGothic.ttf")
-                
-                if os.path.exists(FONT_PATH):
-                    pdf.add_font("NanumGothic", "", FONT_PATH, uni=True)
+                try:
+                    pdf = FPDF()
+                    pdf.add_page()
+                    
+                    # 폰트 설정 (배포 환경에서 확인된 경로 사용)
+                    font_path = "/app/manifest-mini/custom_fonts/NanumGothic.ttf"
+                    pdf.add_font("NanumGothic", "", font_path, uni=True)
                     pdf.set_font("NanumGothic", size=10)
-                else:
-                    pdf.set_font("Arial", size=10)
+                    
+                    # 텍스트 처리 (유니코드 정규화)
+                    text = st.session_state.report_text
+                    normalized_text = unicodedata.normalize('NFKC', text)
+                    
+                    # 줄바꿈 처리
+                    for line in normalized_text.split('\n'):
+                        # 한글 및 유니코드 문자 처리
+                        try:
+                            pdf.cell(0, 10, line.encode('latin-1', 'replace').decode('latin-1'), ln=1)
+                        except UnicodeEncodeError:
+                            # Latin-1로 인코딩 실패 시 UTF-8로 처리 시도
+                            pdf.cell(0, 10, line, ln=1)
+                    
+                    # PDF 바이트 데이터 반환
+                    return pdf.output(dest='S').encode('latin-1', 'ignore')
                 
-                lines = st.session_state.report_text.split('\n')
-                for line in lines:
-                    for i in range(0, len(line), 60):
-                        pdf.cell(0, 10, line[i:i+60], ln=1)
-                
-                return bytes(pdf.output(dest='S'))
+                except Exception as e:
+                    st.error(f"PDF 생성 실패: {str(e)}")
+                    return None
 
             st.download_button(
                 label="📥 PDF 다운로드",
