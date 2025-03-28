@@ -20,6 +20,7 @@ def load_model(channel, selected_market, model_dir):
     filename = f"{channel_key}_{selected_market}_model.pkl"
     model_path = os.path.join(model_dir, filename)
 
+
     if not os.path.exists(model_path):
         st.error(f"❌ 해당 모델 파일이 존재하지 않습니다: {filename}")
         return None
