@@ -25,6 +25,118 @@ def load_data():
 
 df_export, df_sales = load_data()
 
+def car_type():
+    car_types = {
+            '세단 내연기관': [
+                'Avante (CN7)', 'Sonata (LF)', 'Sonata (DN8)',
+                'Grandeur (IG)', 'Grandeur (GN7)', 'G70 (IK)',
+                'G80 (RG3)', 'G90 (HI)',  'Verna (Hci)', 'Verna (BN7i)',
+                'Elantra (CN7c)', 'La festa (SQ)', 'Verna (YC)',
+                'Celesta (ID)', 'Mistra (DU2)', 'Elantra (CN7a)',
+                'Sonata (DN8a)', 'Solaris (HCr)', 'Accent (HCv)',
+                'Accent (BN7v)', 'Elantra (CN7v)'
+            ],
+            '세단 하이브리드': [
+                'Avante (CN7 HEV)', 'IONIQ (AE HEV)', 'Sonata (DN8 HEV)',
+                'Grandeur (IG HEV)', 'Grandeur (GN7 HEV)'
+            ],
+            '세단 전기차': [
+                'IONIQ (AE EV)', 'IONIQ 6 (CE)', 'G80 (RG3 EV)'
+            ],
+            'SUV 내연기관': [
+                'Venue (QX)', 'Kona (OS)',  'Kona (SX2)', 'Tucson (TL)',
+                'Tucson (NX4)', 'Santa-Fe (TM)', 'Santa-Fe (MX5)',
+                'Palisade (LX2)', 'GV80 (JX)', 'Exter (AI3 SUV)', 'Venue (QXi)',
+                'Creta (SU2i)', 'Creta(SU2i)', 'Bayon (BC3 CUV)',
+                'Mufasa (NU2)', 'Tucson (NX4c)', 'ix35 (NU)',
+                'Santa Fe (MX5c)', 'Santa Fe (TMc)', 'Tucson (NX4a)',
+                'Tucson OB (NX4a OB)', 'Santa-Fe (TMa)', 'GV70 (JKa)',
+                'Tucson (TLe)', 'Tucson (NX4e)',  'Creta (SU2r)',
+                'Creta (GSb)', 'Creta (SU2b)', 'Santa-Fe (TMid)',
+                'Santa-Fe (MX5id)',  'Creta (SU2id)',
+                'Creta (SU2v)', 'Tucson (NX4v)', 'Santa Fe (TMv)',
+                'Santa Fe (MX5v)', 'Palisade (LX3)',
+                'GV80 Coupe (JX Coupe)'
+            ],
+            'SUV 하이브리드': [
+                'Kona (OS HEV)', 'Kona (SX2 HEV)', 'Tucson (NX4 HEV)',
+                'Santa-Fe (TM HEV)', 'Santa-Fe (MX5 HEV)',
+                'Santa Fe HEV (TMa HEV)', 'Tucson HEV (NX4c HEV)',
+                'Santa-Fe HEV (MX5a HEV)',  'Tucson HEV (NX4e HEV)',
+                'Santa Fe HEV (TMv HEV)', 'Santa-Fe (MX5id HEV)'
+            ],
+            'SUV 전기차': [
+                'Kona (OS EV)', 'Kona (OS N)', 'Kona (SX2 EV)', 'NEXO (FE)',
+                'IONIQ 5 (NE)', 'IONIQ 5 N (NE N)', 'Kona N (OS N)',
+                'Tucson (NX4 PHEV)', 'Santa-Fe (TM PHEV)',
+                'Santa-Fe (MX5 PHEV)', 'GV70 EV (JK EV)',
+                'Kona EV (OSi EV)', 'IONIQ5 (NEi)', 'Tucson (NX4i)',
+                'Exter(AI3 SUV)', 'Venue(QXi)', 'Creta(SU2i)',
+                'Creta(SU2i LWB)', 'Tucson OB (NX4a OB)',  'Ioniq5 (NEa)',
+                'Kona EV (OSe EV)', 'Kona EV (SX2e EV)',
+                'Tucson PHEV (NX4e PHEV)',  'Kona EV (SX2id EV)',
+                'IONIQ5 (NE)', 'IONIQ5 (NEid N)', 'GV70 (JKa)',
+                'GV70 EV (Jka EV)', 'IONIQ5 (NEv)', 'GV60 (JW)',
+                'Palisade (LX3 HEV)', 'Palisade (LX2v)', 'Santa Fe (TMv)'
+            ],
+            '기타': [
+                'Veloster (JS N)', 'G70 S/B (IK S/B)', 'Casper (AX)', 'LCV',
+                'HCV', 'i30 (PD)', 'Grand i10 (AI3 5DR)', 'i20 (BI3 5DR)',
+                'i10 (AC3)', 'i20 (BC3)', 'i20 N (BC3 N)', 'Custo (KU)',
+                'BHMC', 'i30 (PDe)', 'i30 (Pde N)', 'HB20 (BR2)',
+                'Stargazer (KS)', 'HTBC', 'NX4m', 'HCm', 'Others', 'CV',
+                'i10(AI3v 4DR)', 'i10(AI3v 5DR)', 'Kusto (KUv)', 'Porter (HRv)',
+                'Mighty (LTv)', 'Mighty (VTv)', 'Mighty (QTv)',
+                'Mighty (QTc)', 'Truck',  'IONIQ5 Robotaxi (NE R)',
+                'PV', 'G90', 'Casper (AX EV)', 'Casper EV (AX EV)',
+                'IONIQ New Car (ME)', 'Palisade (LX3 HEV)', 'Santa Fe (TMv)', 'Santa Fe (MX5v)'
+            ]
+                   
+        }
+    return car_types
+car_types = car_type()
+
+# 차종 판매실적 반복 함수
+def filter_sales_data_by_year_and_type():
+    df_sales_melted =  df_sales.melt(id_vars=['차량 모델', '차량 유형', '판매 구분', '연도'], 
+                                        value_vars=["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"] ,
+                                        var_name='월', value_name='판매량')
+    
+    # 카테고리 매핑 딕셔너리 만들기
+    car_category_map = {}
+    for category, models in car_types.items():
+        for model in models:
+            car_category_map[model] = category
+
+    # df_sales에 카테고리 컬럼 추가
+    df_sales_melted['카테고리'] = df_sales_melted['차량 모델'].map(car_category_map)
+            
+    모델_유형_2023 = df_sales_melted.loc[df_sales_melted['연도'] == 2023] 
+    모델_유형_2024 = df_sales_melted.loc[df_sales_melted['연도'] == 2024]
+
+    모델_유형_국내_2023 = 모델_유형_2023.loc[모델_유형_2023['판매 구분'] == '내수용']
+    모델_유형_해외_2023 = 모델_유형_2023.loc[모델_유형_2023['판매 구분'] != '내수용']
+
+    모델_유형_국내_2024 = 모델_유형_2024.loc[모델_유형_2024['판매 구분'] == '내수용']
+    모델_유형_해외_2024 = 모델_유형_2024.loc[모델_유형_2024['판매 구분'] != '내수용']
+
+    전체_국내 = df_sales_melted.loc[df_sales_melted['판매 구분'] == '내수용']
+    전체_해외 = df_sales_melted.loc[df_sales_melted['판매 구분'] != '내수용']
+    
+    # 전체_국내에 카테고리 컬럼 추가
+    전체_국내['카테고리'] = 전체_국내['차량 모델'].map(car_category_map)
+    # 전체_해외에 카테고리 컬럼 추가
+    전체_해외['카테고리'] = 전체_해외['차량 모델'].map(car_category_map)
+
+    
+
+    
+
+    return df_sales_melted, 모델_유형_2023, 모델_유형_2024, 모델_유형_국내_2023, 모델_유형_해외_2023, 모델_유형_국내_2024, 모델_유형_해외_2024, 전체_국내, 전체_해외
+
+df_sales_melted, 모델_유형_2023, 모델_유형_2024, 모델_유형_국내_2023, 모델_유형_해외_2023, 모델_유형_국내_2024, 모델_유형_해외_2024, 전체_국내, 전체_해외 = filter_sales_data_by_year_and_type()
+
+
 # 메인 함수
 def run_eda_hyundai():
 
@@ -99,95 +211,124 @@ def run_eda_hyundai():
                 hovermode="closest",
                 xaxis_range=[min(valid_dates), max(valid_dates)] if valid_dates else None  # 데이터가 있는 경우에만 범위 설정
             )
+
             st.plotly_chart(fig, use_container_width=True)
 
-            st.markdown(""" 
-            ### 분석 목적
-            1. **시장 동향 파악**: 현대의 글로벌 시장에서의 성과를 시각화하여 전반적인 수출 동향을 파악합니다.
-            2. **지역별 성과 비교**: 다양한 국가 및 지역의 수출 실적을 비교 분석하여 지역별 전략의 효과성을 평가합니다.
-            3. **미래 전략 수립**: 과거와 현재의 데이터를 바탕으로 향후 수출 전략 수립에 필요한 인사이트를 도출합니다.
+            # 현대 지역별 수출실적 분석 요약표 작업
+            
+            df_export_melted =  df_export.melt(id_vars=['국가', '연도'], 
+                                    value_vars=["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"] ,
+                                    var_name='월', value_name='판매량')
+                    
+            st.subheader("📌 현대 지역별 수출실적 통계 요약")
+            st.write('')
 
-            ### 분석의 장점
-            1. **데이터 기반 의사결정**: 객관적인 데이터를 통해 보다 정확하고 신뢰성 있는 의사결정이 가능해집니다.
-            2. **트렌드 예측**: 시계열 데이터 분석을 통해 향후 시장 트렌드를 예측할 수 있습니다.
-            3. **경쟁력 강화**: 지역별, 시기별 성과 분석을 통해 기업의 강점과 약점을 파악하고 경쟁력을 강화할 수 있습니다.
-            4. **리소스 최적화**: 데이터에 기반한 성과 분석으로 마케팅 및 생산 리소스의 효율적 배분이 가능해집니다.
-            5. **이해관계자 커뮤니케이션**: 시각화된 데이터를 통해 경영진, 투자자, 직원들과 효과적으로 성과를 공유할 수 있습니다.
+            국가_연도_피벗 = df_export_melted.pivot_table(
+                    index='국가',
+                    columns='연도',
+                    values='판매량',
+                    aggfunc='sum',
+                    fill_value=0
+                )
+            총합 = 국가_연도_피벗.sum(axis=1)
+            국가_연도_피벗.insert(0, '총합', 총합)
+            국가_연도_피벗 = 국가_연도_피벗.sort_values(by='총합', ascending=False)
+
+            # 스타일링을 위해 복사본 생성
+            국가_연도_styled = 국가_연도_피벗.copy()
+
+            # 스타일링 적용
+            styled_국가_연도 = (
+                국가_연도_styled.style
+                .format('{:,.0f}')  # 숫자 포맷
+                .background_gradient(cmap='Blues')
+            )
+            
+            st.write("""##### 🌍 주요 시장별 전체 판매량""")
+            st.dataframe(styled_국가_연도, use_container_width=True)
+
+
+            
+            st.write('📅 국가 연도별 판매량')
+            국가_연도별_피벗 = df_export_melted.pivot_table(index='국가', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+            총합 = 국가_연도별_피벗.sum(axis=1)
+            국가_연도별_피벗.insert(0, '총합', 총합)
+            국가_연도별_피벗 = 국가_연도별_피벗.sort_values(by='총합', ascending=False)
+
+            st.dataframe(국가_연도별_피벗)
+                
+            st.write('📆 국가 월별 통계 (2023년~2025년 누적 기준)')
+
+            # 월 순서를 올바르게 정의
+            month_order = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
+
+            국가_월_피벗 = df_export_melted.pivot_table(index='국가', columns='월', values='판매량', aggfunc='sum', fill_value=0).reindex(columns=month_order)
+            총합 = 국가_월_피벗.sum(axis=1)
+            국가_월_피벗.insert(0, '총합', 총합)
+            국가_월_피벗 = 국가_월_피벗.sort_values(by='총합', ascending=False)
+
+            st.dataframe(국가_월_피벗)
+
+            
+            st.markdown("""
+            <div style="background-color:#FFEBCD; padding:15px; border-radius:10px;">
+            <span style="font-size:20px; font-weight:bold;">📌 2023-2025년 현대차 지역별 수출 실적 분석</span><br>
+
+            1. <b>북미-미국</b>이 압도적 1위 시장으로 전체 수출의 <b>60% 이상</b> 점유 (월평균 4.8만~5.8만대)<br>
+            → 2024년 10월 <b>57,589대</b>로 최고 기록
+
+            2. <b>중동·아프리카</b>와 <b>동유럽</b>이 예상외로 강한 성능 (<b>월 1만대±30%</b>)<br>
+            → 2023년 3월 중동·아프리카 <b>12,760대</b> 돌파
+
+            3. <b>2025년 데이터</b>는 1월만 존재해 계절 비교 불가<br>
+            → 북미-미국(41,454대)이 여전히 선두 but 전년 동월 대비 <b>25.2% 감소</b>
+
+            4. <b>유럽-기타</b> 지역은 수출량 미미 (2025년 1월 46대)<br>
+            → 신규 시장 진출 필요성 대두
+
+            5. <b>변동성 주목</b>: 북미-멕시코는 2024년 3월 <b>287대→4월 373대</b>로 급증<br>
+            → 현지 생산/물류 변화 영향 가능성
+            </div>
+            """, unsafe_allow_html=True)
+            st.write('')
+            st.success("""
+            ✅ **마케팅 전략 권장사항**  
+            1. 북미-미국: 안정적 공급망 유지  
+            2. 중동·아프리카: 2023년 3월 실적(12,760대) 재현을 위한 타겟 마케팅  
+            3. 북미-멕시코: 2024년 3~4월 급증 원인 분석 후 확대 적용  
+            4. 유럽-기타: 시장 조사 후 신모델 투입 검토  
             """)
+
+        with st.expander("🎯 분석 목적"):
+                st.markdown("""
+                <div style='background-color: #F9F9F9; padding: 15px; border-radius: 8px;'>
+                    <h4 style='color:#2E86C1;'>🎯 분석 목적</h4>
+                    <ol>
+                        <li><b style='color:#1F618D'>국내외 판매 추이 비교:</b> 국내외 실적을 비교하여 시장별 성과 차이를 파악합니다.</li>
+                        <li><b style='color:#1F618D'>글로벌 시장 전략 수립:</b> 향후 해외 진출 및 수출 전략 설계에 활용됩니다.</li>
+                        <li><b style='color:#1F618D'>차종별 판매 동향 분석:</b> 월별 추이를 기반으로 인기/부진 모델을 파악할 수 있습니다.</li>
+                    </ol>
+                </div>
+                """, unsafe_allow_html=True)
+
+        with st.expander("✨ 분석 장점"):
+            st.markdown("""
+            <div style='background-color: #F9F9F9; padding: 15px; border-radius: 8px;'>
+                <h4 style='color:#2E86C1;'>✨ 분석 장점</h4>
+                <ol>
+                    <li><b style='color:#117A65'>시장 맞춤 전략 수립:</b> 시장별 맞춤 전략으로 효과적인 마케팅 및 생산 전략 설계 가능</li>
+                    <li><b style='color:#117A65'>시기별 판매 변화 분석:</b> 시즌 및 프로모션에 따른 수요 변화를 시각화할 수 있습니다.</li>
+                    <li><b style='color:#117A65'>차종별 판매 성과 평가:</b> 강점 모델 강화, 약점 모델 보완 전략 도출 가능</li>
+                    <li><b style='color:#117A65'>국내외 판매 비교:</b> 지역별 차종 성과를 기반으로 전략적 수출 비중 조정 가능</li>
+                </ol>
+            </div>
+            """, unsafe_allow_html=True)
         
         st.markdown("</div>", unsafe_allow_html=True)
 
     elif selected == "🏎️ 차종별 판매 분석":
         st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
         st.subheader("🏎️ 차종별 판매 실적")
-
-        car_types = {
-            '세단 내연기관': [
-                'Avante (CN7)', 'Sonata (LF)', 'Sonata (DN8)',
-                'Grandeur (IG)', 'Grandeur (GN7)', 'G70 (IK)',
-                'G80 (RG3)', 'G90 (HI)',  'Verna (Hci)', 'Verna (BN7i)',
-                'Elantra (CN7c)', 'La festa (SQ)', 'Verna (YC)',
-                'Celesta (ID)', 'Mistra (DU2)', 'Elantra (CN7a)',
-                'Sonata (DN8a)', 'Solaris (HCr)', 'Accent (HCv)',
-                'Accent (BN7v)', 'Elantra (CN7v)'
-            ],
-            '세단 하이브리드': [
-                'Avante (CN7 HEV)', 'IONIQ (AE HEV)', 'Sonata (DN8 HEV)',
-                'Grandeur (IG HEV)', 'Grandeur (GN7 HEV)'
-            ],
-            '세단 전기차': [
-                'IONIQ (AE EV)', 'IONIQ 6 (CE)', 'G80 (RG3 EV)'
-            ],
-            'SUV 내연기관': [
-                'Venue (QX)', 'Kona (OS)',  'Kona (SX2)', 'Tucson (TL)',
-                'Tucson (NX4)', 'Santa-Fe (TM)', 'Santa-Fe (MX5)',
-                'Palisade (LX2)', 'GV80 (JX)', 'Exter (AI3 SUV)', 'Venue (QXi)',
-                'Creta (SU2i)', 'Creta(SU2i)', 'Bayon (BC3 CUV)',
-                'Mufasa (NU2)', 'Tucson (NX4c)', 'ix35 (NU)',
-                'Santa Fe (MX5c)', 'Santa Fe (TMc)', 'Tucson (NX4a)',
-                'Tucson OB (NX4a OB)', 'Santa-Fe (TMa)', 'GV70 (JKa)',
-                'Tucson (TLe)', 'Tucson (NX4e)',  'Creta (SU2r)',
-                'Creta (GSb)', 'Creta (SU2b)', 'Santa-Fe (TMid)',
-                'Santa-Fe (MX5id)',  'Creta (SU2id)',
-                'Creta (SU2v)', 'Tucson (NX4v)', 'Santa Fe (TMv)',
-                'Santa Fe (MX5v)', 'Palisade (LX3)',
-                'GV80 Coupe (JX Coupe)'
-            ],
-            'SUV 하이브리드': [
-                'Kona (OS HEV)', 'Kona (SX2 HEV)', 'Tucson (NX4 HEV)',
-                'Santa-Fe (TM HEV)', 'Santa-Fe (MX5 HEV)',
-                'Santa Fe HEV (TMa HEV)', 'Tucson HEV (NX4c HEV)',
-                'Santa-Fe HEV (MX5a HEV)',  'Tucson HEV (NX4e HEV)',
-                'Santa Fe HEV (TMv HEV)', 'Santa-Fe (MX5id HEV)'
-            ],
-            'SUV 전기차': [
-                'Kona (OS EV)', 'Kona (OS N)', 'Kona (SX2 EV)', 'NEXO (FE)',
-                'IONIQ 5 (NE)', 'IONIQ 5 N (NE N)', 'Kona N (OS N)',
-                'Tucson (NX4 PHEV)', 'Santa-Fe (TM PHEV)',
-                'Santa-Fe (MX5 PHEV)', 'GV70 EV (JK EV)',
-                'Kona EV (OSi EV)', 'IONIQ5 (NEi)', 'Tucson (NX4i)',
-                'Exter(AI3 SUV)', 'Venue(QXi)', 'Creta(SU2i)',
-                'Creta(SU2i LWB)', 'Tucson OB (NX4a OB)',  'Ioniq5 (NEa)',
-                'Kona EV (OSe EV)', 'Kona EV (SX2e EV)',
-                'Tucson PHEV (NX4e PHEV)',  'Kona EV (SX2id EV)',
-                'IONIQ5 (NE)', 'IONIQ5 (NEid N)', 'GV70 (JKa)',
-                'GV70 EV (Jka EV)', 'IONIQ5 (NEv)', 'GV60 (JW)',
-                'Palisade (LX3 HEV)', 'Palisade (LX2v)', 'Santa Fe (TMv)'
-            ],
-            '기타': [
-                'Veloster (JS N)', 'G70 S/B (IK S/B)', 'Casper (AX)', 'LCV',
-                'HCV', 'i30 (PD)', 'Grand i10 (AI3 5DR)', 'i20 (BI3 5DR)',
-                'i10 (AC3)', 'i20 (BC3)', 'i20 N (BC3 N)', 'Custo (KU)',
-                'BHMC', 'i30 (PDe)', 'i30 (Pde N)', 'HB20 (BR2)',
-                'Stargazer (KS)', 'HTBC', 'NX4m', 'HCm', 'Others', 'CV',
-                'i10(AI3v 4DR)', 'i10(AI3v 5DR)', 'Kusto (KUv)', 'Porter (HRv)',
-                'Mighty (LTv)', 'Mighty (VTv)', 'Mighty (QTv)',
-                'Mighty (QTc)', 'Truck',  'IONIQ5 Robotaxi (NE R)',
-                'PV', 'G90', 'Casper (AX EV)', 'Casper EV (AX EV)',
-                'IONIQ New Car (ME)', 'Palisade (LX3 HEV)', 'Santa Fe (TMv)', 'Santa Fe (MX5v)'
-            ]
-                   
-        }
 
         # 연도 선택 UI
         year_filter = st.radio(
@@ -286,24 +427,1882 @@ def run_eda_hyundai():
                 st.plotly_chart(fig_domestic, use_container_width=True)
                 st.plotly_chart(fig_international, use_container_width=True)
 
-        st.markdown("""
-        ### 분석 내용:
+        # 현대 차종별 판매실적 분석 요약표 작업
+        
+        if year_filter == '2023년':
+            # 월 순서를 올바르게 정의
+            month_order = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
+            if selected_type == '세단 내연기관':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                세단내연기관_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == '세단 내연기관']
+                세단내연기관_전체_피벗 = 세단내연기관_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
 
-        - 선택한 차종 카테고리 내 각 모델의 국내 및 해외 판매 추이를 확인할 수 있습니다.
-        - 국내와 해외 판매 추이를 비교하여 전략을 수립하는 데 도움을 줄 수 있습니다.
-        - 특정 차종이 국내 및 해외 시장에서 어떻게 성과를 내고 있는지, 그리고 어떤 차종이 글로벌 트렌드에 따라 더 유망한지 확인할 수 있습니다.
+                총합 = 세단내연기관_전체_피벗.sum(axis=1)
+                세단내연기관_전체_피벗.insert(0, '총합', 총합)
+                세단내연기관_전체_피벗 = 세단내연기관_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 세단내연기관_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단내연기관_전체_피벗 = pd.concat([총합_행.to_frame().T, 세단내연기관_전체_피벗])
 
-        ### 분석 목적:
-        1. **국내외 판매 추이 비교**: 각 차종의 국내 및 해외 판매 실적을 비교하여 지역별 시장의 성과 차이를 파악합니다.
-        2. **글로벌 시장 전략 수립**: 국내외 판매 실적을 기반으로 향후 글로벌 시장에서의 판매 전략을 수립할 수 있습니다.
-        3. **차종별 판매 동향 분석**: 각 차종의 월별 판매 추이를 분석하여 인기 모델과 부진한 모델을 파악하고, 판매 전략을 최적화할 수 있습니다.
+                # 스타일링을 위해 복사본 생성
+                세단내연전체_styled = 세단내연기관_전체_피벗.copy()
 
-        ### 분석 장점:
-        1. **시장 맞춤 전략 수립**: 국내외 시장에 맞는 차종별 전략을 세우고, 각 시장에 최적화된 판매 전략을 강화할 수 있습니다.
-        2. **시기별 판매 변화 분석**: 월별 판매 추이를 통해 시즌별, 프로모션 및 이벤트에 따른 판매 변화를 확인하고, 적절한 시점에 마케팅 전략을 세울 수 있습니다.
-        3. **차종별 판매 성과 평가**: 각 차종의 성과를
-        """)
+                # 스타일링 적용
+                styled_세단내연전체 = (
+                    세단내연전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
 
+                st.write('')
+                st.write("""##### 📅 세단내연기관 연간 총 판매량 """)
+                st.dataframe(styled_세단내연전체, use_container_width=True)
+
+
+                # 국내
+                세단_내연기관 = 모델_유형_국내_2023.loc[모델_유형_국내_2023['카테고리'] == '세단 내연기관']
+                세단_내연기관_피벗 = 세단_내연기관.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                세단_내연기관_피벗 = 세단_내연기관_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                세단_내연기관_피벗.insert(0, '총합', 세단_내연기관_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                세단_내연기관_피벗 = 세단_내연기관_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 세단_내연기관_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단내연기관피벗 = pd.concat([총합_행.to_frame().T, 세단_내연기관_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단내연기관 = 세단내연기관피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (국내) 세단내연기관 월별 판매량""")
+                st.dataframe(styled_세단내연기관, use_container_width=True)
+
+                # 해외
+                세단_내연기관 = 모델_유형_해외_2023.loc[모델_유형_해외_2023['카테고리'] == '세단 내연기관']
+                세단_내연기관_피벗 = 세단_내연기관.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                세단_내연기관_피벗 = 세단_내연기관_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                세단_내연기관_피벗.insert(0, '총합', 세단_내연기관_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                세단_내연기관_피벗 = 세단_내연기관_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 세단_내연기관_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단내연기관피벗 = pd.concat([총합_행.to_frame().T, 세단_내연기관_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단내연기관 = 세단내연기관피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 (해외) 세단내연기관 월별 판매량""")
+                st.dataframe(styled_세단내연기관, use_container_width=True)
+
+            elif selected_type == '세단 하이브리드' :
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                세단하이브리드_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == '세단 하이브리드']
+                세단하이브리드_전체_피벗 = 세단하이브리드_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 세단하이브리드_전체_피벗.sum(axis=1)
+                세단하이브리드_전체_피벗.insert(0, '총합', 총합)
+                세단하이브리드_전체_피벗 = 세단하이브리드_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 세단하이브리드_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단하이브리드_전체_피벗 = pd.concat([총합_행.to_frame().T, 세단하이브리드_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                세단하이브리드전체_styled = 세단하이브리드_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_세단하이브리드전체 = (
+                    세단하이브리드전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+
+                st.write('')
+                st.write("""##### 📅 세단하이브리드 연간 총 판매량 """)
+                st.dataframe(styled_세단하이브리드전체, use_container_width=True)
+
+
+                # 국내
+                세단_하이브리드 = 모델_유형_국내_2023.loc[모델_유형_국내_2023['카테고리'] == '세단 하이브리드']
+                세단_하이브리드_피벗 = 세단_하이브리드.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                세단_하이브리드_피벗 = 세단_하이브리드_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                세단_하이브리드_피벗.insert(0, '총합', 세단_하이브리드_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                세단_하이브리드_피벗 = 세단_하이브리드_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 세단_하이브리드_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단하이브리드피벗 = pd.concat([총합_행.to_frame().T, 세단_하이브리드_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단하이브리드 = 세단하이브리드피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (국내) 세단하이브리드 월별 판매량""")
+                st.dataframe(styled_세단하이브리드, use_container_width=True)
+
+                # 해외
+                세단_하이브리드 = 모델_유형_해외_2023.loc[모델_유형_해외_2023['카테고리'] == '세단 하이브리드']
+                세단_하이브리드_피벗 = 세단_하이브리드.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                세단_하이브리드_피벗 = 세단_하이브리드_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                세단_하이브리드_피벗.insert(0, '총합', 세단_하이브리드_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                세단_하이브리드_피벗 = 세단_하이브리드_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 세단_하이브리드_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단하이브리드피벗 = pd.concat([총합_행.to_frame().T, 세단_하이브리드_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단하이브리드 = 세단하이브리드피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (해외) 세단하이브리드 월별 판매량""")
+                st.dataframe(styled_세단하이브리드, use_container_width=True)
+
+            elif selected_type == '세단 전기차':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                세단전기차_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == '세단 전기차']
+                세단전기차_전체_피벗 = 세단전기차_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 세단전기차_전체_피벗.sum(axis=1)
+                세단전기차_전체_피벗.insert(0, '총합', 총합)
+                세단전기차_전체_피벗 = 세단전기차_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 세단전기차_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단전기차_전체_피벗 = pd.concat([총합_행.to_frame().T, 세단전기차_전체_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #87CEEB'  # 연한 초록색
+                    return ''
+
+                styled_세단전기차 = 세단전기차_전체_피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write('')
+                st.write("""##### 📅 세단전기차 연간 총 판매량 """)
+                st.dataframe(styled_세단전기차, use_container_width=True)
+
+
+                # 국내
+                세단_전기차 = 모델_유형_국내_2023.loc[모델_유형_국내_2023['카테고리'] == '세단 전기차']
+                세단_전기차_피벗 = 세단_전기차.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                세단_전기차_피벗 = 세단_전기차_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                세단_전기차_피벗.insert(0, '총합', 세단_전기차_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                세단_전기차_피벗 = 세단_전기차_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 세단_전기차_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단전기차피벗 = pd.concat([총합_행.to_frame().T, 세단_전기차_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단전기차 = 세단전기차피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (국내) 세단전기차 월별 판매량""")
+                st.dataframe(styled_세단전기차, use_container_width=True)
+
+                # 해외
+                세단_전기차 = 모델_유형_해외_2023.loc[모델_유형_해외_2023['카테고리'] == '세단 전기차']
+                세단_전기차_피벗 = 세단_전기차.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                세단_전기차_피벗 = 세단_전기차_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                세단_전기차_피벗.insert(0, '총합', 세단_전기차_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                세단_전기차_피벗 = 세단_전기차_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 세단_전기차_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단전기차피벗 = pd.concat([총합_행.to_frame().T, 세단_전기차_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단전기차 = 세단전기차피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 (해외) 세단전기차 월별 판매량""")
+                st.dataframe(styled_세단전기차, use_container_width=True)
+
+            elif selected_type == 'SUV 내연기관':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                SUV내연기관_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == 'SUV 내연기관']
+                SUV내연기관_전체_피벗 = SUV내연기관_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = SUV내연기관_전체_피벗.sum(axis=1)
+                SUV내연기관_전체_피벗.insert(0, '총합', 총합)
+                SUV내연기관_전체_피벗 = SUV내연기관_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = SUV내연기관_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV내연기관_전체_피벗 = pd.concat([총합_행.to_frame().T, SUV내연기관_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                SUV내연기관전체_styled = SUV내연기관_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_SUV내연기관전체 = (
+                    SUV내연기관전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                
+                st.write('')
+                st.write("""##### 📅 SUV 내연기관 연간 총 판매량 """)
+                st.dataframe(styled_SUV내연기관전체, use_container_width=True)
+
+
+                # 국내
+                SUV_내연기관 = 모델_유형_국내_2023.loc[모델_유형_국내_2023['카테고리'] == 'SUV 내연기관']
+                SUV_내연기관_피벗 = SUV_내연기관.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_내연기관_피벗 = SUV_내연기관_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_내연기관_피벗.insert(0, '총합', SUV_내연기관_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_내연기관_피벗 = SUV_내연기관_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_내연기관_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV내연기관피벗 = pd.concat([총합_행.to_frame().T, SUV_내연기관_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV내연기관 = SUV내연기관피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (국내) SUV 내연기관 월별 판매량""")
+                st.dataframe(styled_SUV내연기관, use_container_width=True)
+
+                # 해외
+                SUV_내연기관 = 모델_유형_해외_2023.loc[모델_유형_해외_2023['카테고리'] == 'SUV 내연기관']
+                SUV_내연기관_피벗 = SUV_내연기관.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_내연기관_피벗 = SUV_내연기관_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_내연기관_피벗.insert(0, '총합', SUV_내연기관_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_내연기관_피벗 = SUV_내연기관_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_내연기관_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV내연기관피벗 = pd.concat([총합_행.to_frame().T, SUV_내연기관_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV내연기관 = SUV내연기관피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 (해외) SUV 내연기관 월별 판매량""")
+                st.dataframe(styled_SUV내연기관, use_container_width=True)
+
+            elif selected_type == 'SUV 하이브리드':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+
+                SUV하이브리드_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == 'SUV 하이브리드']
+                SUV하이브리드_전체_피벗 = SUV하이브리드_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = SUV하이브리드_전체_피벗.sum(axis=1)
+                SUV하이브리드_전체_피벗.insert(0, '총합', 총합)
+                SUV하이브리드_전체_피벗 = SUV하이브리드_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = SUV하이브리드_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV하이브리드_전체_피벗 = pd.concat([총합_행.to_frame().T, SUV하이브리드_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                SUV하이브리드전체_styled = SUV하이브리드_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_SUV하이브리드전체 = (
+                    SUV하이브리드전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+        
+                st.write('')
+                st.write("""##### 📅 SUV 하이브리드 연간 총 판매량 """)
+                st.dataframe(styled_SUV하이브리드전체, use_container_width=True)
+
+
+                # 국내
+                SUV_하이브리드 = 모델_유형_국내_2023.loc[모델_유형_국내_2023['카테고리'] == 'SUV 하이브리드']
+                SUV_하이브리드_피벗 = SUV_하이브리드.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_하이브리드_피벗 = SUV_하이브리드_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_하이브리드_피벗.insert(0, '총합', SUV_하이브리드_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_하이브리드_피벗 = SUV_하이브리드_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_하이브리드_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV하이브리드피벗 = pd.concat([총합_행.to_frame().T, SUV_하이브리드_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV하이브리드 = SUV하이브리드피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (국내) SUV 하이브리드 월별 판매량""")
+                st.dataframe(styled_SUV하이브리드, use_container_width=True)
+
+                # 해외
+                SUV_하이브리드 = 모델_유형_해외_2023.loc[모델_유형_해외_2023['카테고리'] == 'SUV 하이브리드']
+                SUV_하이브리드_피벗 = SUV_하이브리드.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_하이브리드_피벗 = SUV_하이브리드_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_하이브리드_피벗.insert(0, '총합', SUV_하이브리드_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_하이브리드_피벗 = SUV_하이브리드_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_하이브리드_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV하이브리드피벗 = pd.concat([총합_행.to_frame().T, SUV_하이브리드_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV하이브리드 = SUV하이브리드피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 (해외) SUV 하이브리드 월별 판매량""")
+                st.dataframe(styled_SUV하이브리드, use_container_width=True)
+
+            elif selected_type == 'SUV 전기차':
+            
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                SUV전기차_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == 'SUV 전기차']
+                SUV전기차_전체_피벗 = SUV전기차_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = SUV전기차_전체_피벗.sum(axis=1)
+                SUV전기차_전체_피벗.insert(0, '총합', 총합)
+                SUV전기차_전체_피벗 = SUV전기차_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = SUV전기차_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV전기차_전체_피벗 = pd.concat([총합_행.to_frame().T, SUV전기차_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                SUV전기차전체_styled = SUV전기차_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_SUV전기차전체 = (
+                    SUV전기차전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                st.write('')
+                st.write("""##### 📅 SUV 전기차 연간 총 판매량 """)
+                st.dataframe(styled_SUV전기차전체, use_container_width=True)
+
+
+                # 국내
+                SUV_전기차 = 모델_유형_국내_2023.loc[모델_유형_국내_2023['카테고리'] == 'SUV 전기차']
+                SUV_전기차_피벗 = SUV_전기차.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_전기차_피벗 = SUV_전기차_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_전기차_피벗.insert(0, '총합', SUV_전기차_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_전기차_피벗 = SUV_전기차_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_전기차_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                
+                SUV전기차피벗 = pd.concat([총합_행.to_frame().T, SUV_전기차_피벗])
+                
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV전기차 = SUV전기차피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (국내) SUV 전기차 월별 판매량""")
+                st.dataframe(styled_SUV전기차, use_container_width=True)
+
+                # 해외
+                SUV_전기차 = 모델_유형_해외_2023.loc[모델_유형_해외_2023['카테고리'] == 'SUV 전기차']
+                SUV_전기차_피벗 = SUV_전기차.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_전기차_피벗 = SUV_전기차_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_전기차_피벗.insert(0, '총합', SUV_전기차_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_전기차_피벗 = SUV_전기차_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_전기차_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV전기차피벗 = pd.concat([총합_행.to_frame().T, SUV_전기차_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV전기차 = SUV전기차피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 (해외) SUV 전기차 월별 판매량""")
+                st.dataframe(styled_SUV전기차, use_container_width=True)
+
+            elif selected_type == '기타':
+            
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+
+                기타_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == '기타']
+                기타_전체_피벗 = 기타_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 기타_전체_피벗.sum(axis=1)
+                기타_전체_피벗.insert(0, '총합', 총합)
+                기타_전체_피벗 = 기타_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 기타_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                기타_전체_피벗 = pd.concat([총합_행.to_frame().T, 기타_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                기타전체_styled = 기타_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_기타전체 = (
+                    기타전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                st.write('')
+                st.write("""##### 📅 기타 연간 총 판매량 """)
+                st.dataframe(styled_기타전체, use_container_width=True)
+
+
+                # 국내
+                기타 = 모델_유형_국내_2023.loc[모델_유형_국내_2023['카테고리'] == '기타']
+                기타_피벗 = 기타.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                기타_피벗 = 기타_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                기타_피벗.insert(0, '총합', 기타_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                기타_피벗 = 기타_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 기타_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                
+                기타피벗 = pd.concat([총합_행.to_frame().T, 기타_피벗])
+                
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_기타 = 기타피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (국내) 기타 월별 판매량""")
+                st.dataframe(styled_기타, use_container_width=True)
+
+                # 해외
+                기타 = 모델_유형_해외_2023.loc[모델_유형_해외_2023['카테고리'] == '기타']
+                기타_피벗 = 기타.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                기타_피벗 = 기타_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                기타_피벗.insert(0, '총합', 기타_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                기타_피벗 = 기타_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 기타_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                기타피벗 = pd.concat([총합_행.to_frame().T, 기타_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_기타 = 기타피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 (해외) 기타 월별 판매량""")
+                st.dataframe(styled_기타, use_container_width=True)
+
+        if year_filter == '2024년':
+
+            if selected_type == '세단 내연기관':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                세단내연기관_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == '세단 내연기관']
+                세단내연기관_전체_피벗 = 세단내연기관_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 세단내연기관_전체_피벗.sum(axis=1)
+                세단내연기관_전체_피벗.insert(0, '총합', 총합)
+                세단내연기관_전체_피벗 = 세단내연기관_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 세단내연기관_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단내연기관_전체_피벗 = pd.concat([총합_행.to_frame().T, 세단내연기관_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                세단내연전체_styled = 세단내연기관_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_세단내연전체 = (
+                    세단내연전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+
+                st.write('')
+                st.write("""##### 📅 세단내연기관 연간 총 판매량 """)
+                st.dataframe(styled_세단내연전체, use_container_width=True)
+
+
+                # 국내
+                세단_내연기관 = 모델_유형_국내_2024.loc[모델_유형_국내_2024['카테고리'] == '세단 내연기관']
+                세단_내연기관_피벗 = 세단_내연기관.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                세단_내연기관_피벗 = 세단_내연기관_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                세단_내연기관_피벗.insert(0, '총합', 세단_내연기관_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                세단_내연기관_피벗 = 세단_내연기관_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 세단_내연기관_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단내연기관피벗 = pd.concat([총합_행.to_frame().T, 세단_내연기관_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단내연기관 = 세단내연기관피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (국내) 세단내연기관 월별 판매량""")
+                st.dataframe(styled_세단내연기관, use_container_width=True)
+
+                # 해외
+                세단_내연기관 = 모델_유형_해외_2024.loc[모델_유형_해외_2024['카테고리'] == '세단 내연기관']
+                세단_내연기관_피벗 = 세단_내연기관.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                세단_내연기관_피벗 = 세단_내연기관_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                세단_내연기관_피벗.insert(0, '총합', 세단_내연기관_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                세단_내연기관_피벗 = 세단_내연기관_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 세단_내연기관_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단내연기관피벗 = pd.concat([총합_행.to_frame().T, 세단_내연기관_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단내연기관 = 세단내연기관피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 (해외) 세단내연기관 월별 판매량""")
+                st.dataframe(styled_세단내연기관, use_container_width=True)
+
+            
+            elif selected_type == 'SUV 내연기관':
+        
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+
+                SUV내연기관_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == 'SUV 내연기관']
+                SUV내연기관_전체_피벗 = SUV내연기관_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = SUV내연기관_전체_피벗.sum(axis=1)
+                SUV내연기관_전체_피벗.insert(0, '총합', 총합)
+                SUV내연기관_전체_피벗 = SUV내연기관_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = SUV내연기관_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV내연기관_전체_피벗 = pd.concat([총합_행.to_frame().T, SUV내연기관_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                SUV내연기관전체_styled = SUV내연기관_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_SUV내연기관전체 = (
+                    SUV내연기관전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                
+                st.write('')
+                st.write("""##### 📅 SUV 내연기관 연간 총 판매량 """)
+                st.dataframe(styled_SUV내연기관전체, use_container_width=True)
+
+
+                # 국내
+                SUV_내연기관 = 모델_유형_국내_2024.loc[모델_유형_국내_2024['카테고리'] == 'SUV 내연기관']
+                SUV_내연기관_피벗 = SUV_내연기관.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_내연기관_피벗 = SUV_내연기관_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_내연기관_피벗.insert(0, '총합', SUV_내연기관_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_내연기관_피벗 = SUV_내연기관_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_내연기관_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV내연기관피벗 = pd.concat([총합_행.to_frame().T, SUV_내연기관_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV내연기관 = SUV내연기관피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (국내) SUV 내연기관 월별 판매량""")
+                st.dataframe(styled_SUV내연기관, use_container_width=True)
+
+                # 해외
+                SUV_내연기관 = 모델_유형_해외_2024.loc[모델_유형_해외_2024['카테고리'] == 'SUV 내연기관']
+                SUV_내연기관_피벗 = SUV_내연기관.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_내연기관_피벗 = SUV_내연기관_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_내연기관_피벗.insert(0, '총합', SUV_내연기관_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_내연기관_피벗 = SUV_내연기관_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_내연기관_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV내연기관피벗 = pd.concat([총합_행.to_frame().T, SUV_내연기관_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV내연기관 = SUV내연기관피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 (해외) SUV 내연기관 월별 판매량""")
+                st.dataframe(styled_SUV내연기관, use_container_width=True)
+
+            elif selected_type == 'SUV 하이브리드':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+
+                SUV하이브리드_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == 'SUV 하이브리드']
+                SUV하이브리드_전체_피벗 = SUV하이브리드_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = SUV하이브리드_전체_피벗.sum(axis=1)
+                SUV하이브리드_전체_피벗.insert(0, '총합', 총합)
+                SUV하이브리드_전체_피벗 = SUV하이브리드_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = SUV하이브리드_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV하이브리드_전체_피벗 = pd.concat([총합_행.to_frame().T, SUV하이브리드_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                SUV하이브리드전체_styled = SUV하이브리드_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_SUV하이브리드전체 = (
+                    SUV하이브리드전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+        
+                st.write('')
+                st.write("""##### 📅 SUV 하이브리드 연간 총 판매량 """)
+                st.dataframe(styled_SUV하이브리드전체, use_container_width=True)
+
+
+                # 국내
+                SUV_하이브리드 = 모델_유형_국내_2024.loc[모델_유형_국내_2024['카테고리'] == 'SUV 하이브리드']
+                SUV_하이브리드_피벗 = SUV_하이브리드.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_하이브리드_피벗 = SUV_하이브리드_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_하이브리드_피벗.insert(0, '총합', SUV_하이브리드_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_하이브리드_피벗 = SUV_하이브리드_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_하이브리드_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV하이브리드피벗 = pd.concat([총합_행.to_frame().T, SUV_하이브리드_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV하이브리드 = SUV하이브리드피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (국내) SUV 하이브리드 월별 판매량""")
+                st.dataframe(styled_SUV하이브리드, use_container_width=True)
+
+                # 해외
+                SUV_하이브리드 = 모델_유형_해외_2024.loc[모델_유형_해외_2024['카테고리'] == 'SUV 하이브리드']
+                SUV_하이브리드_피벗 = SUV_하이브리드.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_하이브리드_피벗 = SUV_하이브리드_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_하이브리드_피벗.insert(0, '총합', SUV_하이브리드_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_하이브리드_피벗 = SUV_하이브리드_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_하이브리드_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV하이브리드피벗 = pd.concat([총합_행.to_frame().T, SUV_하이브리드_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV하이브리드 = SUV하이브리드피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 (해외) SUV 하이브리드 월별 판매량""")
+                st.dataframe(styled_SUV하이브리드, use_container_width=True)
+
+            elif selected_type == 'SUV 전기차':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+
+                SUV전기차_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == 'SUV 전기차']
+                SUV전기차_전체_피벗 = SUV전기차_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = SUV전기차_전체_피벗.sum(axis=1)
+                SUV전기차_전체_피벗.insert(0, '총합', 총합)
+                SUV전기차_전체_피벗 = SUV전기차_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = SUV전기차_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV전기차_전체_피벗 = pd.concat([총합_행.to_frame().T, SUV전기차_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                SUV전기차전체_styled = SUV전기차_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_SUV전기차전체 = (
+                    SUV전기차전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                st.write('')
+                st.write("""##### 📅 SUV 전기차 연간 총 판매량 """)
+                st.dataframe(styled_SUV전기차전체, use_container_width=True)
+
+
+                # 국내
+                SUV_전기차 = 모델_유형_국내_2024.loc[모델_유형_국내_2024['카테고리'] == 'SUV 전기차']
+                SUV_전기차_피벗 = SUV_전기차.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_전기차_피벗 = SUV_전기차_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_전기차_피벗.insert(0, '총합', SUV_전기차_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_전기차_피벗 = SUV_전기차_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_전기차_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                
+                SUV전기차피벗 = pd.concat([총합_행.to_frame().T, SUV_전기차_피벗])
+                
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV전기차 = SUV전기차피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (국내) SUV 전기차 월별 판매량""")
+                st.dataframe(styled_SUV전기차, use_container_width=True)
+
+                # 해외
+                SUV_전기차 = 모델_유형_해외_2024.loc[모델_유형_해외_2024['카테고리'] == 'SUV 전기차']
+                SUV_전기차_피벗 = SUV_전기차.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_전기차_피벗 = SUV_전기차_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_전기차_피벗.insert(0, '총합', SUV_전기차_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_전기차_피벗 = SUV_전기차_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_전기차_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV전기차피벗 = pd.concat([총합_행.to_frame().T, SUV_전기차_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV전기차 = SUV전기차피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 (해외) SUV 전기차 월별 판매량""")
+                st.dataframe(styled_SUV전기차, use_container_width=True)
+
+            elif selected_type == '기타':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+
+                기타_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == '기타']
+                기타_전체_피벗 = 기타_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 기타_전체_피벗.sum(axis=1)
+                기타_전체_피벗.insert(0, '총합', 총합)
+                기타_전체_피벗 = 기타_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 기타_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                기타_전체_피벗 = pd.concat([총합_행.to_frame().T, 기타_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                기타전체_styled = 기타_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_기타전체 = (
+                    기타전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                st.write('')
+                st.write("""##### 📅 기타 연간 총 판매량 """)
+                st.dataframe(styled_기타전체, use_container_width=True)
+
+                # 국내
+                기타 = 모델_유형_국내_2024.loc[모델_유형_국내_2024['카테고리'] == '기타']
+                기타_피벗 = 기타.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                기타_피벗 = 기타_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                기타_피벗.insert(0, '총합', 기타_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                기타_피벗 = 기타_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 기타_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                
+                기타피벗 = pd.concat([총합_행.to_frame().T, 기타_피벗])
+                
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_기타 = 기타피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 (국내) 기타 월별 판매량""")
+                st.dataframe(styled_기타, use_container_width=True)
+
+                # 해외
+                기타 = 모델_유형_해외_2024.loc[모델_유형_해외_2024['카테고리'] == '기타']
+                기타_피벗 = 기타.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                기타_피벗 = 기타_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                기타_피벗.insert(0, '총합', 기타_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                기타_피벗 = 기타_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 기타_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                기타피벗 = pd.concat([총합_행.to_frame().T, 기타_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_기타 = 기타피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 (해외) 기타 월별 판매량""")
+                st.dataframe(styled_기타, use_container_width=True)
+
+        if year_filter == '전체':
+
+            if selected_type == '세단 내연기관':            
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                세단내연기관_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == '세단 내연기관']
+                세단내연기관_전체_피벗 = 세단내연기관_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 세단내연기관_전체_피벗.sum(axis=1)
+                세단내연기관_전체_피벗.insert(0, '총합', 총합)
+                세단내연기관_전체_피벗 = 세단내연기관_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 세단내연기관_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단내연기관_전체_피벗 = pd.concat([총합_행.to_frame().T, 세단내연기관_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                세단내연전체_styled = 세단내연기관_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_세단내연전체 = (
+                    세단내연전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                st.write('')
+                st.write("""##### 📅 세단내연기관 연간 총 판매량 """)
+                st.dataframe(styled_세단내연전체, use_container_width=True)
+
+                # 국내
+                세단내연기관_전체 = 전체_국내.loc[전체_국내['카테고리'] == '세단 내연기관']
+                세단내연기관_전체_피벗 = 세단내연기관_전체.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 세단내연기관_전체_피벗.sum(axis=1)
+                세단내연기관_전체_피벗.insert(0, '총합', 총합)
+                세단내연기관_전체_피벗 = 세단내연기관_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 세단내연기관_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단내연기관전체피벗 = pd.concat([총합_행.to_frame().T, 세단내연기관_전체_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단내연기관전체 = 세단내연기관전체피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 [국내] 세단내연기관 월별 판매량 (2023년 ~ 2025년 누적) """)
+                st.dataframe(styled_세단내연기관전체, use_container_width=True)
+
+                # 해외
+                세단_내연기관 = 전체_해외.loc[전체_해외['카테고리'] == '세단 내연기관']
+                세단_내연기관_피벗 = 세단_내연기관.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                세단_내연기관_피벗 = 세단_내연기관_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                세단_내연기관_피벗.insert(0, '총합', 세단_내연기관_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                세단_내연기관_피벗 = 세단_내연기관_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 세단_내연기관_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단내연기관피벗 = pd.concat([총합_행.to_frame().T, 세단_내연기관_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단내연기관 = 세단내연기관피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 [해외] 세단내연기관 월별 판매량 (2023년 ~ 2025년 누적)""")
+                st.dataframe(styled_세단내연기관, use_container_width=True)
+
+            
+            elif selected_type == '세단 하이브리드':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                세단하이브리드_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == '세단 하이브리드']
+                세단하이브리드_전체_피벗 = 세단하이브리드_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 세단하이브리드_전체_피벗.sum(axis=1)
+                세단하이브리드_전체_피벗.insert(0, '총합', 총합)
+                세단하이브리드_전체_피벗 = 세단하이브리드_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 세단하이브리드_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단하이브리드_전체_피벗 = pd.concat([총합_행.to_frame().T, 세단하이브리드_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                세단하이브리드전체_styled = 세단하이브리드_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_세단하이브리드전체 = (
+                    세단하이브리드전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                st.write('')
+                st.write("""##### 📅 세단하이브리드 연간 총 판매량 """)
+                st.dataframe(styled_세단하이브리드전체, use_container_width=True)
+
+                
+                # 국내
+                세단하이브리드_전체 = 전체_국내.loc[전체_국내['카테고리'] == '세단 하이브리드']
+                세단하이브리드_전체_피벗 = 세단하이브리드_전체.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 세단하이브리드_전체_피벗.sum(axis=1)
+                세단하이브리드_전체_피벗.insert(0, '총합', 총합)
+                세단하이브리드_전체_피벗 = 세단하이브리드_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 세단하이브리드_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단하이브리드전체피벗 = pd.concat([총합_행.to_frame().T, 세단하이브리드_전체_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단하이브리드전체 = 세단하이브리드전체피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 [국내] 세단하이브리드 월별 판매량 (2023년 ~ 2025년 누적) """)
+                st.dataframe(styled_세단하이브리드전체, use_container_width=True)
+
+                # 해외
+                세단_하이브리드 = 전체_해외.loc[전체_해외['카테고리'] == '세단 하이브리드']
+                세단_하이브리드_피벗 = 세단_하이브리드.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                세단_하이브리드_피벗 = 세단_하이브리드_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                세단_하이브리드_피벗.insert(0, '총합', 세단_하이브리드_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                세단_하이브리드_피벗 = 세단_하이브리드_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 세단_하이브리드_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단하이브리드피벗 = pd.concat([총합_행.to_frame().T, 세단_하이브리드_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단하이브리드 = 세단하이브리드피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 [해외] 세단하이브리드 월별 판매량 (2023년 ~ 2025년 누적)""")
+                st.dataframe(styled_세단하이브리드, use_container_width=True)
+
+            elif selected_type == '세단 전기차':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                세단전기차_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == '세단 전기차']
+                세단전기차_전체_피벗 = 세단전기차_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 세단전기차_전체_피벗.sum(axis=1)
+                세단전기차_전체_피벗.insert(0, '총합', 총합)
+                세단전기차_전체_피벗 = 세단전기차_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 세단전기차_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단전기차_전체_피벗 = pd.concat([총합_행.to_frame().T, 세단전기차_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                세단전기차전체_styled = 세단전기차_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_세단전기차전체 = (
+                    세단전기차전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                st.write('')
+                st.write("""##### 📅 세단전기차 연간 총 판매량 """)
+                st.dataframe(styled_세단전기차전체, use_container_width=True)
+
+                # 국내
+                세단전기차_전체 = 전체_국내.loc[전체_국내['카테고리'] == '세단 전기차']
+                세단전기차_전체_피벗 = 세단전기차_전체.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 세단전기차_전체_피벗.sum(axis=1)
+                세단전기차_전체_피벗.insert(0, '총합', 총합)
+                세단전기차_전체_피벗 = 세단전기차_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 세단전기차_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단전기차전체피벗 = pd.concat([총합_행.to_frame().T, 세단전기차_전체_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단전기차전체 = 세단전기차전체피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 [국내] 세단전기차 월별 판매량 (2023년 ~ 2025년 누적) """)
+                st.dataframe(styled_세단전기차전체, use_container_width=True)
+
+                # 해외
+                세단_전기차 = 전체_해외.loc[전체_해외['카테고리'] == '세단 전기차']
+                세단_전기차_피벗 = 세단_전기차.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                세단_전기차_피벗 = 세단_전기차_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                세단_전기차_피벗.insert(0, '총합', 세단_전기차_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                세단_전기차_피벗 = 세단_전기차_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 세단_전기차_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                세단전기차피벗 = pd.concat([총합_행.to_frame().T, 세단_전기차_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_세단전기차 = 세단전기차피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 [해외] 세단전기차 월별 판매량 (2023년 ~ 2025년 누적)""")
+                st.dataframe(styled_세단전기차, use_container_width=True)
+
+            elif selected_type == 'SUV 내연기관':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                SUV내연기관_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == 'SUV 내연기관']
+                SUV내연기관_전체_피벗 = SUV내연기관_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = SUV내연기관_전체_피벗.sum(axis=1)
+                SUV내연기관_전체_피벗.insert(0, '총합', 총합)
+                SUV내연기관_전체_피벗 = SUV내연기관_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = SUV내연기관_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV내연기관_전체_피벗 = pd.concat([총합_행.to_frame().T, SUV내연기관_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                SUV내연기관전체_styled = SUV내연기관_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_SUV내연기관전체 = (
+                    SUV내연기관전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                st.write('')
+                st.write("""##### 📅 SUV내연기관 연간 총 판매량 """)
+                st.dataframe(styled_SUV내연기관전체, use_container_width=True)
+
+                # 국내
+                SUV내연기관_전체 = 전체_국내.loc[전체_국내['카테고리'] == 'SUV 내연기관']
+                SUV내연기관_전체_피벗 = SUV내연기관_전체.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = SUV내연기관_전체_피벗.sum(axis=1)
+                SUV내연기관_전체_피벗.insert(0, '총합', 총합)
+                SUV내연기관_전체_피벗 = SUV내연기관_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = SUV내연기관_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV내연기관전체피벗 = pd.concat([총합_행.to_frame().T, SUV내연기관_전체_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV내연기관전체 = SUV내연기관전체피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 [국내] SUV내연기관 월별 판매량 (2023년 ~ 2025년 누적) """)
+                st.dataframe(styled_SUV내연기관전체, use_container_width=True)
+
+                # 해외
+                SUV_내연기관 = 전체_해외.loc[전체_해외['카테고리'] == 'SUV 내연기관']
+                SUV_내연기관_피벗 = SUV_내연기관.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_내연기관_피벗 = SUV_내연기관_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_내연기관_피벗.insert(0, '총합', SUV_내연기관_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_내연기관_피벗 = SUV_내연기관_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_내연기관_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV내연기관피벗 = pd.concat([총합_행.to_frame().T, SUV_내연기관_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV내연기관 = SUV내연기관피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 [해외] SUV내연기관 월별 판매량 (2023년 ~ 2025년 누적)""")
+                st.dataframe(styled_SUV내연기관, use_container_width=True)
+
+            elif selected_type == 'SUV 하이브리드':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                SUV하이브리드_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == 'SUV 하이브리드']
+                SUV하이브리드_전체_피벗 = SUV하이브리드_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = SUV하이브리드_전체_피벗.sum(axis=1)
+                SUV하이브리드_전체_피벗.insert(0, '총합', 총합)
+                SUV하이브리드_전체_피벗 = SUV하이브리드_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = SUV하이브리드_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV하이브리드_전체_피벗 = pd.concat([총합_행.to_frame().T, SUV하이브리드_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                SUV하이브리드전체_styled = SUV하이브리드_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_SUV하이브리드전체 = (
+                    SUV하이브리드전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                st.write('')
+                st.write("""##### 📅 SUV하이브리드 연간 총 판매량 """)
+                st.dataframe(styled_SUV하이브리드전체, use_container_width=True)
+
+                # 국내
+                SUV하이브리드_전체 = 전체_국내.loc[전체_국내['카테고리'] == 'SUV 하이브리드']
+                SUV하이브리드_전체_피벗 = SUV하이브리드_전체.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = SUV하이브리드_전체_피벗.sum(axis=1)
+                SUV하이브리드_전체_피벗.insert(0, '총합', 총합)
+                SUV하이브리드_전체_피벗 = SUV하이브리드_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = SUV하이브리드_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV하이브리드전체피벗 = pd.concat([총합_행.to_frame().T, SUV하이브리드_전체_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV하이브리드전체 = SUV하이브리드전체피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 [국내] SUV하이브리드 월별 판매량 (2023년 ~ 2025년 누적) """)
+                st.dataframe(styled_SUV하이브리드전체, use_container_width=True)
+
+                # 해외
+                SUV_하이브리드 = 전체_해외.loc[전체_해외['카테고리'] == 'SUV 하이브리드']
+                SUV_하이브리드_피벗 = SUV_하이브리드.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_하이브리드_피벗 = SUV_하이브리드_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_하이브리드_피벗.insert(0, '총합', SUV_하이브리드_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_하이브리드_피벗 = SUV_하이브리드_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_하이브리드_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV하이브리드피벗 = pd.concat([총합_행.to_frame().T, SUV_하이브리드_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV하이브리드 = SUV하이브리드피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 [해외] SUV하이브리드 월별 판매량 (2023년 ~ 2025년 누적)""")
+                st.dataframe(styled_SUV하이브리드, use_container_width=True)
+
+            elif selected_type == 'SUV 전기차':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                SUV전기차_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == 'SUV 전기차']
+                SUV전기차_전체_피벗 = SUV전기차_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = SUV전기차_전체_피벗.sum(axis=1)
+                SUV전기차_전체_피벗.insert(0, '총합', 총합)
+                SUV전기차_전체_피벗 = SUV전기차_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = SUV전기차_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV전기차_전체_피벗 = pd.concat([총합_행.to_frame().T, SUV전기차_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                SUV전기차전체_styled = SUV전기차_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_SUV전기차전체 = (
+                    SUV전기차전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                st.write('')
+                st.write("""##### 📅 SUV전기차 연간 총 판매량 """)
+                st.dataframe(styled_SUV전기차전체, use_container_width=True)
+
+                # 국내
+                SUV전기차_전체 = 전체_국내.loc[전체_국내['카테고리'] == 'SUV 전기차']
+                SUV전기차_전체_피벗 = SUV전기차_전체.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = SUV전기차_전체_피벗.sum(axis=1)
+                SUV전기차_전체_피벗.insert(0, '총합', 총합)
+                SUV전기차_전체_피벗 = SUV전기차_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = SUV전기차_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV전기차전체피벗 = pd.concat([총합_행.to_frame().T, SUV전기차_전체_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV전기차전체 = SUV전기차전체피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 [국내] SUV전기차 월별 판매량 (2023년 ~ 2025년 누적) """)
+                st.dataframe(styled_SUV전기차전체, use_container_width=True)
+
+                # 해외
+                SUV_전기차 = 전체_해외.loc[전체_해외['카테고리'] == 'SUV 전기차']
+                SUV_전기차_피벗 = SUV_전기차.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                SUV_전기차_피벗 = SUV_전기차_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                SUV_전기차_피벗.insert(0, '총합', SUV_전기차_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                SUV_전기차_피벗 = SUV_전기차_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = SUV_전기차_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                SUV전기차피벗 = pd.concat([총합_행.to_frame().T, SUV_전기차_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_SUV전기차 = SUV전기차피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 [해외] SUV전기차 월별 판매량 (2023년 ~ 2025년 누적)""")
+                st.dataframe(styled_SUV전기차, use_container_width=True)
+
+            elif selected_type == '기타':
+                
+                st.subheader("📊 현대 차종별 판매실적 통계 요약")
+                
+                기타_전체 = df_sales_melted.loc[df_sales_melted['카테고리'] == '기타']
+                기타_전체_피벗 = 기타_전체.pivot_table(index='차량 모델', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 기타_전체_피벗.sum(axis=1)
+                기타_전체_피벗.insert(0, '총합', 총합)
+                기타_전체_피벗 = 기타_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 기타_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                기타_전체_피벗 = pd.concat([총합_행.to_frame().T, 기타_전체_피벗])
+
+                # 스타일링을 위해 복사본 생성
+                기타전체_styled = 기타_전체_피벗.copy()
+
+                # 스타일링 적용
+                styled_기타전체 = (
+                    기타전체_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                st.write('')
+                st.write("""##### 📅 기타 연간 총 판매량 """)
+                st.dataframe(styled_기타전체, use_container_width=True)
+
+                # 국내
+                기타_전체 = 전체_국내.loc[전체_국내['카테고리'] == '기타']
+                기타_전체_피벗 = 기타_전체.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+
+                총합 = 기타_전체_피벗.sum(axis=1)
+                기타_전체_피벗.insert(0, '총합', 총합)
+                기타_전체_피벗 = 기타_전체_피벗.sort_values(by='총합', ascending=False)
+                총합_행 = 기타_전체_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                기타전체피벗 = pd.concat([총합_행.to_frame().T, 기타_전체_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_기타전체 = 기타전체피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+                st.write("""##### 📆 [국내] 기타 월별 판매량 (2023년 ~ 2025년 누적) """)
+                st.dataframe(styled_기타전체, use_container_width=True)
+
+                # 해외
+                기타 = 전체_해외.loc[전체_해외['카테고리'] == '기타']
+                기타_피벗 = 기타.pivot_table(index='차량 모델', columns='월', values='판매량', aggfunc='sum', fill_value=0)
+                # 월 순서대로 열 정렬 (총합 열은 아직 없음)
+                기타_피벗 = 기타_피벗.reindex(columns=month_order)
+
+                # 총합 열 추가 (맨 앞에 넣기 위해 insert 사용)
+                기타_피벗.insert(0, '총합', 기타_피벗.sum(axis=1))
+                # 총합 내림차순 정렬
+                기타_피벗 = 기타_피벗.sort_values(by='총합', ascending=False)
+                # 총합 행 추가
+                총합_행 = 기타_피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                기타피벗 = pd.concat([총합_행.to_frame().T, 기타_피벗])
+
+                # --------------------------
+                # 👉 스타일링 (색상 강조 포함)
+                # --------------------------
+                def highlight_total_cells(val, row_idx, col_name):
+                    if row_idx == '총합' or col_name == '총합':
+                        return 'background-color: #d5f5e3'  # 연한 초록색
+                    return ''
+
+                styled_기타 = 기타피벗.style.format('{:,}').apply(
+                    lambda row: [
+                        highlight_total_cells(val, row.name, col)
+                        for col, val in zip(row.index, row)
+                    ],
+                    axis=1
+                ).set_properties(**{'text-align': 'center'}).set_table_styles([
+                    {'selector': 'th', 'props': [('text-align', 'center'), ('background-color', '#f8f9f9')]}
+                ])
+
+                st.write("""##### 📆 [해외] 기타 월별 판매량 (2023년 ~ 2025년 누적)""")
+                st.dataframe(styled_기타, use_container_width=True)
+
+        
         st.markdown("</div>", unsafe_allow_html=True)
 
     if selected == "📈 생산·판매량 간 관계 분석":
@@ -376,5 +2375,3 @@ def run_eda_hyundai():
         df_specs = pd.DataFrame(data)
         st.dataframe(df_specs,hide_index=True,use_container_width=True)
 
-if __name__ == "__main__":
-    run_eda_현대()
