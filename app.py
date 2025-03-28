@@ -55,10 +55,26 @@ def main_menu():
         
         return option_menu(
             menu_title=None,
-            options=["홈","지역별 예측", "기후별 예측", "기아 분석", "현대 분석","시장 트렌드", "프로젝트 개발과정","원본 데이터 확인"],
-            icons=["house", "file-earmark-text",
-                  "car-front", "car-front",
-                  "graph-up", "globe"],
+    options=[
+        "홈",              # 0
+        "지역별 예측",      # 1
+        "기후별 예측",      # 2
+        "기아 분석",        # 3
+        "현대 분석",        # 4
+        "시장 트렌드",      # 5
+        "프로젝트 개발과정", # 6
+        "원본 데이터 확인"   # 7
+    ],
+    icons=[
+        "house",           # 홈
+        "geo-alt",         # 지역별 예측 (지도/지역)
+        "cloud-sun",       # 기후별 예측 (날씨)
+        "truck-front-fill",# 기아 분석 (자동차)
+        "car-front",       # 현대 분석 (차량 중심)
+        "graph-up-arrow",  # 시장 트렌드 (그래프)
+        "tools",           # 프로젝트 개발과정 (공구/도구)
+        "table"            # 원본 데이터 확인 (표)
+    ],
             default_index=0,
             styles={
                 "container": {"padding": "0!important"},
