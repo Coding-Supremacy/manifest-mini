@@ -1353,22 +1353,32 @@ def run_eda_kia():
             @st.cache_data(ttl=300)
             def get_factory_monthly(_melt, year):
                 factory_monthly = _melt[_melt['연도'] == year]\
-                                .groupby(['공장명(국가)', '월'])['판매량'].sum().unstack()
-                
-                fig, ax = plt.subplots(figsize=(12, 6))
-                for factory in factory_monthly.index:
-                    sns.lineplot(x=factory_monthly.columns, y=factory_monthly.loc[factory], 
-                                label=factory, marker='o', linewidth=2.5)
-                plt.title("월별 판매 추이", fontsize=14)
-                plt.xticks(range(1, 13))
-                plt.grid(True, alpha=0.3)
-                plt.legend(title="공장명", bbox_to_anchor=(1.05, 1))
-                plt.tight_layout()
+                                .groupby(['공장명(국가)', '월'])['판매량'].sum().reset_index()
+
+                fig = px.line(
+                    factory_monthly,
+                    x='월',
+                    y='판매량',
+                    color='공장명(국가)',
+                    markers=True,
+                    title="월별 판매 추이"
+                )
+
+                fig.update_layout(
+                    xaxis=dict(tickmode='linear', tick0=1, dtick=1),
+                    yaxis_title='판매량 (대)',
+                    xaxis_title='월',
+                    margin=dict(l=40, r=40, t=60, b=40),
+                    height=600,
+                    legend_title_text="공장명"
+                )
+                fig.update_traces(line=dict(width=2.5))
                 return fig
 
             st.subheader("공장별 월별 판매 추이")
             fig2 = get_factory_monthly(melt_factory, selected_year_factory)
-            st.pyplot(fig2)
+            st.plotly_chart(fig2, use_container_width=True)
+
             
             st.info("""
             **📆 공장별 계절성 패턴:**
