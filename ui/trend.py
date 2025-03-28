@@ -789,6 +789,7 @@ def run_trend():
 
     st.markdown("---") 
 
+    # 🔹 세션 상태에서 'show_data' 값이 없으면 기본값 False로 설정
     if 'show_data' not in st.session_state:
         st.session_state.show_data = False
 
@@ -804,22 +805,28 @@ def run_trend():
         page_size = 7
         total_pages = (len(data) // page_size) + (1 if len(data) % page_size != 0 else 0)
 
+        # 🔹 세션 상태에서 'page' 값이 없으면 기본값 1로 설정
         if 'page' not in st.session_state:
             st.session_state.page = 1
 
         col1, col2, col3 = st.columns([1, 2, 1])
 
+        # ✅ "이전" 버튼 클릭 시, 세션 상태 값만 변경 (버튼을 사용하지 않음)
         with col1:
-            if st.button('◀ 이전'):
-                if st.session_state.page > 1:
+            if st.session_state.page > 1:
+                if st.button('◀ 이전', key="prev"):
                     st.session_state.page -= 1
+
         with col2:
-            st.write(f"페이지 {st.session_state.page}/{total_pages}")
+            st.write(f"페이지 {st.session_state.page} / {total_pages}")
+
+        # ✅ "다음" 버튼 클릭 시, 세션 상태 값만 변경 (버튼을 사용하지 않음)
         with col3:
-            if st.button('다음 ▶'):
-                if st.session_state.page < total_pages:
+            if st.session_state.page < total_pages:
+                if st.button('다음 ▶', key="next"):
                     st.session_state.page += 1
 
+        # 현재 페이지의 데이터 표시
         start_idx = (st.session_state.page - 1) * page_size
         end_idx = start_idx + page_size
         st.dataframe(data.iloc[start_idx:end_idx], height=300)
