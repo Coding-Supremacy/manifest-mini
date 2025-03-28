@@ -11,6 +11,14 @@ import yfinance as yf
 import matplotlib.colors as mcolors
 import pydeck as pdk
 
+# 페이지 설정
+st.set_page_config(
+    page_title="기아 수출량 분석 대시보드",
+    page_icon="🚗",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 
 
 # CSS 스타일 (최종 버전)
@@ -550,6 +558,110 @@ def create_pydeck_map(data, selected_country):
     
     return r
 
+
+import plotly.express as px
+import pandas as pd
+
+def create_interactive_map(data, selected_country, target_year, selected_car_type, selected_car):
+    # 국가 좌표 데이터
+    country_coords = {
+        '미국': {'lat': 37.0902, 'lon': -95.7129},
+        '중국': {'lat': 35.8617, 'lon': 104.1954},
+        '일본': {'lat': 36.2048, 'lon': 138.2529},
+        '독일': {'lat': 51.1657, 'lon': 10.4515},
+        '영국': {'lat': 55.3781, 'lon': -3.4360},
+        '프랑스': {'lat': 46.2276, 'lon': 2.2137},
+        '한국': {'lat': 35.9078, 'lon': 127.7669},
+        '인도': {'lat': 20.5937, 'lon': 78.9629},
+        '브라질': {'lat': -14.2350, 'lon': -51.9253},
+        '캐나다': {'lat': 56.1304, 'lon': -106.3468},
+        '호주': {'lat': -25.2744, 'lon': 133.7751},
+        '이탈리아': {'lat': 41.8719, 'lon': 12.5675},
+        '스페인': {'lat': 40.4637, 'lon': -3.7492},
+        '멕시코': {'lat': 23.6345, 'lon': -102.5528},
+        '인도네시아': {'lat': -0.7893, 'lon': 113.9213},
+        '터키': {'lat': 38.9637, 'lon': 35.2433},
+        '네덜란드': {'lat': 52.1326, 'lon': 5.2913},
+        '스위스': {'lat': 46.8182, 'lon': 8.2275},
+        '사우디아라비아': {'lat': 23.8859, 'lon': 45.0792},
+        '아르헨티나': {'lat': -38.4161, 'lon': -63.6167}
+    }
+
+    # 전년도 데이터 (모든 국가)
+    map_data = data[
+        (data["날짜"].dt.year == target_year-1) &
+        (data["차종 구분"] == selected_car_type) &
+        (data["차량 구분"] == selected_car)
+    ].groupby("국가명")["수출량"].sum().reset_index()
+    
+    # GDP 데이터 추가
+    map_data['GDP (10억$)'] = map_data['국가명'].apply(lambda x: fetch_gdp_data(x) or 0)
+    map_data['GDP_크기'] = map_data['GDP (10억$)'].apply(lambda x: max(10, x/10))  # 시각화를 위한 크기 조정
+    
+    # 국가별 성장률 데이터 추가 (예시)
+    map_data['성장률(%)'] = map_data['국가명'].apply(
+        lambda x: np.random.randint(-10, 30) if x != selected_country else np.random.randint(5, 40))
+    
+    # 색상 설정 (선택 국가는 빨간색, 다른 국가는 파란색)
+    map_data['색상'] = map_data['국가명'].apply(lambda x: 'red' if x == selected_country else 'blue')
+    
+    # 호버 텍스트 생성
+    map_data['hover_text'] = map_data.apply(
+        lambda row: f"<b>{row['국가명']}</b><br>"
+                    f"수출량: {row['수출량']:,.0f}<br>"
+                    f"GDP: {row['GDP (10억$)']:,.1f} (10억$)<br>"
+                    f"성장률: {row['성장률(%)']}%",
+        axis=1
+    )
+    
+    # 지도 생성
+    fig = px.scatter_geo(map_data,
+                        lat=map_data['국가명'].apply(lambda x: country_coords.get(x, {}).get('lat', 0)),
+                        lon=map_data['국가명'].apply(lambda x: country_coords.get(x, {}).get('lon', 0)),
+                        size="GDP_크기",
+                        color="색상",
+                        hover_name="hover_text",
+                        size_max=30,
+                        projection="natural earth",
+                        title=f"{target_year-1}년 {selected_car_type} - {selected_car} 국가별 수출량 현황<br>"
+                             f"<sup>원 크기: GDP 규모, 색상: 선택 국가(빨강) vs 다른 국가(파랑)</sup>")
+    
+    # 선택 국가에 강조 표시 추가
+    fig.add_trace(
+        go.Scattergeo(
+            lat=[map_data[map_data['국가명'] == selected_country]['lat'].iloc[0]],
+            lon=[map_data[map_data['국가명'] == selected_country]['lon'].iloc[0]],
+            text=[selected_country],
+            mode="text",
+            textfont=dict(size=14, color="black", family="Arial Black"),
+            showlegend=False
+        )
+    )
+    
+    # 레이아웃 업데이트
+    fig.update_layout(
+        geo=dict(
+            landcolor='lightgray',
+            lakecolor='lightblue',
+            oceancolor='azure',
+            showcountries=True,
+            countrycolor='white'
+        ),
+        margin={"r":0,"t":80,"l":0,"b":0},
+        hoverlabel=dict(
+            bgcolor="white",
+            font_size=14,
+            font_family="Arial"
+        )
+    )
+    
+    # 색상 범례 제거 (사용자 정의 색상이므로)
+    fig.update_layout(coloraxis_showscale=False)
+    
+    return fig
+
+
+
 def run_ho():
     # 모델 및 데이터 로드
     model = joblib.load("hoyeon/lgbm_tuned_model.pkl")
@@ -980,6 +1092,8 @@ def run_ho():
                                 - 마우스를 조각 위에 올리면 차량명과 정확한 비율을 확인할 수 있습니다.
                             </div>
                             """, unsafe_allow_html=True)
+
+                            
                         else:
                             st.warning(f"{selected_country}의 차량 수출량 데이터가 없습니다.")
                         st.markdown('</div>', unsafe_allow_html=True)  # chart-column 닫기
@@ -1207,5 +1321,3 @@ def run_ho():
                     """, unsafe_allow_html=True)
                     st.markdown('</div>', unsafe_allow_html=True)  # chart-column 닫기
 
-if __name__ == "__main__":
-    run_ho()
