@@ -269,7 +269,7 @@ def run_prediction_region():
                 pdf.set_auto_page_break(auto=True, margin=15)
                 
                 base_dir = os.path.dirname(os.path.abspath(__file__))
-                FONT_PATH = os.path.join(base_dir, "custom_fonts", "NanumGothic.ttf")
+                FONT_PATH = os.path.join(base_dir, "..", "custom_fonts", "NanumGothic.ttf")
                 st.write("폰트 경로:", FONT_PATH)
                 st.write("폰트 존재 여부:", os.path.exists(FONT_PATH))
                 st.write("현재 디렉토리 내용:", os.listdir(base_dir))
