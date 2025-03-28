@@ -320,7 +320,7 @@ def run_prediction_region():
                     pdf.add_page()
                     
                     # 폰트 설정 (배포 환경에서 확인된 경로 사용)
-                    font_path = "/custom_fonts/NanumGothic.ttf"
+                    font_path = "/app/manifest-mini/custom_fonts/NanumGothic.ttf"
                     pdf.add_font("NanumGothic", "", font_path, uni=True)
                     pdf.set_font("NanumGothic", size=10)
                     
