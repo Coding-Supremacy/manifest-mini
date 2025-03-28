@@ -732,9 +732,6 @@ def run_ho():
                 country_info = fetch_country_info(selected_country)
                 
                 # 1. 지도 히트맵 및 인포박스 컨테이너
-
-                st.write("")
-                st.write("")
                 
                 col1, col2 = st.columns(2)
                 
@@ -888,15 +885,15 @@ def run_ho():
                         st.markdown('</div>', unsafe_allow_html=True)  # info-container 닫기
                 
                 # 2. 국가별 차량 수출량 비교 & 차량 종류별 수출량 비교
-                st.write("")
-                
+                st.write()
+                st.markdown("### 📊 추가 분석 차트")
                 col1, col2 = st.columns(2)
                 
                 with col1:
                     # 선택 차량의 국가별 수출량 비교
                     with st.container():
                         st.write("")
-                        st.subheader("📊국가별 수출량 비교")
+                        st.subheader("국가별 수출량 비교")
                         
                         # 데이터 필터링 (최근 1년 데이터)
                         car_data = df_long[
