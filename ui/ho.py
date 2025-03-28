@@ -9,9 +9,6 @@ import requests
 from PIL import Image
 import yfinance as yf
 import matplotlib.colors as mcolors
-# 지도 관련 라이브러리(pydeck)는 제거합니다.
-
-
 
 # CSS 스타일 (최종 버전)
 st.markdown("""
@@ -217,6 +214,32 @@ st.markdown("""
     .country-header {
         display: flex;
         align-items: center;
+        margin-bottom: 1rem;
+    }
+    .prediction-result-box {
+        background-color: #f0f7ff;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #4a6fa5;
+    }
+    .prediction-header {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #2a3f5f;
+        margin-bottom: 1rem;
+    }
+    .prediction-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        text-align: center;
+        margin: 1rem 0;
+        color: #2a3f5f;
+    }
+    .prediction-change {
+        font-size: 1.1rem;
+        text-align: center;
         margin-bottom: 1rem;
     }
 </style>
@@ -676,88 +699,62 @@ def run_ho():
                                 margin=dict(l=20, r=20, t=40, b=20)
                             )
                             st.plotly_chart(fig_climate, use_container_width=True)
+                            
+                            with st.expander("📊 차트 해석 방법"):
+                                st.info("""
+                                - **가로축**: 기후대 (온대, 열대, 한대 등)
+                                - **세로축**: 해당 기후대에서의 총 수출량
+                                - **색상**: 각 기후대를 구분하기 위한 색상
+                                - **해석**: 특정 차종이 어떤 기후대에서 더 잘 팔리는지 확인할 수 있습니다.
+                                """)
                         else:
                             st.warning(f"{target_year-1}년도 {selected_car_type} - {selected_car} 모델의 기후대별 데이터가 없습니다.")
                     
                     st.markdown("### 💰 GDP 대비 수출량 (버블 차트)")
                     bubble_fig = create_gdp_export_scatter(df_long, selected_country)
                     st.plotly_chart(bubble_fig, use_container_width=True)
+                    
+                    with st.expander("📊 버블 차트 해석 방법"):
+                        st.info("""
+                        - **가로축**: 국가의 GDP (10억 달러 단위)
+                        - **세로축**: 해당 국가의 총 수출량
+                        - **버블 크기**: 수출량을 나타냄 (버블이 클수록 수출량이 많음)
+                        - **색상**: 각 국가를 구분하기 위한 색상
+                        - **해석**: 국가의 경제 규모(GDP) 대비 수출량을 비교할 수 있습니다.
+                        """)
                 
                 with col2:
-                    with st.container():
-                        st.markdown(f"""
-                        <div style="background-color:{'#e6f7e6' if yearly_change >=5 else ('#fce8e8' if yearly_change <=-5 else '#fff8e1')}; 
-                                    border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; 
-                                    border-left: 4px solid {'#28a745' if yearly_change >=5 else ('#dc3545' if yearly_change <=-5 else '#ffc107')};">
-                            <div style="font-size:1.2rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
-                                {selected_country} {target_year}년 {target_month}월 예측 수출량
-                            </div>
-                            <div style="font-size:2.5rem; font-weight:bold; text-align:center; margin:1rem 0; color:#2a3f5f;">
-                                {prediction:,.2f}
-                            </div>
-                            <div style="font-size:1.1rem; text-align:center; margin-bottom:1rem;">
-                                전년 동월 대비 <span class="{ 'positive' if yearly_change >= 5 else ('negative' if yearly_change <= -5 else 'neutral') }" style="font-weight:bold;">{abs(yearly_change):.2f}% {"증가" if yearly_change >= 5 else ("감소" if yearly_change <= -5 else "유지")}</span> {"📈" if yearly_change >= 5 else ("📉" if yearly_change <= -5 else "➡️")}
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                    # 예측 결과 표시 - st.info 사용
+                    change_info = get_change_reason(yearly_change)
+                    change_class = "positive" if yearly_change >= 5 else ("negative" if yearly_change <= -5 else "neutral")
+                    
+                    st.info(f"""
+                    **{selected_country} {target_year}년 {target_month}월 예측 수출량**  
+                    **{prediction:,.2f}**  
+                    전년 동월 대비 {'증가' if yearly_change >= 5 else '감소' if yearly_change <= -5 else '유지'}:  
+                    <span style="color:{change_info['color']}; font-weight:bold">{abs(yearly_change):.2f}%</span>  
+                    {change_info['text']}
+                    """, icon="📊")
+                    
+                    # 주요 지표 표시 - st.info 사용
+                    with st.expander("📌 주요 지표", expanded=True):
+                        st.info(f"""
+                        - **차종/차량**: {selected_car_type} - {selected_car}
+                        - **기후대**: {selected_climate}
+                        - **국가 GDP**: {gdp_value:,.2f} (10억 달러)
+                        - **전월 수출량**: {auto_prev_export:,.2f}
+                        - **전년 동월 수출량**: {prev_year_export:,.2f}
+                        - **최근 수출량**: {auto_current_export:,.2f}
+                        """)
+                    
+                    # 변화 원인 분석 - st.info 사용
+                    with st.expander(f"📌 변화 원인 분석 ({change_info['text']})", expanded=True):
+                        st.info("""
+                        **주요 원인:**  
+                        """ + "\n".join([f"- {reason}" for reason in change_info['reason']]) + """
                         
-                        st.markdown("""
-                        <div class="key-metrics-box">
-                            <div style="font-size:1.1rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
-                                주요 지표
-                            </div>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
-                                <div>
-                                    <div style="color:#666; font-size:0.9rem;">차종/차량</div>
-                                    <div style="font-weight:bold; font-size:1rem;">{} - {}</div>
-                                </div>
-                                <div>
-                                    <div style="color:#666; font-size:0.9rem;">기후대</div>
-                                    <div style="font-weight:bold; font-size:1rem;">{}</div>
-                                </div>
-                                <div>
-                                    <div style="color:#666; font-size:0.9rem;">국가 GDP</div>
-                                    <div style="font-weight:bold; font-size:1rem;">{:,.2f} (10억 달러)</div>
-                                </div>
-                                <div>
-                                    <div style="color:#666; font-size:0.9rem;">전월 수출량</div>
-                                    <div style="font-weight:bold; font-size:1rem;">{:,.2f}</div>
-                                </div>
-                                <div>
-                                    <div style="color:#666; font-size:0.9rem;">전년 동월 수출량</div>
-                                    <div style="font-weight:bold; font-size:1rem;">{:,.2f}</div>
-                                </div>
-                                <div>
-                                    <div style="color:#666; font-size:0.9rem;">최근 수출량</div>
-                                    <div style="font-weight:bold; font-size:1rem;">{:,.2f}</div>
-                                </div>
-                            </div>
-                        </div>
-                        """.format(
-                            selected_car_type, selected_car, 
-                            selected_climate, 
-                            gdp_value, 
-                            auto_prev_export,
-                            prev_year_export,
-                            auto_current_export
-                        ), unsafe_allow_html=True)
-                        
-                        st.markdown(f"""
-                        <div class="{ get_change_reason(yearly_change)['box_class'] }">
-                            <div style="font-size:1.1rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
-                                📌 변화 원인 분석 ({ get_change_reason(yearly_change)['text'] })
-                            </div>
-                            <div style="font-size:0.95rem; margin-bottom:1rem;">
-                                <b>주요 원인:</b><br>
-                                {''.join([f'• {reason}<br>' for reason in get_change_reason(yearly_change)['reason']])}
-                            </div>
-                            <div style="font-size:0.95rem;">
-                                <b>제안 사항:</b><br>
-                                {''.join([f'• {suggestion}<br>' for suggestion in get_change_reason(yearly_change)['suggestion']])}
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    st.markdown('</div>', unsafe_allow_html=True)
+                        **제안 사항:**  
+                        """ + "\n".join([f"- {suggestion}" for suggestion in change_info['suggestion']]))
                 
                 with col3:
                     with st.container():
@@ -788,18 +785,16 @@ def run_ho():
                             )
                             st.plotly_chart(fig3, use_container_width=True)
                              
-                            st.markdown("""
-                            <div class="chart-guide">
-                                <b>🥧 차트 해석 방법:</b><br>
-                                - 전체 원은 선택한 국가의 총 수출량을 나타냅니다.<br>
-                                - 각 조각은 차량 종류별 수출량 비율을 나타냅니다.<br>
-                                - 상위 10개 차량만 표시됩니다.<br>
-                                - 마우스를 조각 위에 올리면 차량명과 정확한 비율을 확인할 수 있습니다.
-                            </div>
-                            """, unsafe_allow_html=True)
+                            with st.expander("📊 파이 차트 해석 방법"):
+                                st.info("""
+                                - **전체 원**: 선택한 국가의 총 수출량
+                                - **각 조각**: 차량 종류별 수출량 비율
+                                - **상위 10개** 차량만 표시됨
+                                - **마우스 오버**: 차량명과 정확한 비율 확인 가능
+                                - **해석**: 해당 국가에서 어떤 차종이 가장 인기 있는지 확인할 수 있습니다.
+                                """)
                         else:
                             st.warning(f"{selected_country}의 차량 수출량 데이터가 없습니다.")
-                    st.markdown('</div>', unsafe_allow_html=True)
                 
                 st.write("")
                 st.markdown("### 📊 추가 분석 차트")
@@ -832,21 +827,16 @@ def run_ho():
                     )
                     st.plotly_chart(fig, use_container_width=True)
                     
-                    st.markdown("""
-                    <div class="chart-guide">
-                        <b>📊 차트 해석 방법:</b><br>
-                        - 가로축은 국가명을, 세로축은 수출량을 나타냅니다.<br>
-                        - 각 막대의 높이는 해당 국가의 총 수출량을 나타냅니다.<br>
-                        - 색상이 다르게 표시되어 국가별로 쉽게 구분할 수 있습니다.<br>
-                        - 마우스를 막대 위에 올리면 정확한 수치를 확인할 수 있습니다.
-                    </div>
-                    """, unsafe_allow_html=True)
+                    with st.expander("📊 막대 차트 해석 방법"):
+                        st.info("""
+                        - **가로축**: 국가명
+                        - **세로축**: 해당 국가의 총 수출량
+                        - **색상**: 각 국가를 구분하기 위한 색상
+                        - **마우스 오버**: 정확한 수치 확인 가능
+                        - **해석**: 선택한 차종이 어떤 국가에서 더 잘 팔리는지 비교할 수 있습니다.
+                        """)
                 else:
                     st.warning("선택한 차량의 수출량 데이터가 없습니다.")
-                st.markdown('</div>', unsafe_allow_html=True)
-        
-                
-                   
     
     elif current_tab == "🌍 다중 국가 비교":
         st.header("🌍 다중 국가 비교 분석")
@@ -955,17 +945,16 @@ def run_ho():
                         )
                         st.plotly_chart(fig_annual, use_container_width=True)
                         
-                        st.markdown("""
-                        <div class="chart-guide">
-                            <b>📅 연간 비교 차트 해석 방법:</b><br>
-                            - 가로축은 연도를, 세로축은 수출량을 나타냅니다.<br>
-                            - 색상별로 다른 국가를 구분할 수 있습니다.<br>
-                            - 각 연도별로 국가 간 수출량을 비교할 수 있습니다.
-                        </div>
-                        """, unsafe_allow_html=True)
+                        with st.expander("📊 연간 비교 차트 해석 방법"):
+                            st.info("""
+                            - **가로축**: 연도 (최근 3년)
+                            - **세로축**: 해당 연도의 총 수출량
+                            - **색상**: 각 국가를 구분하기 위한 색상
+                            - **그룹화**: 국가별로 연도별 수출량을 나란히 비교
+                            - **해석**: 국가별로 시간에 따른 수출량 변화 추이를 비교할 수 있습니다.
+                            """)
                     else:
                         st.warning("연간 수출량 데이터가 없습니다.")
-                    st.markdown('</div>', unsafe_allow_html=True)
             
             with col2:
                 with st.container():
@@ -994,17 +983,16 @@ def run_ho():
                         )
                         st.plotly_chart(fig_heatmap, use_container_width=True)
                         
-                        st.markdown("""
-                        <div class="chart-guide">
-                            <b>🔥 히트맵 해석 방법:</b><br>
-                            - 가로축은 국가명을, 세로축은 차량 종류를 나타냅니다.<br>
-                            - 색상이 진할수록 해당 국가에서 해당 차량의 수출량이 많습니다.<br>
-                            - 마우스를 셀 위에 올리면 정확한 수치를 확인할 수 있습니다.
-                        </div>
-                        """, unsafe_allow_html=True)
+                        with st.expander("📊 히트맵 해석 방법"):
+                            st.info("""
+                            - **가로축**: 국가명
+                            - **세로축**: 차량 종류
+                            - **색상 강도**: 해당 국가에서 해당 차량의 수출량 (진할수록 수출량 많음)
+                            - **마우스 오버**: 정확한 수치 확인 가능
+                            - **해석**: 각 국가에서 어떤 차종이 가장 많이 수출되는지 한눈에 파악할 수 있습니다.
+                            """)
                     else:
                         st.warning("히트맵 생성에 필요한 데이터가 없습니다.")
-                    st.markdown('</div>', unsafe_allow_html=True)
             
             st.write("")
             st.markdown("### 📈 국가별 월별 수출량 추이")
@@ -1029,16 +1017,13 @@ def run_ho():
                 )
                 st.plotly_chart(fig_line, use_container_width=True)
                 
-                st.markdown("""
-                <div class="chart-guide">
-                    <b>📈 라인 차트 해석 방법:</b><br>
-                    - 가로축은 월을, 세로축은 수출량을 나타냅니다.<br>
-                    - 색상별로 다른 국가를 구분할 수 있습니다.<br>
-                    - 선의 기울기로 증가/감소 추세를 파악할 수 있습니다.<br>
-                    - 마우스를 선 위에 올리면 정확한 수치를 확인할 수 있습니다.
-                </div>
-                """, unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)
+                with st.expander("📊 라인 차트 해석 방법"):
+                    st.info("""
+                    - **가로축**: 월 (1월~12월)
+                    - **세로축**: 해당 월의 평균 수출량
+                    - **색상**: 각 국가를 구분하기 위한 색상
+                    - **선**: 국가별 월별 수출량 추이
+                    - **마우스 오버**: 정확한 수치 확인 가능
+                    - **해석**: 국가별로 계절적 수요 패턴을 비교할 수 있습니다.
+                    """)
 
-if __name__ == "__main__":
-    run_ho()
