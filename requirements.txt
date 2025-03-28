@@ -20,3 +20,4 @@ yfinance
 lightgbm
 fpdf
 fpdf2
+pathlib
