@@ -36,6 +36,15 @@ def configure_page():
         div[data-testid="stSidebarUserContent"] { padding: 1rem; }
         .stButton>button { width: 100%; }
         .stDownloadButton>button { width: 100%; }
+        /* 컨텐츠 정렬 */
+        .block-container {
+            max-width: 1300px; /* 중앙 정렬을 위한 최대 너비 */
+            margin: auto;
+            padding: 2rem;
+            border-radius: 10px;
+            background-color: white; /* 컨텐츠 부분만 흰색 */
+            box-shadow: 2px 2px 10px rgba(0,0,0,0.1); /* 살짝 그림자 효과 */
+        }
     </style>
     """, unsafe_allow_html=True)
 
