@@ -34,7 +34,7 @@ def run_eda_hyundai():
 
     selected = option_menu(
         menu_title=None,
-        options=["📊 지역별 수출 분석", "🏎️ 차종별 판매 분석", "📈 생산·판매량 간 관계 분석"],
+        options=["📊 지역별 수출 분석", "🏎️ 차종별 판매 분석"],
         default_index=0,
         orientation="horizontal",
         styles={
@@ -308,75 +308,6 @@ def run_eda_hyundai():
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-    if selected == "📈 생산·판매량 간 관계 분석":
-        st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
-        st.subheader("📈 생산·판매량 간 관계 분석")
-        df = pd.read_csv('data/현대_모델별_생산_판매.csv')
-
-        # 1) 특정 모델(Santa-Fe (TMa), Santa-Fe (MX5a))만 별도 분류, 나머지는 '기타'
-        df['특별모델'] = '기타'
-        df.loc[df['차량 모델'] == 'Santa-Fe (TMa)', '특별모델'] = 'Santa-Fe (TMa)'
-        df.loc[df['차량 모델'] == 'Santa-Fe (MX5a)', '특별모델'] = 'Santa-Fe (MX5a)'
-
-        # 2) Plotly Scatter: color='특별모델'로 지정, color_discrete_map으로 색상 매핑
-        fig = px.scatter(
-            df,
-            x="총생산량",
-            y="총판매량",
-            color='특별모델',  # 이 열을 기준으로 색이 달라짐
-            color_discrete_map={
-                'Santa-Fe (TMa)': 'red',     # 빨강
-                'Santa-Fe (MX5a)': 'green', # 초록
-                '기타': 'blue'               # 그 외 모델은 파랑
-            },
-            hover_name="차량 모델",
-            hover_data={"총생산량": True, "총판매량": True, "특별모델": False},
-            title="모델별 총생산량 vs 총판매량"
-        )
-        fig.update_layout(showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)
-
-        st.markdown("""
-        ### 모델별 공장 생산량 vs. 판매 실적 분석
-
-        이 산점도는 각 차량 모델의 <b>공장 생산량(가로축)</b>과 **판매 실적(세로축)** 간의 관계를 시각화한 그래프입니다.
-
-        - **양의 선형 관계**<br>
-        대부분의 모델은 생산량이 증가할수록 판매량도 함께 증가하는 경향을 보여주어<br>**23년~24년간의 생산 계획이 시장 수요를 잘 반영**하고 있음을 시사합니다.
-
-        - **조정이 필요한 특이 모델(Outlier)**
-            - **생산 대비 판매량이 극단적으로 낮은 모델**: 생산이 많음에도 판매가 저조해, **과잉 생산**이나 **시장 수요 부족** 등의 문제가 있을 수 있습니다. 예를 들어, Santa-Fe (TMa)가 이 범주에 속해 재고 누적 위험이 있을 수 있습니다.
-            - **생산 대비 판매량이 예측보다 높은 모델**: 시장에서 좋은 반응을 얻어, **추가 생산 확대**나 **마케팅 지원**을 고려해볼 만한 모델입니다. Santa-Fe (MX5a)가 이 범주에 해당합니다.
-
-                    """, unsafe_allow_html=True)
-
-        data = {
-        '특징': ['세대', '출시 시기', '디자인', '플랫폼', '실내 공간', '주요 특징'],
-        'Santa-Fe (TMa) (4세대)': [
-            '4세대', 
-            '2018년 ~ 2023년', 
-            '곡선 위주', 
-            '이전 세대 플랫폼', 
-            '실용적', 
-            '다양한 파워트레인, 첨단 안전/편의 사양'
-        ],
-        'Santa-Fe (MX5a) (5세대)': [
-            '5세대', 
-            '2023년 하반기 ~ 현재', 
-            '각진 형태', 
-            '현대 N3 플랫폼', 
-            '넓음', 
-            '넓은 공간, 최신 기술, 새로운 디자인'
-        ]
-        }
-        st.markdown(""" 
-        - **특이 모델(Outlier) 분석**
-        - <b><span style="color: red;">Santa-Fe (TMa) (4세대)</b></span>: 생산량에 비해 판매량이 크게 낮은 모델이였습니다.
-        - <b><span style="color: green;">Santa-Fe (MX5a) (5세대)</b></span>: 5세대 출시 이후 수요가 크게 늘어 생산량을 늘리는 것이 필요해 보입니다.
-                    <br> 고객에게 큰 인기를 끌고 있는 모델로, 4세대와의 차이점을 분석하여 다른 차종에도 적용가능한 포인트를 찾아보는 것이 좋을 것 같습니다.
-                    """, unsafe_allow_html=True)
-        df_specs = pd.DataFrame(data)
-        st.dataframe(df_specs,hide_index=True,use_container_width=True)
 
 if __name__ == "__main__":
-    run_eda_현대()
+    run_eda_hyundai()
