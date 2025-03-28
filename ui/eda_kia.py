@@ -7,35 +7,9 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import os
-import platform
 
 # 한글 폰트 설정
-
-@st.cache_data
-def fontRegistered():
-    font_dirs = [os.getcwd() + '../font']
-    font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
-    for font_file in font_files:
-        font_manager.fontManager.addfont(font_file)
-    font_manager._load_fontmanager(try_read_cache=False)
-
-
-
-plt.rcParams['axes.unicode_minus'] = False
-
-if platform.system() == 'Darwin':
-    rc('font', family='AppleGothic')
-elif platform.system() == 'Windows':
-    path = "c:/Windows/Fonts/malgun.ttf"
-    font_name = font_manager.FontProperties(fname=path).get_name()
-    rc('font', family=font_name)
-else:
-    print('Unknown system... sorry~~~~')
-
-plt.rc('font', family='NanumGothic')  # Linux (배포 환경) 사용
-
-# 마이너스 기호 깨짐 방지
+plt.rcParams['font.family'] = 'Malgun Gothic'
 plt.rcParams['axes.unicode_minus'] = False
 
 months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
@@ -46,8 +20,7 @@ def load_data():
     months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
     
     # 지역별 수출 데이터
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    df_export = pd.read_csv(os.path.join(BASE_DIR, "data/기아_지역별수출실적_전처리.csv"))
+    df_export = pd.read_csv("data/기아_지역별수출실적_전처리.csv")
     df_export['연간합계'] = df_export[months].sum(axis=1)
     df_export['차량유형'] = df_export['차량 구분'].str.split('(').str[0]
     
@@ -58,7 +31,7 @@ def load_data():
     melt_export['월'] = melt_export['월'].str.replace('월', '').astype(int)
     
     # 차종별 판매 데이터
-    df_sales = pd.read_csv(os.path.join(BASE_DIR, "data/기아_차종별판매실적.csv"))
+    df_sales = pd.read_csv("data/기아_차종별판매실적.csv")
     df_sales['연간합계'] = df_sales[months].sum(axis=1)
     
     melt_sales = df_sales.melt(id_vars=['차종', '차량 구분', '거래 유형', '연도'],
@@ -68,7 +41,7 @@ def load_data():
     melt_sales['월'] = melt_sales['월'].str.replace('월', '').astype(int)
     
     # 해외공장 판매 데이터
-    df_factory = pd.read_csv(os.path.join(BASE_DIR, "data/기아_해외공장판매실적_전처리.csv"))
+    df_factory = pd.read_csv("data/기아_해외공장판매실적_전처리.csv")
     df_factory['연간합계'] = df_factory[months].sum(axis=1)
     
     melt_factory = df_factory.melt(id_vars=['공장명(국가)', '공장 코드', '차종', '연도'],
@@ -78,7 +51,7 @@ def load_data():
     melt_factory['월'] = melt_factory['월'].str.replace('월', '').astype(int)
     
     # 해외현지판매 데이터
-    df_overseas = pd.read_csv(os.path.join(BASE_DIR, "data/기아_해외현지판매_전처리.csv"))
+    df_overseas = pd.read_csv("data/기아_해외현지판매_전처리.CSV")
     df_overseas['월별합계'] = df_overseas[months].sum(axis=1)
     
     melt_overseas = df_overseas.melt(id_vars=['국가명', '공장명(국가)', '차종', '연도'],
@@ -217,8 +190,6 @@ st.title("🚗 기아 자동차 통합 분석 대시보드 (최적화 버전)")
 
 
 def run_eda_kia():
-
-
     # 세션 상태 초기화
     if 'current_tab' not in st.session_state:
         st.session_state.current_tab = "🌍 지역별 수출 분석"
@@ -226,7 +197,6 @@ def run_eda_kia():
     # 탭 변경 감지 함수
     def on_tab_change():
         st.session_state.current_tab = st.session_state.tab_key
-        
     # 메인 탭 구성
     main_tabs = st.tabs(["🌍 지역별 수출 분석", "🚘 차종별 판매 분석", "🏭 해외공장 판매 분석", "📊 해외현지 판매 분석"])
 
@@ -470,11 +440,140 @@ def run_eda_kia():
                 st.plotly_chart(fig, use_container_width=True)
 
                 st.markdown("""
-                ### 분석 목적
-                1. **시장 동향 파악**: 기아의 글로벌 시장에서의 성과를 시각화하여 전반적인 수출 동향을 파악합니다.
-                2. **지역별 성과 비교**: 다양한 국가 및 지역의 수출 실적을 비교 분석하여 지역별 전략의 효과성을 평가합니다.
-                3. **미래 전략 수립**: 과거와 현재의 데이터를 바탕으로 향후 수출 전략 수립에 필요한 인사이트를 도출합니다.
-                """)
+                <div style="background-color:#FFEBCD; padding:15px; border-radius:10px;">
+                <span style="font-size:20px; font-weight:bold;">📌 주요 시장별 수출량 변화 분석</span><br>
+
+                - **미국(US)** 과 **EU+EFTA**는 가장 높은 수출량을 기록한 주요 시장으로, 전반적으로 안정적인 흐름을 유지하고 있습니다.  
+                - **멕시코**, **중동**, **라틴 아메리카** 등의 지역은 상대적으로 수출량이 낮지만, 일부 구간에서 증가 추세를 보여 **성장 가능성**이 있는 시장으로 분석됩니다.  
+                - 최근 수출량 변동이 큰 국가는 **미국(US), 인도(India), 아시아/퍼시픽 지역** 등으로, 글로벌 수요 또는 정책 변화에 따른 영향을 받고 있는 것으로 해석됩니다. **이들 시장은 지속적인 모니터링과 전략 조정이 필요한 대상**입니다.
+                </div>
+                """, unsafe_allow_html=True)
+
+                st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+                
+                st.divider()
+
+                # 기아 지역별 수출실적 분석 요약표 작업
+
+                df_export.drop(df_export.loc[df_export['차량 구분'] == '총합'].index, inplace=True)
+                
+                df_export_melted =  df_export.melt(id_vars=['차량 구분', '국가명', '연도'], 
+                                        value_vars=["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"] ,
+                                        var_name='월', value_name='판매량')
+            
+                
+                
+                st.subheader("📌 기아 지역별 수출실적 통계 요약")
+                st.write('')
+
+                국가_차종_피벗 = df_export_melted.pivot_table(
+                        index='국가명',
+                        columns='차량 구분',
+                        values='판매량',
+                        aggfunc='sum',
+                        fill_value=0
+                    )
+                총합 = 국가_차종_피벗.sum(axis=1)
+                국가_차종_피벗.insert(0, '총합', 총합)
+                국가_차종_피벗 = 국가_차종_피벗.sort_values(by='총합', ascending=False)
+
+                # 총합 컬럼 빼고 나머지 차종 컬럼만 선택
+                차종_컬럼 = 국가_차종_피벗.columns.drop('총합')
+                # 차종별 총합 기준으로 열 순서 정렬
+                정렬된_열_순서 = 국가_차종_피벗[차종_컬럼].sum().sort_values(ascending=False).index.tolist()
+                # 총합을 맨 앞으로 두고 열 재정렬
+                열_순서 = ['총합'] + 정렬된_열_순서
+                국가차종피벗 = 국가_차종_피벗[열_순서]
+                총합_행 = 국가차종피벗.sum(numeric_only=True)
+                총합_행.name = '총합'
+                국가차종피벗 = pd.concat([총합_행.to_frame().T, 국가차종피벗])
+
+                # 스타일링을 위해 복사본 생성
+                국가_차종_styled = 국가차종피벗.copy()
+
+                # 스타일링 적용
+                styled_국가_차종 = (
+                    국가_차종_styled.style
+                    .format('{:,.0f}')  # 숫자 포맷
+                    .background_gradient(cmap='Blues')
+                )
+                
+                
+                st.write("""##### 🌍 국가별 차종 판매량""")
+                st.dataframe(styled_국가_차종, use_container_width=True)
+
+
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.write('📅 국가 연도별 판매량')
+                    국가_연도별_피벗 = df_export_melted.pivot_table(index='국가명', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+                    총합 = 국가_연도별_피벗.sum(axis=1)
+                    국가_연도별_피벗.insert(0, '총합', 총합)
+                    국가_연도별_피벗 = 국가_연도별_피벗.sort_values(by='총합', ascending=False)
+
+                    st.dataframe(국가_연도별_피벗)
+
+                    차량_연도별_피벗 = df_export_melted.pivot_table(index='차량 구분', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+                    총합 = 차량_연도별_피벗.sum(axis=1)
+                    차량_연도별_피벗.insert(0, '총합', 총합)
+                    차량_연도별_피벗 = 차량_연도별_피벗.sort_values(by='총합', ascending=False)
+
+                    st.write('📅 차량 연도별 판매량')                
+                    
+                    st.dataframe(차량_연도별_피벗)
+                    
+                with col2:
+                    st.write('📆 국가 월별 통계 (2023년~2025년 누적 기준)')
+
+                    # 월 순서를 올바르게 정의
+                    month_order = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
+
+                    국가_월_피벗 = df_export_melted.pivot_table(index='국가명', columns='월', values='판매량', aggfunc='sum', fill_value=0).reindex(columns=month_order)
+                    총합 = 국가_월_피벗.sum(axis=1)
+                    국가_월_피벗.insert(0, '총합', 총합)
+                    국가_월_피벗 = 국가_월_피벗.sort_values(by='총합', ascending=False)
+
+                    st.dataframe(국가_월_피벗)
+
+                    차량_월_피벗 = df_export_melted.pivot_table(index='차량 구분', columns='월', values='판매량', aggfunc='sum', fill_value=0).reindex(columns=month_order)
+                    총합 = 차량_월_피벗.sum(axis=1)
+                    차량_월_피벗.insert(0, '총합', 총합)
+                    차량_월_피벗 = 차량_월_피벗.sort_values(by='총합', ascending=False)
+                    
+                    st.write('📆 차량 월별 판매량')
+                    st.dataframe(차량_월_피벗)
+
+                
+                
+
+                st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+
+                with st.expander("🎯 분석 목적"):
+                    st.markdown("""
+                    <div style='background-color: #F4F6F6; padding: 15px; border-radius: 8px;'>
+                        <h4 style='color:#2E86C1;'>🎯 분석 목적</h4>
+                        <ul>
+                            <li><b style='color:#1F618D'>시장 동향 파악:</b> 글로벌 시장에서의 성과를 시각화하여 전반적인 수출 동향을 파악합니다.</li>
+                            <li><b style='color:#1F618D'>지역별 성과 비교:</b> 다양한 국가 및 지역의 실적을 비교하여 전략의 효과성을 평가합니다.</li>
+                            <li><b style='color:#1F618D'>미래 전략 수립:</b> 과거와 현재 데이터를 기반으로 향후 전략 수립에 필요한 인사이트를 도출합니다.</li>
+                        </ul>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                with st.expander("✨ 분석 장점"):
+                    st.markdown("""
+                    <div style='background-color: #F9F9F9; padding: 15px; border-radius: 8px;'>
+                        <h4 style='color:#2E86C1;'>✨ 분석 장점</h4>
+                        <ol>
+                            <li><b style='color:#117A65'>데이터 기반 의사결정:</b> 객관적인 데이터를 통해 신뢰도 높은 의사결정이 가능합니다.</li>
+                            <li><b style='color:#117A65'>트렌드 예측:</b> 시계열 분석을 통해 향후 시장 흐름을 예측할 수 있습니다.</li>
+                            <li><b style='color:#117A65'>경쟁력 강화:</b> 강점/약점을 파악하고 전략적으로 대응할 수 있습니다.</li>
+                            <li><b style='color:#117A65'>리소스 최적화:</b> 분석을 통해 마케팅 및 생산 자원의 효율적 배분이 가능합니다.</li>
+                            <li><b style='color:#117A65'>이해관계자 커뮤니케이션:</b> 경영진, 투자자와 효과적으로 성과를 공유할 수 있습니다.</li>
+                        </ol>
+                    </div>
+                    """, unsafe_allow_html=True)
             
             st.markdown("</div>", unsafe_allow_html=True)
 
@@ -772,16 +871,237 @@ def run_eda_kia():
                 tickformat="%Y-%m"
             )
 
-            # 차트 출력
+            # 국내 차트 출력
             st.plotly_chart(fig_domestic, use_container_width=True)
-            st.plotly_chart(fig_international, use_container_width=True)
 
-            st.markdown("""
-            ### 분석 내용:
-            - 선택한 차종 카테고리 내 각 모델의 국내 및 해외 판매 추이를 확인할 수 있습니다.
-            - 국내와 해외 판매 추이를 비교하여 전략을 수립하는 데 도움을 줄 수 있습니다.
-            - 특정 차종이 국내 및 해외 시장에서 어떻게 성과를 내고 있는지 확인할 수 있습니다.
-            """)
+            st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+            st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+
+            # 차트별 분석 내용
+            if selected_type == '세단':
+                st.markdown("""
+                <div style="background-color:#fff8e7; padding:15px; border-radius:10px;">
+                <span style="font-size:20px; font-weight:bold;">📌 세단 차종별 국내 판매 분석</span><br>
+
+                - **K5**, **K3**, **K7/K8** 모델은 국내 시장에서 비교적 높은 판매량을 기록하고 있으며, **중형 세단 수요**가 지속되고 있음을 보여줍니다.  
+                - **Stinger**, **K9** 등 고급 세단 모델은 지속적인 감소세를 보여, **단종 또는 전략 조정 필요성**이 제기될 수 있습니다.  
+                - **Ray**의 판매량이 최근 상승세를 보이며, **경차 수요 확대** 가능성이 관찰됩니다.
+                </div>
+                """, unsafe_allow_html=True)
+            elif selected_type == 'SUV':
+                st.markdown("""
+                <div style="background-color:#fff8e7; padding:15px; border-radius:10px;">
+                <span style="font-size:20px; font-weight:bold;">📌 SUV 차종별 국내 판매 분석</span><br>
+
+                - **Sorento**, **Sportage**는 국내 SUV 시장을 선도하고 있으며, **탄탄한 수요 기반**이 유지되고 있습니다.  
+                - **전기 SUV**인 **EV6**, **EV9**는 점진적인 수요 상승을 보이며, **친환경 트렌드**에 따라 향후 확대 가능성이 있습니다.  
+                - **Mohave**는 전통적인 수요층이 존재하나, **점진적 감소세**로 **라인업 재정비 고려**가 필요합니다.
+                </div>
+                """, unsafe_allow_html=True)
+            elif selected_type == '기타':
+                st.markdown("""
+                <div style="background-color:#fff8e7; padding:15px; border-radius:10px;">
+                <span style="font-size:20px; font-weight:bold;">📌 기타 차종별 국내 월별 판매량 분석</span><br>
+                            
+                - Carnival 모델이 압도적으로 높은 국내 판매량을 보이며, 기타 차종 중 가장 인기 있는 차량으로 확인됩니다.
+                - Bongo 또한 일정한 수요를 유지하고 있으며, 상용차로서 안정적인 판매 흐름을 보여줍니다.
+                - Bus와 Military, 특수 모델(Bus/ Bongo) 등은 비교적 판매량이 낮고, 특정 시기에만 수요가 발생하는 패턴을 보입니다.
+                - 전반적으로 Carnival의 판매 흐름이 전체 기타 차종의 국내 시장을 주도하고 있음이 드러납니다.
+                </div>
+                """, unsafe_allow_html=True)
+
+            # 해외 차트 출력
+            st.plotly_chart(fig_international, use_container_width=True)
+            st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+            st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+
+            # 차트별 분석 내용
+            if selected_type == '세단':
+                st.markdown("""
+                <div style="background-color:#eaf4fc; padding:15px; border-radius:10px;">
+                <span style="font-size:20px; font-weight:bold;">📌 세단 차종별 해외 판매 분석</span><br>
+
+                - **Morning/Picanto**는 해외 시장에서 **가장 강력한 수요**를 기록하고 있으며, **소형차 중심의 수요**가 강함을 보여줍니다.  
+                - **K5/Optima**는 2024년 중반 이후 해외 수요가 급증하며, **중형 세단의 글로벌 경쟁력**을 입증하고 있습니다.  
+                - **고급 세단 모델**인 Stinger, K7/K8 등은 **해외 시장에서 낮은 수요**를 보여 **선택적 수출 전략**이 필요합니다.
+                </div>
+                """, unsafe_allow_html=True)
+            elif selected_type == 'SUV':
+                st.markdown("""
+                <div style="background-color:#eaf4fc; padding:15px; border-radius:10px;">
+                <span style="font-size:20px; font-weight:bold;">📌 SUV 차종별 해외 판매 분석</span><br>            
+
+                - **Sportage**, **Seltos**는 해외 시장에서도 높은 판매량을 기록하며, **글로벌 전략 차종**으로서 경쟁력을 입증하고 있습니다.  
+                - **EV6**는 일시적인 수요 급증 이후 다소 하락세로, **전기차 마케팅 전략 재점검**이 필요할 수 있습니다.  
+                - **Mohave**는 해외 수요가 거의 없으며, **EV9**는 출시 초기로 **데이터 확보 및 향후 추이 관찰**이 필요합니다.
+                </div>
+                """, unsafe_allow_html=True)
+                
+            elif selected_type == '기타':
+                st.markdown("""
+                <div style="background-color:#eaf4fc; padding:15px; border-radius:10px;">
+                <span style="font-size:20px; font-weight:bold;">📌 기타 차종별 해외 월별 판매량 분석</span><br>
+
+                - 해외 시장에서도 Carnival/Sedona 모델의 판매 비중이 매우 높으며, 국내와 유사하게 해당 차종이 핵심 수출 모델로 작용하고 있습니다.
+                - Bongo의 해외 수출은 안정적인 흐름을 보이나, 국내보다는 판매량이 낮은 편입니다.
+                - **특수 목적 차량들(Military, 특수 Bus/Bongo)**은 대부분 소량 수출에 머무르고 있으며, 특정 국가나 계약 기반 수요에 의존하는 구조일 수 있습니다.
+                - 전체적으로 기타 차종 중 Carnival이 국내외에서 모두 전략적으로 중요한 모델로 평가됩니다.
+                </div>
+                """, unsafe_allow_html=True)
+
+            # 기아 차종별 판매실적 분석 요약표 작업
+        
+            df_sales_melted =  df_sales.melt(id_vars=['차종', '차량 구분', '거래 유형', '연도'], 
+                                    value_vars=["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"] ,
+                                    var_name='월', value_name='판매량')
+
+            # 카테고리 매핑 딕셔너리 만들기
+            car_category_map = {}
+            for category, models in car_types.items():
+                for model in models:
+                    car_category_map[model] = category
+
+            # df_sales에 카테고리 컬럼 추가
+            df_sales_melted['카테고리'] = df_sales_melted['차종'].map(car_category_map)
+            
+            st.divider()
+            st.subheader("📊 기아 차종별 판매실적 통계 요약")
+            
+            차종_연도_피벗 = df_sales_melted.pivot_table(
+                    index='카테고리',
+                    columns='연도',
+                    values='판매량',
+                    aggfunc='sum',
+                    fill_value=0
+                )
+            총합 = 차종_연도_피벗.sum(axis=1)
+            차종_연도_피벗.insert(0, '총합', 총합)
+            차종_연도_피벗 = 차종_연도_피벗.sort_values(by='총합', ascending=False)
+            
+            # 총합 컬럼 빼고 나머지 차종 컬럼만 선택
+            카테고리_컬럼 = 차종_연도_피벗.columns.drop('총합')
+            # 차종별 총합 기준으로 열 순서 정렬
+            정렬된_열_순서 = 차종_연도_피벗[카테고리_컬럼].sum().sort_values(ascending=False).index.tolist()
+            # 총합을 맨 앞으로 두고 열 재정렬
+            열_순서 = ['총합'] + 정렬된_열_순서
+            차종연도피벗 = 차종_연도_피벗[열_순서]
+            총합_행 = 차종연도피벗.sum(numeric_only=True)
+            총합_행.name = '총합'
+            차종연도피벗 = pd.concat([총합_행.to_frame().T, 차종연도피벗])
+
+            # 스타일링을 위해 복사본 생성
+            차종_연도_styled = 차종연도피벗.copy()
+
+            # 스타일링 적용
+            styled_차종_연도 = (
+                차종_연도_styled.style
+                .format('{:,.0f}')  # 숫자 포맷
+                .background_gradient(cmap='Blues')
+            )
+            
+            st.write('')
+            st.write("""##### 🌍 차종별 전체 판매량(2023년~2025년)""")
+            st.dataframe(styled_차종_연도, use_container_width=True)
+            
+
+            국내 = df_sales_melted.loc[df_sales_melted['거래 유형'] == '국내']
+            해외 = df_sales_melted.loc[df_sales_melted['거래 유형'] != '국내']
+
+            st.write('')
+            st.write("""##### 🚙 카테고리별 차종 판매량 (연도 기준) """)
+            st.info('##### - 국내 카테고리별 차종')
+            col1, col2, col3 = st.columns(3)    
+            # 국내 카테고리별 차종 판매량
+            with col1: 
+           
+                국내_세단 = 국내.loc[국내['카테고리'] == '세단']
+                국내_세단_피벗 = 국내_세단.pivot_table(index='차종', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+                
+                st.markdown("<h5 style='text-align:center;'>세단</h5>", unsafe_allow_html=True)
+                st.dataframe(국내_세단_피벗)
+
+            with col2:
+
+                국내_SUV = 국내.loc[국내['카테고리'] == 'SUV']
+                국내_SUV_피벗 = 국내_SUV.pivot_table(index='차종', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                st.markdown("<h5 style='text-align:center;'>SUV</h5>", unsafe_allow_html=True)
+                st.dataframe(국내_SUV_피벗)    
+
+            with col3:
+
+                국내_기타 = 국내.loc[국내['카테고리'] == '기타']
+                국내_기타_피벗 = 국내_기타.pivot_table(index='차종', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                st.markdown("<h5 style='text-align:center;'>기타</h5>", unsafe_allow_html=True)
+                st.dataframe(국내_기타_피벗)
+
+            st.success('##### - 해외 카테고리별 차종')
+            col1, col2, col3 = st.columns(3)    
+            # 해외 카테고리 차종별 판매량
+            with col1: 
+                
+                해외_세단 = 해외.loc[해외['카테고리'] == '세단']
+                해외_세단_피벗 = 해외_세단.pivot_table(index='차종', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+                
+                st.markdown("<h5 style='text-align:center;'>세단</h5>", unsafe_allow_html=True)
+                st.dataframe(해외_세단_피벗)
+
+            with col2:
+
+                해외_SUV = 해외.loc[해외['카테고리'] == 'SUV']
+                해외_SUV_피벗 = 해외_SUV.pivot_table(index='차종', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                st.markdown("<h5 style='text-align:center;'>SUV</h5>", unsafe_allow_html=True)
+                st.dataframe(해외_SUV_피벗)    
+
+            with col3:
+
+                해외_기타 = 해외.loc[해외['카테고리'] == '기타']
+                해외_기타_피벗 = 해외_기타.pivot_table(index='차종', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+                st.markdown("<h5 style='text-align:center;'>기타</h5>", unsafe_allow_html=True)
+                st.dataframe(해외_기타_피벗)
+
+            
+
+
+            with st.expander("📊 분석 내용"):
+                st.markdown("""
+                <div style='background-color: #F4F6F6; padding: 15px; border-radius: 8px;'>
+                    <h4 style='color:#2E86C1;'>📊 분석 내용</h4>
+                    <ul>
+                        <li>선택한 차종 카테고리 내 각 모델의 <b>국내 및 해외 판매 추이</b>를 확인할 수 있습니다.</li>
+                        <li>국내와 해외 판매 추이를 비교하여 <b>전략 수립에 도움</b>을 줄 수 있습니다.</li>
+                        <li>특정 차종이 <b>어떤 시장에서 유망한지</b> 확인하고, 글로벌 트렌드에 맞춰 분석할 수 있습니다.</li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with st.expander("🎯 분석 목적"):
+                st.markdown("""
+                <div style='background-color: #F9F9F9; padding: 15px; border-radius: 8px;'>
+                    <h4 style='color:#2E86C1;'>🎯 분석 목적</h4>
+                    <ol>
+                        <li><b style='color:#1F618D'>국내외 판매 추이 비교:</b> 국내외 실적을 비교하여 시장별 성과 차이를 파악합니다.</li>
+                        <li><b style='color:#1F618D'>글로벌 시장 전략 수립:</b> 향후 해외 진출 및 수출 전략 설계에 활용됩니다.</li>
+                        <li><b style='color:#1F618D'>차종별 판매 동향 분석:</b> 월별 추이를 기반으로 인기/부진 모델을 파악할 수 있습니다.</li>
+                    </ol>
+                </div>
+                """, unsafe_allow_html=True)
+
+            with st.expander("✨ 분석 장점"):
+                st.markdown("""
+                <div style='background-color: #F9F9F9; padding: 15px; border-radius: 8px;'>
+                    <h4 style='color:#2E86C1;'>✨ 분석 장점</h4>
+                    <ol>
+                        <li><b style='color:#117A65'>시장 맞춤 전략 수립:</b> 시장별 맞춤 전략으로 효과적인 마케팅 및 생산 전략 설계 가능</li>
+                        <li><b style='color:#117A65'>시기별 판매 변화 분석:</b> 시즌 및 프로모션에 따른 수요 변화를 시각화할 수 있습니다.</li>
+                        <li><b style='color:#117A65'>차종별 판매 성과 평가:</b> 강점 모델 강화, 약점 모델 보완 전략 도출 가능</li>
+                        <li><b style='color:#117A65'>국내외 판매 비교:</b> 지역별 차종 성과를 기반으로 전략적 수출 비중 조정 가능</li>
+                    </ol>
+                </div>
+                """, unsafe_allow_html=True)
             
             st.markdown("</div>", unsafe_allow_html=True)
 
