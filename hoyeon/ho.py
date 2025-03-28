@@ -301,7 +301,8 @@ def run_ho():
             yearly_change = ((prediction - prev_year_export) / prev_year_export * 100) if prev_year_export != 0 else 0
             change_info = get_change_reason(yearly_change)
             gdp_value = fetch_gdp_data(selected_country) or df[df["국가명"] == selected_country]["GDP"].iloc[0]
-            
+            st.write("")
+            st.write("")
             # 예측 결과 표시
             st.markdown("### 📌 예측 결과 요약")
 
@@ -369,6 +370,8 @@ def run_ho():
                     <div style="font-size:1.2rem; font-weight:bold;">{selected_climate}</div>
                 </div>
                 """, unsafe_allow_html=True)
+
+            st.write("")   
             
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -396,6 +399,9 @@ def run_ho():
                 </div>
                 """, unsafe_allow_html=True)
             
+
+            st.write("")
+            st.write("")
             # 분석 인사이트 섹션
             st.markdown("### 🔍 분석 인사이트")
             with st.container():
@@ -409,6 +415,8 @@ def run_ho():
                 """, unsafe_allow_html=True)
             
             # 차트 분석 섹션
+            st.write("")
+            st.write("")
             st.markdown("### 📊 차트 분석")
             
             # 첫 번째 행 차트
