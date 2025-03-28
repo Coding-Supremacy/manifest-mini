@@ -687,6 +687,15 @@ def run_eda_kia():
         
         with sub_tab2:
 
+            # 2024년이 있는지 확인하고 인덱스 찾기
+            default_year = 2024
+            try:
+                default_index = years.index(default_year)
+            except ValueError:
+                # 2024년이 없으면 가장 최근 연도로 설정
+                default_index = len(years) - 1
+                st.warning(f"2024년 데이터가 없어서 가장 최근 연도인 {years[-1]}년을 표시합니다.")
+
             selected_year = st.selectbox(
             "연도 선택",
             options=sorted(df_sales['연도'].unique()),
