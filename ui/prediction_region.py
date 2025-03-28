@@ -315,8 +315,9 @@ def run_prediction_region():
                 pdf.add_page()
                 pdf.set_auto_page_break(auto=True, margin=15)
                 
-                FONT_PATH ="custom_fonts/NanumGothicCoding.ttf"
-                
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                FONT_PATH = os.path.join(base_dir, "custom_fonts", "NanumGothic.ttf")
+                st.write(FONT_PATH)
                 if os.path.exists(FONT_PATH):
                     pdf.add_font("NanumGothic", "", FONT_PATH, uni=True)
                     pdf.set_font("NanumGothic", size=10)
