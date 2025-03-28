@@ -694,27 +694,27 @@ def run_eda_kia():
             key='sales_year_sub_tab2'
         )
 
-        # 3. 상위 차종 월별 추이 (막대그래프 버전)
+        # 3. 상위 차종 월별 추이 (겹쳐진 막대그래프 버전)
         @st.cache_data(ttl=300)
         def get_monthly_trend_top5(_melt, year, models, n=5):
             top5 = models[:n]
             monthly_top5 = _melt[
                 (_melt['연도'] == year) & 
                 (_melt['차종'].isin(top5))
-            ].groupby(['차종', '월'])['판매량'].sum().unstack().T
+            ].groupby(['월', '차종'])['판매량'].sum().unstack()
             
             fig, ax = plt.subplots(figsize=(12, 6))
-            monthly_top5.plot(kind='bar', ax=ax, width=0.8)
-            plt.title("월별 판매 동향 (상위 5개 차종)", fontsize=14)
+            monthly_top5.plot(kind='bar', stacked=True, ax=ax, width=0.8)
+            plt.title("월별 판매 동향 - 상위 5개 차종 (누적)", fontsize=14)
             plt.xlabel("월")
-            plt.ylabel("판매량")
-            plt.xticks(range(12), range(1, 13))  # 1월부터 12월까지 표시
-            plt.grid(True, alpha=0.3)
+            plt.ylabel("판매량 (누적)")
+            plt.xticks(range(12), range(1, 13), rotation=0)  # 1월~12월 표시
+            plt.grid(axis='y', alpha=0.3)
             plt.legend(title='차종', bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.tight_layout()
             return fig
 
-        st.subheader("상위 5개 차종 월별 추이 (막대그래프)")
+        st.subheader("상위 5개 차종 월별 추이 (겹쳐진 막대그래프)")
         fig3 = get_monthly_trend_top5(melt_sales, selected_year, top_models)
         st.pyplot(fig3)
 
@@ -805,7 +805,7 @@ def run_eda_kia():
         - 패키지 할인: {model1}+{model2} 동시 구매 시 {5 if abs(model1_total-model2_total)<3000 else 7}% 추가 할인
         - 공통 마케팅: 두 모델 모두 강점을 보이는 {list(set([model1_peak, model2_peak]))[0]}월에 통합 캠페인 진행
         """)
-        
+
         with sub_tab3:
 
             car_types = {
