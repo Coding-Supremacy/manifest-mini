@@ -9,34 +9,23 @@ import requests
 from PIL import Image
 import yfinance as yf
 import matplotlib.colors as mcolors
+# 지도 관련 라이브러리(pydeck)는 제거합니다.
+
+
 
 # CSS 스타일 (최종 버전)
 st.markdown("""
 <style>
-    :root {
-        --primary-color: #4a6fa5;
-        --secondary-color: #166088;
-        --positive-color: #28a745;
-        --negative-color: #dc3545;
-        --neutral-color: #ffc107;
-        --light-bg: #f8f9fa;
-        --card-bg: #ffffff;
-        --text-color: #2a3f5f;
-    }
-    
     .main {
-        background-color: var(--light-bg);
+        background-color: #f8f9fa;
         padding: 2rem;
     }
-    
-    /* 탭 버튼 스타일 */
     .tab-button-container {
         display: flex;
         justify-content: center;
         margin-bottom: 2rem;
         gap: 1rem;
     }
-    
     .tab-button {
         padding: 1rem 2rem;
         border-radius: 8px;
@@ -49,166 +38,186 @@ st.markdown("""
         width: 100%;
         font-size: 1rem;
     }
-    
     .tab-button:hover {
         background-color: #dee2e6;
     }
-    
     .tab-button.active {
-        background-color: var(--primary-color);
+        background-color: #4a6fa5;
         color: white;
         font-weight: bold;
     }
-    
-    /* 카드 스타일 */
-    .card {
-        background-color: var(--card-bg);
-        border-radius: 12px;
+    .highlight-box {
+        background-color: #f0f7ff;
+        border: 2px solid #2a3f5f;
         padding: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        margin-bottom: 1.5rem;
-        border-left: 4px solid var(--primary-color);
-    }
-    
-    .card-header {
-        font-size: 1.2rem;
-        font-weight: bold;
-        color: var(--text-color);
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-    }
-    
-    .card-header i {
-        margin-right: 10px;
-        font-size: 1.5rem;
-    }
-    
-    /* 예측 결과 박스 */
-    .prediction-card {
-        background-color: var(--card-bg);
         border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
     }
-    
-    .prediction-positive {
-        border-left: 4px solid var(--positive-color);
-    }
-    
-    .prediction-negative {
-        border-left: 4px solid var(--negative-color);
-    }
-    
-    .prediction-neutral {
-        border-left: 4px solid var(--neutral-color);
-    }
-    
-    .prediction-value {
-        font-size: 2.5rem;
-        font-weight: bold;
-        text-align: center;
-        margin: 1rem 0;
-        color: var(--text-color);
-    }
-    
-    .prediction-change {
-        font-size: 1.1rem;
-        text-align: center;
-        margin-bottom: 1rem;
-        font-weight: bold;
-    }
-    
-    /* 지표 박스 */
     .metric-container {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
+        border-radius: 10px;
+        padding: 1.5rem;
+        background-color: white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         margin-bottom: 1.5rem;
     }
-    
-    .metric-item {
-        background-color: var(--light-bg);
-        border-radius: 8px;
-        padding: 1rem;
-    }
-    
-    .metric-label {
-        font-size: 0.9rem;
+    .metric-title {
+        font-size: 1rem;
         color: #666;
         margin-bottom: 0.5rem;
     }
-    
     .metric-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2a3f5f;
+    }
+    .metric-change {
         font-size: 1.2rem;
         font-weight: bold;
-        color: var(--text-color);
+        margin-top: 0.5rem;
     }
-    
-    /* 차트 가이드 */
+    .positive {
+        color: #28a745;
+    }
+    .negative {
+        color: #dc3545;
+    }
+    .neutral {
+        color: #ffc107;
+    }
     .chart-guide {
-        background-color: var(--light-bg);
-        border-radius: 8px;
-        padding: 1rem;
+        background-color: #f5f5f5;
+        padding: 1.2rem;
+        border-radius: 10px;
         margin-top: 1rem;
         font-size: 0.9rem;
-        color: var(--text-color);
+        color: #333;
+        line-height: 1.6;
         border-left: 4px solid #6c757d;
     }
-    
-    /* 버튼 스타일 */
+    .country-info-card {
+        background-color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    .summary-box {
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+    .summary-item {
+        background-color: white;
+        border-radius: 10px;
+        padding: 1.2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .map-info-container {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    .map-container {
+        flex: 1;
+        background-color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .info-container {
+        flex: 1;
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .reason-box-positive {
+        background-color: #e6f7e6;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #28a745;
+    }
+    .reason-box-negative {
+        background-color: #fce8e8;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #dc3545;
+    }
+    .reason-box-neutral {
+        background-color: #fff8e1;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #ffc107;
+    }
+    .key-metrics-box {
+        background-color: #f0f7ff;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 4px solid #4a6fa5;
+    }
+    .chart-columns {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+    .chart-column {
+        flex: 1;
+        background-color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
     .stButton>button {
-        background-color: var(--primary-color);
+        background-color: #4a6fa5;
         color: white;
         border-radius: 8px;
         padding: 0.75rem 1.5rem;
         font-size: 1rem;
-        transition: all 0.3s ease;
     }
-    
     .stButton>button:hover {
-        background-color: var(--secondary-color);
+        background-color: #3a5f95;
         color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    
-    /* 섹션 제목 */
     .section-title {
         font-size: 1.5rem;
-        color: var(--text-color);
+        color: #2a3f5f;
         margin-bottom: 1.5rem;
         padding-bottom: 0.5rem;
         border-bottom: 2px solid #e6e6e6;
-        display: flex;
-        align-items: center;
     }
-    
-    .section-title i {
-        margin-right: 10px;
+    .feature-description {
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #4a6fa5;
     }
-    
-    /* 기타 */
-    .positive {
-        color: var(--positive-color);
-    }
-    
-    .negative {
-        color: var(--negative-color);
-    }
-    
-    .neutral {
-        color: var(--neutral-color);
-    }
-    
     .flag-img {
         width: 40px;
         height: 25px;
         object-fit: cover;
         border: 1px solid #ddd;
         margin-right: 10px;
-        border-radius: 4px;
+    }
+    .country-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -327,9 +336,8 @@ def get_change_reason(change_rate):
                 "📌 현지 서비스 네트워크 강화 필요",
                 "📌 가격 인상 가능성 검토"
             ],
-            "color": "#28a745",
-            "box_class": "prediction-positive",
-            "icon": "📈"
+            "color": "#2e7d32",
+            "box_class": "reason-box-positive"
         }
     elif 15 < change_rate <= 30:
         return {
@@ -347,8 +355,7 @@ def get_change_reason(change_rate):
                 "📌 고객 만족도 조사 실시"
             ],
             "color": "#4caf50",
-            "box_class": "prediction-positive",
-            "icon": "📈"
+            "box_class": "reason-box-positive"
         }
     elif 5 < change_rate <= 15:
         return {
@@ -366,8 +373,7 @@ def get_change_reason(change_rate):
                 "📌 경쟁사 동향 모니터링"
             ],
             "color": "#8bc34a",
-            "box_class": "prediction-positive",
-            "icon": "📈"
+            "box_class": "reason-box-positive"
         }
     elif -5 <= change_rate <= 5:
         return {
@@ -385,8 +391,7 @@ def get_change_reason(change_rate):
                 "📌 마케팅 전략 재검토"
             ],
             "color": "#ffc107",
-            "box_class": "prediction-neutral",
-            "icon": "➡️"
+            "box_class": "reason-box-neutral"
         }
     elif -15 <= change_rate < -5:
         return {
@@ -404,8 +409,7 @@ def get_change_reason(change_rate):
                 "📌 모델 업데이트 계획 수립"
             ],
             "color": "#ff9800",
-            "box_class": "prediction-negative",
-            "icon": "📉"
+            "box_class": "reason-box-neutral"
         }
     elif -30 <= change_rate < -15:
         return {
@@ -424,8 +428,7 @@ def get_change_reason(change_rate):
                 "📌 본사 지원 필요"
             ],
             "color": "#f44336",
-            "box_class": "prediction-negative",
-            "icon": "📉"
+            "box_class": "reason-box-negative"
         }
     else:
         return {
@@ -444,8 +447,7 @@ def get_change_reason(change_rate):
                 "📌 시장 철수 가능성 검토"
             ],
             "color": "#b71c1c",
-            "box_class": "prediction-negative",
-            "icon": "📉"
+            "box_class": "reason-box-negative"
         }
 
 def create_tab_buttons():
@@ -484,8 +486,8 @@ def run_ho():
     model_columns = joblib.load("hoyeon/model_columns.pkl")  
     df = pd.read_csv("hoyeon/기아.csv")
     
-    # 대시보드 제목
-    st.markdown("<h1 style='text-align: center; color: #2a3f5f; margin-bottom: 2rem;'>기아 자동차 수출량 분석 대시보드</h1>", unsafe_allow_html=True)
+    # 대시보드 제목 (st.title로 단순하게 표시)
+    st.title("기아 자동차 수출량 분석 대시보드")
     
     # 데이터 전처리
     id_vars = ['국가명', '연도', '기후대', 'GDP', '차종 구분', '차량 구분']
@@ -511,21 +513,21 @@ def run_ho():
         st.header("📊 단일 국가 수출량 예측")
         
         # 기능 설명 추가
-        with st.expander("ℹ️ 기능 설명 보기", expanded=False):
-            st.info("""
-            **단일 국가 예측 기능 사용 방법**  
-            이 기능은 특정 국가의 특정 차종에 대한 수출량을 예측합니다. 다음과 같은 경우에 유용합니다:
-            - 특정 국가의 수출 전략 수립 전 예측이 필요할 때
-            - 특정 차종의 수요 예측이 필요할 때
-            - 전년 대비 성장률 분석이 필요할 때
-            - 새로운 유입 국가 추가시 수출모델 예측이 필요할 때
-
-            **사용 방법:**  
-            왼쪽에서 국가, 차종, 예측 연도/월을 선택한 후 "예측 실행" 버튼을 클릭하세요.
-
-            **결과 해석:**  
-            예측 결과는 차트와 수치로 표시되며, 전년 대비 변화율과 원인 분석도 제공합니다.
-            """)
+        with st.container():
+            st.markdown("""
+            <div class="feature-description">
+                <h4>📌 단일 국가 예측 기능 사용 방법</h4>
+                <p>이 기능은 특정 국가의 특정 차종에 대한 수출량을 예측합니다. 다음과 같은 경우에 유용합니다:</p>
+                <ul>
+                    <li>특정 국가의 수출 전략 수립 전 예측이 필요할 때</li>
+                    <li>특정 차종의 수요 예측이 필요할 때</li>
+                    <li>전년 대비 성장률 분석이 필요할 때</li>
+                    <li>새로운 유입 국가 추가시 수출모델 예측이 필요할 때</li>
+                </ul>
+                <p><b>사용 방법:</b> 왼쪽에서 국가, 차종, 예측 연도/월을 선택한 후 "예측 실행" 버튼을 클릭하세요.</p>
+                <p><b>결과 해석:</b> 예측 결과는 차트와 수치로 표시되며, 전년 대비 변화율과 원인 분석도 제공합니다.</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         with st.expander("🔍 분석 조건 설정", expanded=True):
             col1, col2 = st.columns(2)
@@ -650,16 +652,11 @@ def run_ho():
                     st.markdown("### 🌦️ 기후대별 차량 수출량 분석")
                     with st.container():
                         climate_data = df_long[
-                            ((df_long["차종 구분"] == selected_car_type) | (df_long["차량 구분"] == selected_car)) &
+                            ((df_long["차종 구분"] == selected_car_type) | (df_long["차량 구분"] == selected_car)) |
                             (df_long["날짜"].dt.year == target_year-1)
                         ].groupby("기후대")["수출량"].sum().reset_index()
                         
                         if not climate_data.empty:
-                            # 기후대 순서 정의 (건조, 온대, 열대, 한대)
-                            climate_order = ['건조', '온대', '열대', '한대']
-                            climate_data['기후대'] = pd.Categorical(climate_data['기후대'], categories=climate_order, ordered=True)
-                            climate_data = climate_data.sort_values('기후대')
-                            
                             fig_climate = px.bar(
                                 climate_data,
                                 x="기후대",
@@ -679,106 +676,88 @@ def run_ho():
                                 margin=dict(l=20, r=20, t=40, b=20)
                             )
                             st.plotly_chart(fig_climate, use_container_width=True)
-                            
-                            with st.expander("📊 차트 해석 방법", expanded=False):
-                                st.info("""
-                                - **가로축**: 기후대 (건조, 온대, 열대, 한대)
-                                - **세로축**: 해당 기후대에서의 총 수출량
-                                - **색상**: 각 기후대를 구분하기 위한 색상
-                                - **해석**: 특정 차종이 어떤 기후대에서 더 잘 팔리는지 확인할 수 있습니다.
-                                """)
                         else:
                             st.warning(f"{target_year-1}년도 {selected_car_type} - {selected_car} 모델의 기후대별 데이터가 없습니다.")
                     
                     st.markdown("### 💰 GDP 대비 수출량 (버블 차트)")
                     bubble_fig = create_gdp_export_scatter(df_long, selected_country)
                     st.plotly_chart(bubble_fig, use_container_width=True)
-                    
-                    with st.expander("📊 버블 차트 해석 방법", expanded=False):
-                        st.info("""
-                        - **가로축**: 국가의 GDP (10억 달러 단위)
-                        - **세로축**: 해당 국가의 총 수출량
-                        - **버블 크기**: 수출량을 나타냄 (버블이 클수록 수출량이 많음)
-                        - **색상**: 각 국가를 구분하기 위한 색상
-                        - **해석**: 국가의 경제 규모(GDP) 대비 수출량을 비교할 수 있습니다.
-                        """)
                 
                 with col2:
-                    # 예측 결과 카드
-                    change_info = get_change_reason(yearly_change)
-                    change_class = "positive" if yearly_change >= 5 else ("negative" if yearly_change <= -5 else "neutral")
-                    
-                    st.markdown(f"""
-                    <div class="prediction-card {change_info['box_class']}">
-                        <div class="card-header">
-                            {change_info['icon']} {selected_country} {target_year}년 {target_month}월 예측 수출량
+                    with st.container():
+                        st.markdown(f"""
+                        <div style="background-color:{'#e6f7e6' if yearly_change >=5 else ('#fce8e8' if yearly_change <=-5 else '#fff8e1')}; 
+                                    border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; 
+                                    border-left: 4px solid {'#28a745' if yearly_change >=5 else ('#dc3545' if yearly_change <=-5 else '#ffc107')};">
+                            <div style="font-size:1.2rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
+                                {selected_country} {target_year}년 {target_month}월 예측 수출량
+                            </div>
+                            <div style="font-size:2.5rem; font-weight:bold; text-align:center; margin:1rem 0; color:#2a3f5f;">
+                                {prediction:,.2f}
+                            </div>
+                            <div style="font-size:1.1rem; text-align:center; margin-bottom:1rem;">
+                                전년 동월 대비 <span class="{ 'positive' if yearly_change >= 5 else ('negative' if yearly_change <= -5 else 'neutral') }" style="font-weight:bold;">{abs(yearly_change):.2f}% {"증가" if yearly_change >= 5 else ("감소" if yearly_change <= -5 else "유지")}</span> {"📈" if yearly_change >= 5 else ("📉" if yearly_change <= -5 else "➡️")}
+                            </div>
                         </div>
-                        <div class="prediction-value" style="color: {change_info['color']}">
-                            {prediction:,.0f}대
+                        """, unsafe_allow_html=True)
+                        
+                        st.markdown("""
+                        <div class="key-metrics-box">
+                            <div style="font-size:1.1rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
+                                주요 지표
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                                <div>
+                                    <div style="color:#666; font-size:0.9rem;">차종/차량</div>
+                                    <div style="font-weight:bold; font-size:1rem;">{} - {}</div>
+                                </div>
+                                <div>
+                                    <div style="color:#666; font-size:0.9rem;">기후대</div>
+                                    <div style="font-weight:bold; font-size:1rem;">{}</div>
+                                </div>
+                                <div>
+                                    <div style="color:#666; font-size:0.9rem;">국가 GDP</div>
+                                    <div style="font-weight:bold; font-size:1rem;">{:,.2f} (10억 달러)</div>
+                                </div>
+                                <div>
+                                    <div style="color:#666; font-size:0.9rem;">전월 수출량</div>
+                                    <div style="font-weight:bold; font-size:1rem;">{:,.2f}</div>
+                                </div>
+                                <div>
+                                    <div style="color:#666; font-size:0.9rem;">전년 동월 수출량</div>
+                                    <div style="font-weight:bold; font-size:1rem;">{:,.2f}</div>
+                                </div>
+                                <div>
+                                    <div style="color:#666; font-size:0.9rem;">최근 수출량</div>
+                                    <div style="font-weight:bold; font-size:1rem;">{:,.2f}</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="prediction-change">
-                            전년 동월 대비 <span class="{change_class}">{abs(yearly_change):.1f}% {"증가" if yearly_change >= 5 else ("감소" if yearly_change <= -5 else "유지")}</span>
+                        """.format(
+                            selected_car_type, selected_car, 
+                            selected_climate, 
+                            gdp_value, 
+                            auto_prev_export,
+                            prev_year_export,
+                            auto_current_export
+                        ), unsafe_allow_html=True)
+                        
+                        st.markdown(f"""
+                        <div class="{ get_change_reason(yearly_change)['box_class'] }">
+                            <div style="font-size:1.1rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
+                                📌 변화 원인 분석 ({ get_change_reason(yearly_change)['text'] })
+                            </div>
+                            <div style="font-size:0.95rem; margin-bottom:1rem;">
+                                <b>주요 원인:</b><br>
+                                {''.join([f'• {reason}<br>' for reason in get_change_reason(yearly_change)['reason']])}
+                            </div>
+                            <div style="font-size:0.95rem;">
+                                <b>제안 사항:</b><br>
+                                {''.join([f'• {suggestion}<br>' for suggestion in get_change_reason(yearly_change)['suggestion']])}
+                            </div>
                         </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # 주요 지표 카드
-                    with st.expander("📌 주요 지표", expanded=True):
-                        col1, col2 = st.columns(2)
-                        
-                        with col1:
-                            st.markdown("""
-                            <div class="metric-item">
-                                <div class="metric-label">차종/차량</div>
-                                <div class="metric-value">{} - {}</div>
-                            </div>
-                            """.format(selected_car_type, selected_car), unsafe_allow_html=True)
-                            
-                            st.markdown("""
-                            <div class="metric-item">
-                                <div class="metric-label">국가 GDP</div>
-                                <div class="metric-value">{:,.1f} (10억$)</div>
-                            </div>
-                            """.format(gdp_value), unsafe_allow_html=True)
-                            
-                            st.markdown("""
-                            <div class="metric-item">
-                                <div class="metric-label">전월 수출량</div>
-                                <div class="metric-value">{:,.0f}대</div>
-                            </div>
-                            """.format(auto_prev_export), unsafe_allow_html=True)
-                        
-                        with col2:
-                            st.markdown("""
-                            <div class="metric-item">
-                                <div class="metric-label">기후대</div>
-                                <div class="metric-value">{}</div>
-                            </div>
-                            """.format(selected_climate), unsafe_allow_html=True)
-                            
-                            st.markdown("""
-                            <div class="metric-item">
-                                <div class="metric-label">전년 동월 수출량</div>
-                                <div class="metric-value">{:,.0f}대</div>
-                            </div>
-                            """.format(prev_year_export), unsafe_allow_html=True)
-                            
-                            st.markdown("""
-                            <div class="metric-item">
-                                <div class="metric-label">최근 수출량</div>
-                                <div class="metric-value">{:,.0f}대</div>
-                            </div>
-                            """.format(auto_current_export), unsafe_allow_html=True)
-                    
-                    # 변화 원인 분석 카드
-                    with st.expander(f"📌 변화 원인 분석 ({change_info['text']})", expanded=True):
-                        st.info("""
-                        **주요 원인:**  
-                        """ + "\n".join([f"- {reason}" for reason in change_info['reason']]))
-                        
-                        st.info("""
-                        **제안 사항:**  
-                        """ + "\n".join([f"- {suggestion}" for suggestion in change_info['suggestion']]))
+                        """, unsafe_allow_html=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
                 
                 with col3:
                     with st.container():
@@ -809,16 +788,18 @@ def run_ho():
                             )
                             st.plotly_chart(fig3, use_container_width=True)
                              
-                            with st.expander("📊 파이 차트 해석 방법", expanded=False):
-                                st.info("""
-                                - **전체 원**: 선택한 국가의 총 수출량
-                                - **각 조각**: 차량 종류별 수출량 비율
-                                - **상위 10개** 차량만 표시됨
-                                - **마우스 오버**: 차량명과 정확한 비율 확인 가능
-                                - **해석**: 해당 국가에서 어떤 차종이 가장 인기 있는지 확인할 수 있습니다.
-                                """)
+                            st.markdown("""
+                            <div class="chart-guide">
+                                <b>🥧 차트 해석 방법:</b><br>
+                                - 전체 원은 선택한 국가의 총 수출량을 나타냅니다.<br>
+                                - 각 조각은 차량 종류별 수출량 비율을 나타냅니다.<br>
+                                - 상위 10개 차량만 표시됩니다.<br>
+                                - 마우스를 조각 위에 올리면 차량명과 정확한 비율을 확인할 수 있습니다.
+                            </div>
+                            """, unsafe_allow_html=True)
                         else:
                             st.warning(f"{selected_country}의 차량 수출량 데이터가 없습니다.")
+                    st.markdown('</div>', unsafe_allow_html=True)
                 
                 st.write("")
                 st.markdown("### 📊 추가 분석 차트")
@@ -851,34 +832,39 @@ def run_ho():
                     )
                     st.plotly_chart(fig, use_container_width=True)
                     
-                    with st.expander("📊 막대 차트 해석 방법", expanded=False):
-                        st.info("""
-                        - **가로축**: 국가명
-                        - **세로축**: 해당 국가의 총 수출량
-                        - **색상**: 각 국가를 구분하기 위한 색상
-                        - **마우스 오버**: 정확한 수치 확인 가능
-                        - **해석**: 선택한 차종이 어떤 국가에서 더 잘 팔리는지 비교할 수 있습니다.
-                        """)
+                    st.markdown("""
+                    <div class="chart-guide">
+                        <b>📊 차트 해석 방법:</b><br>
+                        - 가로축은 국가명을, 세로축은 수출량을 나타냅니다.<br>
+                        - 각 막대의 높이는 해당 국가의 총 수출량을 나타냅니다.<br>
+                        - 색상이 다르게 표시되어 국가별로 쉽게 구분할 수 있습니다.<br>
+                        - 마우스를 막대 위에 올리면 정확한 수치를 확인할 수 있습니다.
+                    </div>
+                    """, unsafe_allow_html=True)
                 else:
                     st.warning("선택한 차량의 수출량 데이터가 없습니다.")
+                st.markdown('</div>', unsafe_allow_html=True)
+        
+                
+                   
     
     elif current_tab == "🌍 다중 국가 비교":
         st.header("🌍 다중 국가 비교 분석")
         
-        with st.expander("ℹ️ 기능 설명 보기", expanded=False):
-            st.info("""
-            **다중 국가 비교 기능 사용 방법**  
-            이 기능은 여러 국가의 수출량을 비교 분석합니다. 다음과 같은 경우에 유용합니다:
-            - 여러 국가 간 수출 성과 비교가 필요할 때
-            - 시장별 성장 추세 분석이 필요할 때
-            - 차종별 국가별 선호도 비교가 필요할 때
-
-            **사용 방법:**  
-            왼쪽에서 비교할 국가와 차종을 선택한 후 "비교하기" 버튼을 클릭하세요.
-
-            **결과 해석:**  
-            비교 결과는 라인 차트, 막대 차트, 히트맵 등 다양한 시각화로 제공되며, 국가 간 차이를 쉽게 파악할 수 있습니다.
-            """)
+        with st.container():
+            st.markdown("""
+            <div class="feature-description">
+                <h4>📌 다중 국가 비교 기능 사용 방법</h4>
+                <p>이 기능은 여러 국가의 수출량을 비교 분석합니다. 다음과 같은 경우에 유용합니다:</p>
+                <ul>
+                    <li>여러 국가 간 수출 성과 비교가 필요할 때</li>
+                    <li>시장별 성장 추세 분석이 필요할 때</li>
+                    <li>차종별 국가별 선호도 비교가 필요할 때</li>
+                </ul>
+                <p><b>사용 방법:</b> 왼쪽에서 비교할 국가와 차종을 선택한 후 "비교하기" 버튼을 클릭하세요.</p>
+                <p><b>결과 해석:</b> 비교 결과는 라인 차트, 막대 차트, 히트맵 등 다양한 시각화로 제공되며, 국가 간 차이를 쉽게 파악할 수 있습니다.</p>
+            </div>
+            """, unsafe_allow_html=True)
         
         with st.expander("🔍 비교 조건 설정", expanded=True):
             col1, col2 = st.columns(2)
@@ -939,7 +925,7 @@ def run_ho():
             
             with col1:
                 with st.container():
-                    st.markdown("### 📅 연간 수출량 비교")
+                    st.subheader("연간 수출량 비교")
                     current_year = datetime.now().year
                     past_years = sorted([y for y in df_long["날짜"].dt.year.unique() if y < current_year], reverse=True)[:3]
                     
@@ -969,20 +955,21 @@ def run_ho():
                         )
                         st.plotly_chart(fig_annual, use_container_width=True)
                         
-                        with st.expander("📊 차트 해석 방법", expanded=False):
-                            st.info("""
-                            - **가로축**: 연도 (최근 3년)
-                            - **세로축**: 해당 연도의 총 수출량
-                            - **색상**: 각 국가를 구분하기 위한 색상
-                            - **그룹화**: 국가별로 연도별 수출량을 나란히 비교
-                            - **해석**: 국가별로 시간에 따른 수출량 변화 추이를 비교할 수 있습니다.
-                            """)
+                        st.markdown("""
+                        <div class="chart-guide">
+                            <b>📅 연간 비교 차트 해석 방법:</b><br>
+                            - 가로축은 연도를, 세로축은 수출량을 나타냅니다.<br>
+                            - 색상별로 다른 국가를 구분할 수 있습니다.<br>
+                            - 각 연도별로 국가 간 수출량을 비교할 수 있습니다.
+                        </div>
+                        """, unsafe_allow_html=True)
                     else:
                         st.warning("연간 수출량 데이터가 없습니다.")
+                    st.markdown('</div>', unsafe_allow_html=True)
             
             with col2:
                 with st.container():
-                    st.markdown("### 🔥 차량 종류별 수출량 비교")
+                    st.subheader("차량 종류별 수출량 비교")
                     heatmap_data = df_long[
                         (df_long["국가명"].isin(selected_countries)) &
                         (df_long["날짜"].dt.year == latest_year)
@@ -1007,16 +994,17 @@ def run_ho():
                         )
                         st.plotly_chart(fig_heatmap, use_container_width=True)
                         
-                        with st.expander("📊 차트 해석 방법", expanded=False):
-                            st.info("""
-                            - **가로축**: 국가명
-                            - **세로축**: 차량 종류
-                            - **색상 강도**: 해당 국가에서 해당 차량의 수출량 (진할수록 수출량 많음)
-                            - **마우스 오버**: 정확한 수치 확인 가능
-                            - **해석**: 각 국가에서 어떤 차종이 가장 많이 수출되는지 한눈에 파악할 수 있습니다.
-                            """)
+                        st.markdown("""
+                        <div class="chart-guide">
+                            <b>🔥 히트맵 해석 방법:</b><br>
+                            - 가로축은 국가명을, 세로축은 차량 종류를 나타냅니다.<br>
+                            - 색상이 진할수록 해당 국가에서 해당 차량의 수출량이 많습니다.<br>
+                            - 마우스를 셀 위에 올리면 정확한 수치를 확인할 수 있습니다.
+                        </div>
+                        """, unsafe_allow_html=True)
                     else:
                         st.warning("히트맵 생성에 필요한 데이터가 없습니다.")
+                    st.markdown('</div>', unsafe_allow_html=True)
             
             st.write("")
             st.markdown("### 📈 국가별 월별 수출량 추이")
@@ -1041,13 +1029,16 @@ def run_ho():
                 )
                 st.plotly_chart(fig_line, use_container_width=True)
                 
-                with st.expander("📊 차트 해석 방법", expanded=False):
-                    st.info("""
-                    - **가로축**: 월 (1월~12월)
-                    - **세로축**: 해당 월의 평균 수출량
-                    - **색상**: 각 국가를 구분하기 위한 색상
-                    - **선**: 국가별 월별 수출량 추이
-                    - **마우스 오버**: 정확한 수치 확인 가능
-                    - **해석**: 국가별로 계절적 수요 패턴을 비교할 수 있습니다.
-                    """)
+                st.markdown("""
+                <div class="chart-guide">
+                    <b>📈 라인 차트 해석 방법:</b><br>
+                    - 가로축은 월을, 세로축은 수출량을 나타냅니다.<br>
+                    - 색상별로 다른 국가를 구분할 수 있습니다.<br>
+                    - 선의 기울기로 증가/감소 추세를 파악할 수 있습니다.<br>
+                    - 마우스를 선 위에 올리면 정확한 수치를 확인할 수 있습니다.
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
 
+if __name__ == "__main__":
+    run_ho()
