@@ -787,20 +787,28 @@ def run_trend():
                         </a>
                         """, unsafe_allow_html=True)
 
-    # ✅ "원본데이터 보기" 버튼을 마지막에 추가
+    st.markdown("---") 
+
+    if 'show_data' not in st.session_state:
+        st.session_state.show_data = False
+
+    # 🔹 "원본 데이터 보기" 버튼을 누르면 상태 변경 (True <-> False)
     if st.button('🔍 원본데이터 보기'):
+        st.session_state.show_data = not st.session_state.show_data
+
+    # 🔹 상태가 True일 때만 데이터 표시
+    if st.session_state.show_data:
         st.subheader("📁 원본 데이터 (7개 행씩 표시)")
-        
+
         # 페이지네이션 구현
         page_size = 7
         total_pages = (len(data) // page_size) + (1 if len(data) % page_size != 0 else 0)
-        
-        # 페이지 선택 (세션 상태로 관리)
+
         if 'page' not in st.session_state:
             st.session_state.page = 1
-        
-        # 페이지 이동 버튼
+
         col1, col2, col3 = st.columns([1, 2, 1])
+
         with col1:
             if st.button('◀ 이전'):
                 if st.session_state.page > 1:
@@ -811,13 +819,11 @@ def run_trend():
             if st.button('다음 ▶'):
                 if st.session_state.page < total_pages:
                     st.session_state.page += 1
-        
-        # 현재 페이지 데이터 표시
+
         start_idx = (st.session_state.page - 1) * page_size
         end_idx = start_idx + page_size
         st.dataframe(data.iloc[start_idx:end_idx], height=300)
-        
-        # 데이터 요약 정보 표시
+
         with st.expander("📊 데이터 요약 정보 보기"):
             st.write(f"총 행 수: {len(data)}")
             st.write("컬럼 정보:")
