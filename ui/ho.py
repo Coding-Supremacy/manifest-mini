@@ -11,14 +11,6 @@ import yfinance as yf
 import matplotlib.colors as mcolors
 import pydeck as pdk
 
-# 페이지 설정
-st.set_page_config(
-    page_title="기아 수출량 분석 대시보드",
-    page_icon="🚗",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
 
 
 # CSS 스타일 (최종 버전)
