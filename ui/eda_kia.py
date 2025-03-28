@@ -9,14 +9,10 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
 
-# 한글 폰트 설정
-plt.rcParams['font.family'] = 'Malgun Gothic'
-plt.rcParams['axes.unicode_minus'] = False
+# 기본 폰트 설정 (DejaVu Sans)
+plt.rc('font', family='DejaVu Sans')
+plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
 
-plt.rc('font', family='NanumGothic')  # Linux (배포 환경) 사용
-
-# 마이너스 기호 깨짐 방지
-plt.rcParams['axes.unicode_minus'] = False
 
 months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
 
