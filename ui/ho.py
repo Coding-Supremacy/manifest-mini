@@ -225,61 +225,6 @@ st.markdown("""
 def reset_form():
     st.session_state.clear()
 
-def get_country_flag(country_name):
-    """국가명으로 국기 이미지 URL 가져오기"""
-    flag_mapping = {
-        '미국': 'https://flagcdn.com/w320/us.png',
-        '중국': 'https://flagcdn.com/w320/cn.png',
-        '일본': 'https://flagcdn.com/w320/jp.png',
-        '독일': 'https://flagcdn.com/w320/de.png',
-        '영국': 'https://flagcdn.com/w320/gb.png',
-        '프랑스': 'https://flagcdn.com/w320/fr.png',
-        '한국': 'https://flagcdn.com/w320/kr.png',
-        '인도': 'https://flagcdn.com/w320/in.png',
-        '브라질': 'https://flagcdn.com/w320/br.png',
-        '캐나다': 'https://flagcdn.com/w320/ca.png',
-        '호주': 'https://flagcdn.com/w320/au.png',
-        '이탈리아': 'https://flagcdn.com/w320/it.png',
-        '스페인': 'https://flagcdn.com/w320/es.png',
-        '멕시코': 'https://flagcdn.com/w320/mx.png',
-        '인도네시아': 'https://flagcdn.com/w320/id.png',
-        '터키': 'https://flagcdn.com/w320/tr.png',
-        '네덜란드': 'https://flagcdn.com/w320/nl.png',
-        '스위스': 'https://flagcdn.com/w320/ch.png',
-        '사우디아라비아': 'https://flagcdn.com/w320/sa.png',
-        '아르헨티나': 'https://flagcdn.com/w320/ar.png'
-    }
-    return flag_mapping.get(country_name, None)
-
-def fetch_country_info(country_name):
-    """국가 정보 가져오기 (수정된 버전)"""
-    country_unions = {
-        '미국': '북미자유무역협정(NAFTA), G7, G20',
-        '중국': 'G20, BRICS, 상하이협력기구',
-        '일본': 'G7, G20, 아시아태평양경제협력체(APEC)',
-        '독일': '유럽연합(EU), G7, G20',
-        '영국': 'G7, G20, 유럽연합(탈퇴)',
-        '프랑스': '유럽연합(EU), G7, G20',
-        '한국': 'G20, 아시아태평양경제협력체(APEC)',
-        '인도': 'G20, BRICS, 상하이협력기구',
-        '브라질': 'G20, BRICS, 남미국가연합',
-        '캐나다': '북미자유무역협정(NAFTA), G7, G20',
-        '호주': 'G20, 아시아태평양경제협력체(APEC)',
-        '이탈리아': '유럽연합(EU), G7, G20',
-        '스페인': '유럽연합(EU), G20',
-        '멕시코': '북미자유무역협정(NAFTA), G20',
-        '인도네시아': 'G20, 아세안(ASEAN)',
-        '터키': 'G20',
-        '네덜란드': '유럽연합(EU)',
-        '스위스': '유럽자유무역연합(EFTA)',
-        '사우디아라비아': 'G20, OPEC',
-        '아르헨티나': 'G20, 남미국가연합'
-    }
-    
-    return {
-        'union': country_unions.get(country_name, '정보 없음'),
-        'flag': get_country_flag(country_name)
-    }
 
 def fetch_gdp_data(country_name):
     """World Bank API에서 GDP 데이터 가져오기"""
