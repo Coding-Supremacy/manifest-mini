@@ -8,13 +8,27 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import os
+import platform
 
-# 기본 폰트 설정 (DejaVu Sans)
-plt.rc('font', family='DejaVu Sans')
-plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
+# 한글 폰트 설정
 
-fig.update_layout(font=dict(family="DejaVu Sans"))
 
+
+plt.rcParams['axes.unicode_minus'] = False
+
+if platform.system() == 'Darwin':
+    rc('font', family='AppleGothic')
+elif platform.system() == 'Windows':
+    path = "c:/Windows/Fonts/malgun.ttf"
+    font_name = font_manager.FontProperties(fname=path).get_name()
+    rc('font', family=font_name)
+else:
+    print('Unknown system... sorry~~~~')
+
+plt.rc('font', family='NanumGothic')  # Linux (배포 환경) 사용
+
+# 마이너스 기호 깨짐 방지
+plt.rcParams['axes.unicode_minus'] = False
 
 months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
 
