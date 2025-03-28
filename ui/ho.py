@@ -312,7 +312,8 @@ def run_ho():
         <h3 style="color: #2a3f5f; margin-top: 0;">✨ 핵심 예측 지표</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
             <div style="background: white; border-radius: 10px; padding: 1.5rem; 
-                        box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center;">
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center;
+                        border-top: 4px solid #4a6fa5;">
                 <div style="font-size: 1rem; color: #666; margin-bottom: 0.5rem;">예상 수출량</div>
                 <div style="font-size: 2.5rem; font-weight: bold; color: #2a3f5f;">
                     {prediction:,.0f}
@@ -322,15 +323,20 @@ def run_ho():
                 </div>
             </div>
             <div style="background: white; border-radius: 10px; padding: 1.5rem; 
-                        box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center;">
+                        box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center;
+                        border-top: 4px solid #4a6fa5;">
                 <div style="font-size: 1rem; color: #666; margin-bottom: 0.5rem;">전년 동월 대비</div>
-                <div style="font-size: 2.5rem; font-weight: bold; color: {color};">
+                <div style="font-size: 2.5rem; font-weight: bold; color: #2a3f5f;">
                     {yearly_change:+.1f}%
                 </div>
                 <div style="font-size: 0.9rem; color: #666;">
                     {prev_year_export:,.0f} → {prediction:,.0f}
                 </div>
             </div>
+        </div>
+        <div style="margin-top: 1rem; font-size: 0.9rem; color: #666; text-align: center;
+                    {change_style}">
+            {change_info["text"]}
         </div>
     </div>
     """.format(
@@ -339,10 +345,9 @@ def run_ho():
         target_month=target_month,
         yearly_change=yearly_change,
         prev_year_export=prev_year_export,
-        color="green" if yearly_change >= 5 else ("red" if yearly_change <= -5 else "orange")
+        change_style="color: #28a745;" if yearly_change >= 5 else ("color: #dc3545;" if yearly_change <= -5 else "color: #ffc107;"),
+        change_info=change_info
     ), unsafe_allow_html=True)
-
-
 
 
 
