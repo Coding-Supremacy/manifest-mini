@@ -789,49 +789,47 @@ def run_trend():
 
     st.markdown("---") 
 
-    # 🔹 세션 상태에서 'show_data' 값이 없으면 기본값 False로 설정
+    # 세션 상태 초기화
     if 'show_data' not in st.session_state:
         st.session_state.show_data = False
+    if 'page' not in st.session_state:
+        st.session_state.page = 1  # 기본값 1로 설정
 
-    # 🔹 "원본 데이터 보기" 버튼을 누르면 상태 변경 (True <-> False)
+    # 🔹 원본 데이터 보기 버튼
     if st.button('🔍 원본데이터 보기'):
         st.session_state.show_data = not st.session_state.show_data
 
-    # 🔹 상태가 True일 때만 데이터 표시
+    # 🔹 데이터 표시 영역
     if st.session_state.show_data:
         st.subheader("📁 원본 데이터 (7개 행씩 표시)")
-
-        # 페이지네이션 구현
+        
+        # 페이지네이션 설정
         page_size = 7
-        total_pages = (len(data) // page_size) + (1 if len(data) % page_size != 0 else 0)
-
-        # 🔹 세션 상태에서 'page' 값이 없으면 기본값 1로 설정
-        if 'page' not in st.session_state:
-            st.session_state.page = 1
-
+        total_pages = max(1, (len(data) // page_size) + (1 if len(data) % page_size else 0))
+        
+        # 페이지 이동 버튼
         col1, col2, col3 = st.columns([1, 2, 1])
-
-        # ✅ "이전" 버튼 클릭 시, 세션 상태 값만 변경 (버튼을 사용하지 않음)
+        
         with col1:
-            if st.session_state.page > 1:
-                if st.button('◀ 이전', key="prev"):
-                    st.session_state.page -= 1
-
+            if st.button('◀ 이전', disabled=(st.session_state.page <= 1)):
+                st.session_state.page -= 1
+                st.rerun()  # 변경 즉시 화면 갱신
+        
         with col2:
-            st.write(f"페이지 {st.session_state.page} / {total_pages}")
-
-        # ✅ "다음" 버튼 클릭 시, 세션 상태 값만 변경 (버튼을 사용하지 않음)
+            st.write(f"페이지 {st.session_state.page}/{total_pages}")
+        
         with col3:
-            if st.session_state.page < total_pages:
-                if st.button('다음 ▶', key="next"):
-                    st.session_state.page += 1
-
-        # 현재 페이지의 데이터 표시
+            if st.button('다음 ▶', disabled=(st.session_state.page >= total_pages)):
+                st.session_state.page += 1
+                st.rerun()  # 변경 즉시 화면 갱신
+        
+        # 데이터 표시
         start_idx = (st.session_state.page - 1) * page_size
-        end_idx = start_idx + page_size
+        end_idx = min(start_idx + page_size, len(data))
         st.dataframe(data.iloc[start_idx:end_idx], height=300)
-
+        
+        # 데이터 요약
         with st.expander("📊 데이터 요약 정보 보기"):
-            st.write(f"총 행 수: {len(data)}")
-            st.write("컬럼 정보:")
-            st.json(dict(zip(data.columns, data.dtypes.astype(str).tolist())))
+            st.write(f"• 총 행 수: {len(data)}")
+            st.write("• 컬럼 구조:")
+            st.json({col: str(dtype) for col, dtype in data.dtypes.items()})
