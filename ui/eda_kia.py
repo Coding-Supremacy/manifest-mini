@@ -16,7 +16,7 @@ plt.rcParams['axes.unicode_minus'] = False
 if platform.system() == 'Darwin':
     rc('font', family='AppleGothic')
 elif platform.system() == 'Windows':
-    path = "c:/Windows/Fonts/malgun.ttf"
+    path = "/mount/src/manifest-mini/custom_fonts/NanumGothic.ttf"
     font_name = font_manager.FontProperties(fname=path).get_name()
     rc('font', family=font_name)
 else:
