@@ -13,6 +13,8 @@ import os
 plt.rc('font', family='DejaVu Sans')
 plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
 
+fig.update_layout(font=dict(family="DejaVu Sans"))
+
 
 months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
 
