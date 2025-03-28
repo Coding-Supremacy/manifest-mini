@@ -9,11 +9,7 @@ import requests
 from PIL import Image
 import yfinance as yf
 import matplotlib.colors as mcolors
-# 지도 관련 라이브러리(pydeck)는 제거합니다.
 
-
-
-# CSS 스타일 (최종 버전)
 st.markdown("""
 <style>
     .main {
@@ -1040,3 +1036,5 @@ def run_ho():
                 """, unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
 
+if __name__ == "__main__":
+    run_ho()
