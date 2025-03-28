@@ -686,22 +686,17 @@ def run_eda_kia():
             """)
         
         with sub_tab2:
-
-            # 2024년이 있는지 확인하고 인덱스 찾기
-            default_year = 2024
-            try:
-                default_index = years.index(default_year)
-            except ValueError:
-                # 2024년이 없으면 가장 최근 연도로 설정
-                default_index = len(years) - 1
-                st.warning(f"2024년 데이터가 없어서 가장 최근 연도인 {years[-1]}년을 표시합니다.")
-
+            # 연도 선택 박스 설정 (2024년 기본값)
+            year_options = sorted(df_sales['연도'].unique())
+            default_year_index = year_options.index(2024) if 2024 in year_options else len(year_options)-1
+            
             selected_year = st.selectbox(
-            "연도 선택",
-            options=years,
-            index=default_index,  # 2024년 인덱스 또는 가장 최근 연도
-            key='sales_year_sub_tab2'
-)
+                "연도 선택",
+                options=year_options,
+                index=default_year_index,  # 2024년 인덱스 자동 탐색
+                key='sales_year_sub_tab2'
+            )
+
         # 3. 상위 차종 월별 추이 (겹쳐진 막대그래프 버전)
         @st.cache_data(ttl=300)
         def get_monthly_trend_top5(_melt, year, models, n=5):
