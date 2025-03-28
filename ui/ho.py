@@ -11,12 +11,7 @@ import yfinance as yf
 import matplotlib.colors as mcolors
 # 지도 관련 라이브러리(pydeck)는 제거합니다.
 
-# 페이지 설정 (사이드바 없이 전체 화면 배치)
-st.set_page_config(
-    page_title="기아 수출량 분석 대시보드",
-    page_icon="🚗",
-    layout="wide"
-)
+
 
 # CSS 스타일 (최종 버전)
 st.markdown("""
