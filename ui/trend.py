@@ -787,40 +787,37 @@ def run_trend():
                         </a>
                         """, unsafe_allow_html=True)
 
-# 원본데이터 보기 버튼 (맨 아래)
-if st.button('🔍 원본데이터 보기', key='view_raw_data'):
-    st.subheader("📁 원본 데이터 (7개 행씩 표시)")
-    
-    # 페이지네이션 구현
-    page_size = 7
-    total_pages = max(1, (len(data) // page_size) + (1 if len(data) % page_size != 0 else 0))  # 0페이지 방지
-    
-    # 페이지 선택 (세션 상태 초기화)
-    if 'page' not in st.session_state:
-        st.session_state.page = 1
-    
-    # 현재 페이지 데이터 계산
-    start_idx = (st.session_state.page - 1) * page_size
-    end_idx = min(start_idx + page_size, len(data))  # 인덱스 초과 방지
-    
-    # 데이터 표시
-    st.dataframe(data.iloc[start_idx:end_idx], height=300)
-    
-    # 페이지 이동 UI
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col1:
-        if st.button('◀ 이전', disabled=(st.session_state.page <= 1)):
-            st.session_state.page -= 1
-            st.rerun()
-    with col2:
-        st.write(f"페이지 {st.session_state.page}/{total_pages}")
-    with col3:
-        if st.button('다음 ▶', disabled=(st.session_state.page >= total_pages)):
-            st.session_state.page += 1
-            st.rerun()
-    
-    # 데이터 요약
-    with st.expander("📊 데이터 요약 정보 보기"):
-        st.write(f"• 총 행 수: {len(data)}")
-        st.write("• 컬럼 구조:")
-        st.json({col: str(dtype) for col, dtype in data.dtypes.items()})
+            if st.button('🔍 원본데이터 보기', key='view_raw_data_button'):
+                st.subheader("📁 원본 데이터 (7개 행씩 표시)")
+
+                # 페이지네이션 구현
+                page_size = 7
+                total_pages = max(1, (len(data) // page_size) + (1 if len(data) % page_size != 0 else 0))
+
+                # 페이지 선택 (세션 상태 초기화)
+                if 'page' not in st.session_state:
+                    st.session_state.page = 1
+
+                # 현재 페이지 데이터 계산
+                start_idx = (st.session_state.page - 1) * page_size
+                end_idx = min(start_idx + page_size, len(data))
+
+                # 데이터 표시
+                st.dataframe(data.iloc[start_idx:end_idx], height=300)
+
+                # 페이지 이동 UI
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col1:
+                    if st.button('◀ 이전', disabled=(st.session_state.page <= 1), key='previous_button'):
+                        st.session_state.page -= 1
+                with col2:
+                    st.write(f"페이지 {st.session_state.page}/{total_pages}")
+                with col3:
+                    if st.button('다음 ▶', disabled=(st.session_state.page >= total_pages), key='next_button'):
+                        st.session_state.page += 1
+
+                # 데이터 요약
+                with st.expander("📊 데이터 요약 정보 보기"):
+                    st.write(f"• 총 행 수: {len(data)}")
+                    st.write("• 컬럼 구조:")
+                    st.json({col: str(dtype) for col, dtype in data.dtypes.items()})
