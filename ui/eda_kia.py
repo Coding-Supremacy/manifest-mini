@@ -14,7 +14,7 @@ import platform
 
 @st.cache_data
 def fontRegistered():
-    font_dirs = [os.getcwd() + '../custom_fonts']
+    font_dirs = [os.getcwd() + '../font']
     font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
     for font_file in font_files:
         font_manager.fontManager.addfont(font_file)
