@@ -270,6 +270,10 @@ def run_prediction_region():
                 
                 base_dir = os.path.dirname(os.path.abspath(__file__))
                 FONT_PATH = os.path.join(base_dir, "custom_fonts", "NanumGothic.ttf")
+                st.write("폰트 경로:", FONT_PATH)
+                st.write("폰트 존재 여부:", os.path.exists(FONT_PATH))
+                st.write("현재 디렉토리 내용:", os.listdir(base_dir))
+                st.write("custom_fonts 디렉토리 내용:", os.listdir(os.path.join(base_dir, "custom_fonts")))
                 st.write(FONT_PATH)
                 if os.path.exists(FONT_PATH):
                     pdf.add_font("NanumGothic", "", FONT_PATH, uni=True)
