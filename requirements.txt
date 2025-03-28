@@ -19,3 +19,4 @@ prophet
 yfinance
 lightgbm
 fpdf
+fpdf2
