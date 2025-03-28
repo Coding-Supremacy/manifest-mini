@@ -10,10 +10,15 @@ from prophet import Prophet
 from openai import OpenAI
 from streamlit_option_menu import option_menu
 import datetime
+import re
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 TEST_MODE = True
+
+def clean_text(text):
+    # 유니코드 이모지 및 특수기호 제거
+    return re.sub(r"[^\u0000-\uD7FF\uE000-\uFFFF]", "", text)
 
 def load_model(channel, selected_market, model_dir):
     channel_key_map = {
@@ -286,7 +291,7 @@ def run_prediction_region():
                 else:
                     pdf.set_font("Arial", size=10)
 
-                lines = st.session_state.report_text.split('\n')
+                lines = clean_text(st.session_state.report_text).split('\n')
                 for line in lines:
                     for i in range(0, len(line), 60):
                         pdf.cell(0, 10, line[i:i+60], ln=1)
