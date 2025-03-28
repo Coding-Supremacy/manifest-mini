@@ -19,8 +19,8 @@ st.markdown("""
 # 데이터 로드 함수
 @st.cache_data
 def load_data():
-    df_export = pd.read_csv("data/현대_지역별수출실적.csv")
-    df_sales = pd.read_csv("data/현대_차종별판매실적.csv")
+    df_export = pd.read_csv("../data/현대_지역별수출실적.csv")
+    df_sales = pd.read_csv("../data/현대_차종별판매실적.csv")
     return df_export, df_sales
 
 df_export, df_sales = load_data()
