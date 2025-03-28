@@ -698,11 +698,10 @@ def run_eda_kia():
 
             selected_year = st.selectbox(
             "연도 선택",
-            options=sorted(df_sales['연도'].unique()),
-            index=len(df_sales['연도'].unique())-1,
+            options=years,
+            index=default_index,  # 2024년 인덱스 또는 가장 최근 연도
             key='sales_year_sub_tab2'
-        )
-
+)
         # 3. 상위 차종 월별 추이 (겹쳐진 막대그래프 버전)
         @st.cache_data(ttl=300)
         def get_monthly_trend_top5(_melt, year, models, n=5):
