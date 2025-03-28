@@ -12,6 +12,14 @@ import platform
 
 # 한글 폰트 설정
 
+@st.cache_data
+def fontRegistered():
+    font_dirs = [os.getcwd() + '/font']
+    font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
+    for font_file in font_files:
+        font_manager.fontManager.addfont(font_file)
+    font_manager._load_fontmanager(try_read_cache=False)
+
 
 
 plt.rcParams['axes.unicode_minus'] = False
