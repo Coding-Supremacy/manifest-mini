@@ -48,6 +48,8 @@ def save_report_to_pdf(report_text, filename="시장_예측_보고서.pdf"):
         # 폰트 경로 설정 (절대 경로)
         base_dir = os.path.dirname(os.path.abspath(__file__))
         FONT_PATH = os.path.join(base_dir, "..", "custom_fonts", "NanumGothic.ttf")
+
+
         
         if not os.path.exists(FONT_PATH):
             st.warning(f"❌ 한글 폰트 파일을 찾을 수 없습니다: {FONT_PATH}")
