@@ -192,6 +192,8 @@ st.title("🚗 기아 자동차 통합 분석 대시보드 (최적화 버전)")
 
 
 def run_eda_kia():
+    
+    
     # 세션 상태 초기화
     if 'current_tab' not in st.session_state:
         st.session_state.current_tab = "🌍 지역별 수출 분석"
@@ -684,124 +686,128 @@ def run_eda_kia():
             """)
         
         with sub_tab2:
-
+            # 연도 선택 박스 설정 (2024년 기본값)
+            year_options = sorted(df_sales['연도'].unique())
+            default_year_index = year_options.index(2024) if 2024 in year_options else len(year_options)-1
+            
             selected_year = st.selectbox(
-            "연도 선택",
-            options=sorted(df_sales['연도'].unique()),
-            index=len(df_sales['연도'].unique())-1,
-            key='sales_year_sub_tab2'
+                "연도 선택",
+                options=year_options,
+                index=default_year_index,  # 2024년 인덱스 자동 탐색
+                key='sales_year_sub_tab2'
             )
 
-            # 3. 상위 차종 월별 추이 (캐싱 적용)
-            @st.cache_data(ttl=300)
-            def get_monthly_trend_top5(_melt, year, models, n=5):
-                top5 = models[:n]
-                monthly_top5 = _melt[
-                    (_melt['연도'] == year) & 
-                    (_melt['차종'].isin(top5))
-                ].groupby(['차종', '월'])['판매량'].sum().unstack().T
-                
-                fig, ax = plt.subplots(figsize=(12, 6))
-                for model in top5:
-                    sns.lineplot(x=monthly_top5.index, y=monthly_top5[model], 
-                                label=model, marker='o', linewidth=2.5)
-                plt.title("월별 판매 동향", fontsize=14)
-                plt.xticks(range(1, 13))
-                plt.grid(True, alpha=0.3)
-                plt.tight_layout()
-                return fig
+        # 3. 상위 차종 월별 추이 (겹쳐진 막대그래프 버전)
+        @st.cache_data(ttl=300)
+        def get_monthly_trend_top5(_melt, year, models, n=5):
+            top5 = models[:n]
+            monthly_top5 = _melt[
+                (_melt['연도'] == year) & 
+                (_melt['차종'].isin(top5))
+            ].groupby(['월', '차종'])['판매량'].sum().unstack()
+            
+            fig, ax = plt.subplots(figsize=(12, 6))
+            monthly_top5.plot(kind='bar', stacked=True, ax=ax, width=0.8)
+            plt.title("월별 판매 동향 - 상위 5개 차종 (누적)", fontsize=14)
+            plt.xlabel("월")
+            plt.ylabel("판매량 (누적)")
+            plt.xticks(range(12), range(1, 13), rotation=0)  # 1월~12월 표시
+            plt.grid(axis='y', alpha=0.3)
+            plt.legend(title='차종', bbox_to_anchor=(1.05, 1), loc='upper left')
+            plt.tight_layout()
+            return fig
 
-            st.subheader("상위 5개 차종 월별 추이")
-            fig3 = get_monthly_trend_top5(melt_sales, selected_year, top_models)
-            st.pyplot(fig3)
-            
-            model1_pattern = get_seasonality_pattern(melt_sales[(melt_sales['차종']==top_models[0]) & (melt_sales['연도']==selected_year)].groupby('월')['판매량'].sum())
-            model2_pattern = get_seasonality_pattern(melt_sales[(melt_sales['차종']==top_models[2]) & (melt_sales['연도']==selected_year)].groupby('월')['판매량'].sum())
-            ev_increase = melt_sales[(melt_sales['차종'].isin([m for m in top_models if get_powertrain_type(m)=='전기차'])) & (melt_sales['월'].isin([11,12]))]['판매량'].sum()/melt_sales[(melt_sales['차종'].isin([m for m in top_models if get_powertrain_type(m)=='전기차']))]['판매량'].sum()*12/2*100-100 if melt_sales[(melt_sales['차종'].isin([m for m in top_models if get_powertrain_type(m)=='전기차']))]['판매량'].sum() > 0 else 0
-            
-            st.info(f"""
-            **📅 계절성 패턴:**
-            - {top_models[0]}: {model1_pattern}
-            - {top_models[2]}: {model2_pattern}
-            - 전기차 모델: 연말(11~12월) 평균 대비 {ev_increase:.0f}% 증가
-            
-            **🔄 생산 계획 제안:**
-            1. 생산량 조정:
-            - {top_models[0]}: 최고 판매월 전월 생산량 20% 증대
-            - {top_models[2]}: 판매 정점기 2개월 전부터 증산
-            2. 재고 관리:
-            - 저조기(1월, 7월) 생산량 15% 감축
-            - 연말 수요 대비 10월까지 목표 재고 확보
-            3. 프로모션 일정:
-            - 3월: 신학기 맞춤 캠페인 ({top_models[2]} 중심)
-            - 11월: 전기차 보조금 마감 기간 집중 홍보
-            """)
-            
-            # 4. 상위 차종 비교 (캐싱 적용)
-            @st.cache_data(ttl=300)
-            def get_model_comparison(_melt, year, model1, model2):
-                compare = _melt[
-                    (_melt['차종'].isin([model1, model2])) &
-                    (_melt['연도'] == year)
-                ].pivot_table(index='월', columns='차종', values='판매량', aggfunc='sum')
-                
-                fig, ax = plt.subplots(figsize=(10, 5))
-                compare.plot(kind='bar', ax=ax, width=0.8)
-                plt.title(f"{model1} vs {model2}", fontsize=14)
-                plt.xlabel("월")
-                plt.tight_layout()
-                return fig
+        st.subheader("상위 5개 차종 월별 추이")
+        fig3 = get_monthly_trend_top5(melt_sales, selected_year, top_models)
+        st.pyplot(fig3)
 
-            st.subheader("상위 차종 직접 비교")
-            col1, col2 = st.columns(2)
-            with col1:
-                model1 = st.selectbox(
-                    "첫 번째 차종",
-                    options=top_models,
-                    index=0,
-                    key='model1'
-                )
-            with col2:
-                model2 = st.selectbox(
-                    "두 번째 차종", 
-                    options=[m for m in top_models if m != model1],
-                    index=1 if len(top_models) > 1 else 0,
-                    key='model2'
-                )
+        model1_pattern = get_seasonality_pattern(melt_sales[(melt_sales['차종']==top_models[0]) & (melt_sales['연도']==selected_year)].groupby('월')['판매량'].sum())
+        model2_pattern = get_seasonality_pattern(melt_sales[(melt_sales['차종']==top_models[2]) & (melt_sales['연도']==selected_year)].groupby('월')['판매량'].sum())
+        ev_increase = melt_sales[(melt_sales['차종'].isin([m for m in top_models if get_powertrain_type(m)=='전기차'])) & (melt_sales['월'].isin([11,12]))]['판매량'].sum()/melt_sales[(melt_sales['차종'].isin([m for m in top_models if get_powertrain_type(m)=='전기차']))]['판매량'].sum()*12/2*100-100 if melt_sales[(melt_sales['차종'].isin([m for m in top_models if get_powertrain_type(m)=='전기차']))]['판매량'].sum() > 0 else 0
+
+        st.info(f"""
+        **📅 계절성 패턴:**
+        - {top_models[0]}: {model1_pattern}
+        - {top_models[2]}: {model2_pattern}
+        - 전기차 모델: 연말(11~12월) 평균 대비 {ev_increase:.0f}% 증가
+
+        **🔄 생산 계획 제안:**
+        1. 생산량 조정:
+        - {top_models[0]}: 최고 판매월 전월 생산량 20% 증대
+        - {top_models[2]}: 판매 정점기 2개월 전부터 증산
+        2. 재고 관리:
+        - 저조기(1월, 7월) 생산량 15% 감축
+        - 연말 수요 대비 10월까지 목표 재고 확보
+        3. 프로모션 일정:
+        - 3월: 신학기 맞춤 캠페인 ({top_models[2]} 중심)
+        - 11월: 전기차 보조금 마감 기간 집중 홍보
+        """)
+
+        # 4. 상위 차종 비교 (기존 막대그래프 유지)
+        @st.cache_data(ttl=300)
+        def get_model_comparison(_melt, year, model1, model2):
+            compare = _melt[
+                (_melt['차종'].isin([model1, model2])) &
+                (_melt['연도'] == year)
+            ].pivot_table(index='월', columns='차종', values='판매량', aggfunc='sum')
             
-            fig4 = get_model_comparison(melt_sales, selected_year, model1, model2)
-            st.pyplot(fig4)
-            
-            # 모델 비교 분석을 위한 추가 계산
-            model1_total = melt_sales[(melt_sales['차종']==model1) & (melt_sales['연도']==selected_year)]['판매량'].sum()
-            model2_total = melt_sales[(melt_sales['차종']==model2) & (melt_sales['연도']==selected_year)]['판매량'].sum()
-            model1_peak = melt_sales[(melt_sales['차종']==model1) & (melt_sales['연도']==selected_year)].groupby('월')['판매량'].sum().idxmax()
-            model2_peak = melt_sales[(melt_sales['차종']==model2) & (melt_sales['연도']==selected_year)].groupby('월')['판매량'].sum().idxmax()
-            
-            st.info(f"""
-            **🔍 {model1} vs {model2} 심층 비교 ({selected_year}년)**
-            
-            📊 기본 현황:
-            - 총 판매량: {model1} {model1_total:,}대 vs {model2} {model2_total:,}대
-            - 판매 차이: {abs(model1_total-model2_total):,}대 ({'상위' if model1_total>model2_total else '하위'} {abs(model1_total/model2_total*100-100):.1f}%)
-            - 최고 판매월: {model1} {model1_peak}월 vs {model2} {model2_peak}월
-            
-            💡 인사이트:
-            1. 제품 포지셔닝:
-            - {model1}: {get_powertrain_type(model1)} 차종으로 {'주력 모델' if model1_total > model2_total else '보조 모델'} 역할
-            - {model2}: {get_powertrain_type(model2)} 차종으로 {'가격 경쟁력' if 'K' in model2 else '고급형'} 포지션
-            
-            🎯 마케팅 전략:
-            1. {model1} 강화 방안:
-            - {model1_peak}월에 맞춘 한정판 모델 출시
-            - 경쟁 모델 대비 차별화 포인트({get_improvement_point(model1)}) 강조
-            2. {model2} 판매 촉진:
-            - {get_promotion_idea(model2)} 프로모션 실시
-            - {model1} 구매 고객 대상 {model2} 크로스 오퍼 제공
-            3. 시너지 창출:
-            - 패키지 할인: {model1}+{model2} 동시 구매 시 {5 if abs(model1_total-model2_total)<3000 else 7}% 추가 할인
-            - 공통 마케팅: 두 모델 모두 강점을 보이는 {list(set([model1_peak, model2_peak]))[0]}월에 통합 캠페인 진행
-            """)
+            fig, ax = plt.subplots(figsize=(10, 5))
+            compare.plot(kind='bar', ax=ax, width=0.8)
+            plt.title(f"{model1} vs {model2}", fontsize=14)
+            plt.xlabel("월")
+            plt.tight_layout()
+            return fig
+
+        st.subheader("상위 차종 직접 비교")
+        col1, col2 = st.columns(2)
+        with col1:
+            model1 = st.selectbox(
+                "첫 번째 차종",
+                options=top_models,
+                index=0,
+                key='model1'
+            )
+        with col2:
+            model2 = st.selectbox(
+                "두 번째 차종", 
+                options=[m for m in top_models if m != model1],
+                index=1 if len(top_models) > 1 else 0,
+                key='model2'
+            )
+
+        fig4 = get_model_comparison(melt_sales, selected_year, model1, model2)
+        st.pyplot(fig4)
+
+        # 모델 비교 분석을 위한 추가 계산
+        model1_total = melt_sales[(melt_sales['차종']==model1) & (melt_sales['연도']==selected_year)]['판매량'].sum()
+        model2_total = melt_sales[(melt_sales['차종']==model2) & (melt_sales['연도']==selected_year)]['판매량'].sum()
+        model1_peak = melt_sales[(melt_sales['차종']==model1) & (melt_sales['연도']==selected_year)].groupby('월')['판매량'].sum().idxmax()
+        model2_peak = melt_sales[(melt_sales['차종']==model2) & (melt_sales['연도']==selected_year)].groupby('월')['판매량'].sum().idxmax()
+
+        st.info(f"""
+        **🔍 {model1} vs {model2} 심층 비교 ({selected_year}년)**
+
+        📊 기본 현황:
+        - 총 판매량: {model1} {model1_total:,}대 vs {model2} {model2_total:,}대
+        - 판매 차이: {abs(model1_total-model2_total):,}대 ({'상위' if model1_total>model2_total else '하위'} {abs(model1_total/model2_total*100-100):.1f}%)
+        - 최고 판매월: {model1} {model1_peak}월 vs {model2} {model2_peak}월
+
+        💡 인사이트:
+        1. 제품 포지셔닝:
+        - {model1}: {get_powertrain_type(model1)} 차종으로 {'주력 모델' if model1_total > model2_total else '보조 모델'} 역할
+        - {model2}: {get_powertrain_type(model2)} 차종으로 {'가격 경쟁력' if 'K' in model2 else '고급형'} 포지션
+
+        🎯 마케팅 전략:
+        1. {model1} 강화 방안:
+        - {model1_peak}월에 맞춘 한정판 모델 출시
+        - 경쟁 모델 대비 차별화 포인트({get_improvement_point(model1)}) 강조
+        2. {model2} 판매 촉진:
+        - {get_promotion_idea(model2)} 프로모션 실시
+        - {model1} 구매 고객 대상 {model2} 크로스 오퍼 제공
+        3. 시너지 창출:
+        - 패키지 할인: {model1}+{model2} 동시 구매 시 {5 if abs(model1_total-model2_total)<3000 else 7}% 추가 할인
+        - 공통 마케팅: 두 모델 모두 강점을 보이는 {list(set([model1_peak, model2_peak]))[0]}월에 통합 캠페인 진행
+        """)
 
         with sub_tab3:
 
