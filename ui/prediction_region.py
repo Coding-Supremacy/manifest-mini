@@ -1,4 +1,6 @@
 import os
+import tempfile
+from fpdf import FPDF
 import streamlit as st
 import pandas as pd
 import pickle
@@ -10,7 +12,9 @@ from streamlit_option_menu import option_menu
 import datetime
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-# 11
+
+TEST_MODE = False
+
 def load_model(channel, selected_market, model_dir):
     channel_key_map = {
         "현대": "hyundai",
@@ -19,7 +23,6 @@ def load_model(channel, selected_market, model_dir):
     channel_key = channel_key_map[channel]
     filename = f"{channel_key}_{selected_market}_model.pkl"
     model_path = os.path.join(model_dir, filename)
-    
 
     if not os.path.exists(model_path):
         st.error(f"❌ 해당 모델 파일이 존재하지 않습니다: {filename}")
@@ -35,6 +38,53 @@ def load_sales_data(csv_path, selected_market):
     df = df[df["국가"] == selected_market][["ds", "y"]].copy()
     return df
 
+def save_report_to_pdf(report_text, filename="시장_예측_보고서.pdf"):
+    try:
+        # PDF 객체 생성 및 설정
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        
+        # 폰트 경로 설정 (절대 경로)
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        FONT_PATH = os.path.join(base_dir, "..", "custom_fonts", "NanumGothic.ttf")
+        
+        if not os.path.exists(FONT_PATH):
+            st.warning(f"❌ 한글 폰트 파일을 찾을 수 없습니다: {FONT_PATH}")
+            return None
+
+        # 한글 폰트 추가 및 설정
+        pdf.add_font("NanumGothic", "", FONT_PATH, uni=True)
+        pdf.set_font("NanumGothic", size=10)  # 폰트 크기 10으로 줄임
+        
+        # 페이지 여백 설정
+        pdf.set_left_margin(10)
+        pdf.set_right_margin(10)
+        
+        # 텍스트 처리
+        lines = report_text.split('\n')
+        for line in lines:
+            try:
+                # 라인을 60자 단위로 분할
+                for i in range(0, len(line), 60):
+                    chunk = line[i:i+60]
+                    # multi_cell 대신 cell 사용 (너비 190mm로 고정)
+                    pdf.cell(190, 10, chunk, ln=1)
+            except Exception as e:
+                st.error(f"텍스트 처리 오류 (해당 라인 생략): {str(e)}")
+                continue
+
+        # 임시 파일 저장
+        temp_dir = tempfile.gettempdir()
+        pdf_path = os.path.join(temp_dir, filename)
+        pdf.output(pdf_path)
+        
+        return pdf_path
+        
+    except Exception as e:
+        st.error(f"PDF 생성 중 심각한 오류 발생: {str(e)}")
+        return None
+
 def create_forecast(model, periods=18, freq="ME"):
     future = model.make_future_dataframe(periods=periods, freq=freq)
     forecast = model.predict(future)
@@ -42,17 +92,14 @@ def create_forecast(model, periods=18, freq="ME"):
 
 def plot_forecast(df_actual, forecast, selected_market):
     fig = go.Figure()
-
     fig.add_trace(go.Scatter(
         x=forecast["ds"], y=forecast["yhat"],
         mode='lines+markers', name='예측값', line=dict(color='blue')
     ))
-
     fig.add_trace(go.Scatter(
         x=df_actual["ds"], y=df_actual["y"],
         mode='lines', name='실제값', line=dict(color='orange', dash='dash')
     ))
-
     fig.add_trace(go.Scatter(
         x=forecast["ds"].tolist() + forecast["ds"][::-1].tolist(),
         y=forecast["yhat_upper"].tolist() + forecast["yhat_lower"][::-1].tolist(),
@@ -60,7 +107,6 @@ def plot_forecast(df_actual, forecast, selected_market):
         line=dict(color='rgba(255,255,255,0)'),
         hoverinfo="skip", showlegend=True, name='신뢰구간'
     ))
-
     fig.update_layout(
         title=f"[{selected_market}] 수출 실적 예측",
         xaxis_title="날짜",
@@ -72,7 +118,6 @@ def plot_forecast(df_actual, forecast, selected_market):
         tickformat="%Y-%m", dtick="M1", tickangle=45,
         range=["2024-10-01", forecast["ds"].max().strftime("%Y-%m-%d")]
     )
-
     return fig
 
 def fetch_news(query, display=5):
@@ -87,7 +132,7 @@ def fetch_news(query, display=5):
         return response.json().get("items", [])
     else:
         return []
-# 
+
 def run_prediction_region():
     CURRENT_DIR = os.path.dirname(__file__)
     MODEL_DIR = os.path.join(CURRENT_DIR,"..", "models")
@@ -95,7 +140,7 @@ def run_prediction_region():
         "현대": os.path.join(CURRENT_DIR,"..",  "data", "현대_시장구분별_수출실적.csv"),
         "기아": os.path.join(CURRENT_DIR,"..", "data", "기아_시장구분별_수출실적.csv")
     }
-    
+
     channel = option_menu(None, ["현대", "기아"], default_index=0, orientation="horizontal",
         icons=["car-front-fill", "truck-front-fill"],
         styles={"container": {"padding": "0!important", "background-color": "#f9f9f9"},
@@ -127,50 +172,7 @@ def run_prediction_region():
         df_actual = load_sales_data(CSV_PATH_MAP[channel], selected_market)
         st.plotly_chart(plot_forecast(df_actual, forecast, selected_market), use_container_width=True)
 
-        st.markdown("#### 분석을 원하는 분기를 선택해주세요")
-        quarter_options = {
-            "2025년 1분기 (1~3월)": datetime.date(2025, 1, 1),
-            "2025년 2분기 (4~6월)": datetime.date(2025, 4, 1),
-            "2025년 3분기 (7~9월)": datetime.date(2025, 7, 1),
-            "2025년 4분기 (10~12월)": datetime.date(2025, 10, 1),
-            "2026년 1분기 (1~3월)": datetime.date(2026, 1, 1),
-            "2026년 2분기 (4~6월)": datetime.date(2026, 4, 1)
-        }
-        selected_q_label = st.selectbox("분기를 선택하세요", list(quarter_options.keys()))
-        selected_date = pd.to_datetime(quarter_options[selected_q_label])
-
-        start_range = selected_date - pd.DateOffset(months=3)
-        end_range = selected_date + pd.DateOffset(months=3)
-
-        forecast_selected = forecast[(forecast["ds"] >= start_range) & (forecast["ds"] <= end_range)][["ds", "yhat", "yhat_lower", "yhat_upper"]].copy()
-
-        # ✅ 날짜 변환 및 컬럼명 변경
-        forecast_selected["월"] = forecast_selected["ds"].apply(
-            lambda d: (d + pd.DateOffset(days=1)).strftime("%Y년 %m월") if d.is_month_end else d.strftime("%Y년 %m월")
-        )
-        forecast_selected = forecast_selected.rename(columns={
-            "yhat": "예측치", "yhat_lower": "하한", "yhat_upper": "상한"
-        })
-        highlight_months = pd.date_range(start=selected_date, periods=3, freq="MS").strftime("%Y년 %m월").tolist()
-
-        # ✅ 스타일 함수 정의
-        def highlight_selected_quarter(row):
-            if row["월"] in highlight_months:
-                return ['background-color: #D5F5E3'] * len(row)
-            else:
-                return [''] * len(row)
-
-        st.markdown(f"#### {selected_q_label} 예측 데이터")
-        st.dataframe(
-            forecast_selected[["월", "예측치", "하한", "상한"]].style
-                .apply(highlight_selected_quarter, axis=1)
-                .format({
-                    "예측치": "{:,.0f}", "하한": "{:,.0f}", "상한": "{:,.0f}"
-                }),
-            use_container_width=True,hide_index=True
-        )
-
-
+        # 뉴스 섹션 추가
         st.subheader(f"[{selected_label}] 관련 최신 뉴스")
         query = f"{selected_label} 자동차 수출"
         news_items = fetch_news(query)
@@ -193,41 +195,71 @@ def run_prediction_region():
         else:
             st.info("뉴스 데이터를 불러올 수 없습니다.")
 
-        st.subheader("AI 분석가의 시장 해석")
-        if st.button("AI 예측실행"):
+        st.markdown("#### 분석을 원하는 분기를 선택해주세요")
+        quarter_options = {
+            "2025년 1분기 (1~3월)": datetime.date(2025, 1, 1),
+            "2025년 2분기 (4~6월)": datetime.date(2025, 4, 1),
+            "2025년 3분기 (7~9월)": datetime.date(2025, 7, 1),
+            "2025년 4분기 (10~12월)": datetime.date(2025, 10, 1),
+            "2026년 1분기 (1~3월)": datetime.date(2026, 1, 1),
+            "2026년 2분기 (4~6월)": datetime.date(2026, 4, 1)
+        }
+        selected_q_label = st.selectbox("분기를 선택하세요", list(quarter_options.keys()))
+        selected_date = pd.to_datetime(quarter_options[selected_q_label])
+
+        start_range = selected_date - pd.DateOffset(months=3)
+        end_range = selected_date + pd.DateOffset(months=3)
+
+        forecast_selected = forecast[(forecast["ds"] >= start_range) & (forecast["ds"] <= end_range)][["ds", "yhat", "yhat_lower", "yhat_upper"]].copy()
+        forecast_selected["월"] = forecast_selected["ds"].apply(
+            lambda d: (d + pd.DateOffset(days=1)).strftime("%Y년 %m월") if d.is_month_end else d.strftime("%Y년 %m월")
+        )
+        forecast_selected = forecast_selected.rename(columns={
+            "yhat": "예측치", "yhat_lower": "하한", "yhat_upper": "상한"
+        })
+        highlight_months = pd.date_range(start=selected_date, periods=3, freq="MS").strftime("%Y년 %m월").tolist()
+
+        def highlight_selected_quarter(row):
+            if row["월"] in highlight_months:
+                return ['background-color: #D5F5E3'] * len(row)
+            else:
+                return [''] * len(row)
+
+        st.markdown(f"#### {selected_q_label} 예측 데이터")
+        st.dataframe(
+            forecast_selected[["월", "예측치", "하한", "상한"]].style
+                .apply(highlight_selected_quarter, axis=1)
+                .format({"예측치": "{:,.0f}", "하한": "{:,.0f}", "상한": "{:,.0f}"}),
+            use_container_width=True, hide_index=True
+        )
+
+        st.subheader("AI 분석가의 시장 분석과 예측")
+        if "report_text" not in st.session_state:
+            st.session_state.report_text = None
+
+        if st.button("AI 분석 실행"):
             if forecast_selected.empty:
                 st.warning("예측 데이터가 충분하지 않아 AI 분석을 생성할 수 없습니다.")
                 return
 
-            try:
-                # ✅ 예측 추세 계산
-                forecast_start = forecast_selected["예측치"].iloc[0]
-                forecast_end = forecast_selected["예측치"].iloc[-1]
-                forecast_trend = "증가세" if forecast_end > forecast_start else "감소세"
+            forecast_start = forecast_selected["예측치"].iloc[0]
+            forecast_end = forecast_selected["예측치"].iloc[-1]
+            forecast_trend = "증가세" if forecast_end > forecast_start else "감소세"
 
-                # ✅ 뉴스 키워드 추출
-                news_keywords = ", ".join([
-                    n["title"].replace("<b>", "").replace("</b>", "")
-                    for n in news_items[:3]
-                ])
+            news_items = fetch_news(f"{selected_label} 자동차 수출")
+            news_keywords = ", ".join([n["title"].replace("<b>", "").replace("</b>", "") for n in news_items[:3]])
 
-                # ✅ 최근 12개월 실제 수출 실적 추출
-                recent_actual = df_actual.sort_values("ds").tail(12)
-                actual_trend_str = ", ".join([
-                    f"{row['ds'].strftime('%Y-%m')}: {int(row['y'])}"
-                    for _, row in recent_actual.iterrows()
-                ])
+            recent_actual = df_actual.sort_values("ds").tail(12)
+            actual_trend_str = ", ".join([
+                f"{row['ds'].strftime('%Y-%m')}: {int(row['y'])}" for _, row in recent_actual.iterrows()
+            ])
 
-                # ✅ ±1분기 예측 수출량 추이 정리
-                trend_data_str = ", ".join([
-                    f"{row['월']}: {int(row['예측치'])}"
-                    for _, row in forecast_selected.iterrows()
-                ])
+            trend_data_str = ", ".join([
+                f"{row['월']}: {int(row['예측치'])}" for _, row in forecast_selected.iterrows()
+            ])
 
-                # ✅ 프롬프트 구성
-                prompt = f"""
+            prompt = f"""
 당신은 자동차 수출 시장을 분석하는 전문 보고서 작성자입니다. 아래 정보를 바탕으로, [시장 분석 보고서]를 작성해주세요.
-
 - 브랜드: {channel}
 - 시장명: {selected_label}
 - 최근 12개월간 실제 수출 실적: {actual_trend_str}
@@ -249,24 +281,60 @@ def run_prediction_region():
 선택된 분기를 기준으로 총 6개월의 수출 예측 흐름을 분석해주세요.  
 어떤 요인들이 영향을 미칠 것으로 보이며, 어떤 주의사항이나 기회가 있는지 설명해주세요.
 
-4. **전략적 제언**  
+4. **전략적 제안**  
 자동차 제조업체 또는 관련 산업이 향후 어떻게 대응하면 좋을지 구체적이고 현실적인 전략을 제시해주세요.
 
 보고서는 **전문적이지만 이해하기 쉽게**, **한글로** 작성해주세요.
-                """
-
-                with st.spinner("GPT-4 Turbo가 분석 중입니다..."):
-                    response = client.chat.completions.create(
-                        model="gpt-4-0125-preview",
-                        messages=[
-                            {"role": "system", "content": "당신은 자동차 수출 시장 전문 보고서를 작성하는 전문가입니다."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.7,
-                        max_tokens=1024
-                    )
-                st.success(response.choices[0].message.content.strip())
-
+"""
+            try:
+                if TEST_MODE:
+                    st.session_state.report_text = "🧪 [테스트 모드] 실제 보고서 대신 이 문구가 출력됩니다.\nPDF 저장 및 레이아웃 확인용입니다."
+                else:
+                    with st.spinner("GPT-4 Turbo가 분석 중입니다..."):
+                        response = client.chat.completions.create(
+                            model="gpt-4-0125-preview",
+                            messages=[
+                                {"role": "system", "content": "당신은 자동차 수출 시장 전문 보고서를 작성하는 전문가입니다."},
+                                {"role": "user", "content": prompt}
+                            ]
+                        )
+                        st.session_state.report_text = response.choices[0].message.content.strip()
             except Exception as e:
-                st.warning("AI 해석 생성 실패")
-                st.text(f"에러: {e}")
+                st.error(f"AI 분석 중 오류 발생: {e}")
+
+        # 세션 상태에 보고서가 있다면 출력 및 PDF 저장 가능하도록
+        if st.session_state.get("report_text"):
+            st.markdown("### 📄 AI 분석 보고서")
+            st.text_area("보고서 내용", st.session_state.report_text, height=400, label_visibility="collapsed")
+            
+            st.markdown("---")
+            st.markdown("#### 📀 보고서를 PDF로 저장하기")
+            
+            def generate_pdf():
+                pdf = FPDF()
+                pdf.add_page()
+                pdf.set_auto_page_break(auto=True, margin=15)
+                
+                base_dir = os.path.dirname(os.path.abspath(__file__))
+                FONT_PATH = os.path.join(base_dir, "..", "custom_fonts", "NanumGothic.ttf")
+                
+                if os.path.exists(FONT_PATH):
+                    pdf.add_font("NanumGothic", "", FONT_PATH, uni=True)
+                    pdf.set_font("NanumGothic", size=10)
+                else:
+                    pdf.set_font("Arial", size=10)
+                
+                lines = st.session_state.report_text.split('\n')
+                for line in lines:
+                    for i in range(0, len(line), 60):
+                        pdf.cell(0, 10, line[i:i+60], ln=1)
+                
+                return bytes(pdf.output(dest='S'))
+
+            st.download_button(
+                label="📥 PDF 다운로드",
+                data=generate_pdf(),
+                file_name=f"{selected_label}_시장_분석_보고서.pdf",
+                mime="application/pdf",
+                key="pdf_download"
+            )
