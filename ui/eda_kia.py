@@ -186,17 +186,20 @@ def get_country_policy(country):
 
 st.title("🚗 기아 자동차 통합 분석 대시보드 (최적화 버전)")
 
-# 세션 상태 초기화
-if 'current_tab' not in st.session_state:
-    st.session_state.current_tab = "🌍 지역별 수출 분석"
 
-# 탭 변경 감지 함수
-def on_tab_change():
-    st.session_state.current_tab = st.session_state.tab_key
 
 
 def run_eda_kia():
 
+
+    # 세션 상태 초기화
+    if 'current_tab' not in st.session_state:
+        st.session_state.current_tab = "🌍 지역별 수출 분석"
+
+    # 탭 변경 감지 함수
+    def on_tab_change():
+        st.session_state.current_tab = st.session_state.tab_key
+        
     # 메인 탭 구성
     main_tabs = st.tabs(["🌍 지역별 수출 분석", "🚘 차종별 판매 분석", "🏭 해외공장 판매 분석", "📊 해외현지 판매 분석"])
 
