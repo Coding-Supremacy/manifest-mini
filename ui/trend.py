@@ -28,8 +28,6 @@ elif platform.system() == 'Windows':
 else:
     print('Unknown system... sorry~~~~')
 
-
-
 @st.cache_data
 def fontRegistered():
     font_dirs = [os.getcwd() + '../font']
