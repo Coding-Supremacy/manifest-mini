@@ -196,7 +196,7 @@ st.title("🚗 기아 자동차 통합 분석 대시보드 (최적화 버전)")
 
 
 def run_eda_kia():
-    
+
     
     # 세션 상태 초기화
     if 'current_tab' not in st.session_state:
@@ -234,19 +234,33 @@ def run_eda_kia():
             col3.metric("최다 수출 지역", top_region)
 
             # 2. 지역별 총합 차트 (캐싱 적용)
-            @st.cache_data(ttl=300)
             def get_region_chart():
                 region_data = df_export.groupby('국가명')['연간합계'].sum().sort_values(ascending=False)
-                fig, ax = plt.subplots(figsize=(10, 6))
-                sns.barplot(x=region_data.values, y=region_data.index, palette='viridis')
-                for i, v in enumerate(region_data.values):
-                    ax.text(v + 100, i, f"{v:,}", va='center', fontsize=10)
-                plt.tight_layout()
+                region_df = region_data.reset_index()
+                region_df.columns = ['국가명', '총수출량']
+
+
+                fig = px.bar(
+                    region_df,
+                    x='총수출량',
+                    y='국가명',
+                    orientation='h',
+                    text='총수출량',
+                    color='총수출량',
+                    color_continuous_scale='Viridis'
+                )
+                fig.update_traces(texttemplate='%{text:,}', textposition='outside')
+                fig.update_layout(
+                    yaxis=dict(autorange='reversed'),
+                    xaxis_title="수출량 (대)",
+                    margin=dict(l=50, r=50, t=60, b=40),
+                    height=600
+                )
                 return fig
 
             st.subheader("지역별 총 수출량")
             fig1 = get_region_chart()
-            st.pyplot(fig1)
+            st.plotly_chart(fig1, use_container_width=True)
             
             st.info(f"""
             **📊 분석 코멘트:**
@@ -267,15 +281,23 @@ def run_eda_kia():
             def get_region_heatmap():
                 region_month = melt_export.pivot_table(index='국가명', columns='월', 
                                                     values='수출량', aggfunc='mean')
-                fig, ax = plt.subplots(figsize=(12, 6))
-                sns.heatmap(region_month, cmap="Blues", annot=True, fmt=',.0f',
-                            linewidths=.5, cbar_kws={'label': '평균 수출량 (대)'})
-                plt.tight_layout()
+
+                fig = px.imshow(
+                    region_month,
+                    labels=dict(x="월", y="국가명", color="평균 수출량 (대)"),
+                    color_continuous_scale="Blues",
+                    text_auto=True,
+                    aspect="auto"
+                )
+                fig.update_layout(
+                    margin=dict(l=50, r=50, t=60, b=40),
+                    height=600
+                )
                 return fig
 
             st.subheader("지역-월별 수출 현황")
             fig4 = get_region_heatmap()
-            st.pyplot(fig4)
+            st.plotly_chart(fig4, use_container_width=True)
             
             st.info("""
             **🌍 월별 패턴 분석:**
@@ -299,22 +321,33 @@ def run_eda_kia():
             # 4. 월별 수출 추이 (캐싱 적용)
             @st.cache_data(ttl=300)
             def get_monthly_trend():
-                palette = sns.color_palette("husl", len(df_export['연도'].unique()))
-                fig, ax = plt.subplots(figsize=(12, 6))
-                for idx, year in enumerate(sorted(df_export['연도'].unique())):
-                    monthly_data = melt_export[melt_export['연도'] == year].groupby('월')['수출량'].sum()
-                    sns.lineplot(x=monthly_data.index, y=monthly_data.values, 
-                                label=str(year), color=palette[idx], 
-                                marker='o', linewidth=2.5, ax=ax)
-                plt.xticks(range(1, 13))
-                plt.grid(True, alpha=0.3)
-                plt.legend(title="연도", bbox_to_anchor=(1.05, 1), loc='upper left')
-                plt.tight_layout()
+                # 연도별 월간 수출량 집계
+                trend_data = melt_export.groupby(['연도', '월'])['수출량'].sum().reset_index()
+
+                # Plotly Line Chart 생성
+                fig = px.line(
+                    trend_data,
+                    x='월',
+                    y='수출량',
+                    color='연도',
+                    markers=True,
+                    line_shape='spline',
+                    labels={'월': '월', '수출량': '수출량 (대)', '연도': '연도'},
+                    title="연도별 월별 수출 추이"
+                )
+
+                fig.update_layout(
+                    height=600,
+                    xaxis=dict(dtick=1),  # 1월 ~ 12월
+                    legend_title="연도",
+                    margin=dict(l=50, r=50, t=60, b=40),
+                    hovermode="x unified"
+                )
                 return fig
 
             st.subheader("월별 수출 추이 (연도별 비교)")
             fig2 = get_monthly_trend()
-            st.pyplot(fig2)
+            st.plotly_chart(fig2, use_container_width=True)
             
             # 성장률 계산 함수
             @st.cache_data(ttl=300)
@@ -340,7 +373,7 @@ def run_eda_kia():
             
             st.info(f"""
             **📈 추세 분석:**
-            - 매년 2~3월과 8~9월에 두드러진 판매 증가 패턴 확인
+            - 매년 2-3월과 8-9월에 두드러진 판매 증가 패턴 확인
             - {current_year}년 4분기 판매량 전년 대비 {growth_rate:.1f}% 증가
             
             **🛠️ 운영 전략:**
@@ -358,16 +391,30 @@ def run_eda_kia():
             # 5. 차량유형별 월별 패턴 (캐싱 적용)
             @st.cache_data(ttl=300)
             def get_vehicle_heatmap():
-                vehicle_month = melt_export.groupby(['차량유형', '월'])['수출량'].mean().unstack()
-                fig, ax = plt.subplots(figsize=(12, 6))
-                sns.heatmap(vehicle_month, cmap="YlGnBu", annot=True, fmt=',.0f', 
-                            linewidths=.5, cbar_kws={'label': '평균 수출량 (대)'})
-                plt.tight_layout()
-                return fig
+                # 차량유형-월별 평균 수출량 데이터 생성
+                vehicle_month = melt_export[melt_export['차량유형'] != '총합'] \
+    .groupby(['차량유형', '월'])['수출량'].mean().unstack()
 
+                # Plotly 히트맵 생성
+                fig = px.imshow(
+                    vehicle_month,
+                    text_auto='.0f',
+                    color_continuous_scale='YlGnBu',
+                    aspect='auto',
+                    labels=dict(x="월", y="차량유형", color="평균 수출량 (대)"),
+                )
+
+                fig.update_layout(
+                    title="차량유형-월별 수출 패턴",
+                    xaxis_title="월",
+                    yaxis_title="차량유형",
+                    margin=dict(l=50, r=50, t=60, b=40),
+                    height=600
+                )
+                return fig
             st.subheader("차량유형-월별 수출 패턴")
             fig3 = get_vehicle_heatmap()
-            st.pyplot(fig3)
+            st.plotly_chart(fig3, use_container_width=True)
             
             st.info("""
             **🚗 차종별 특징:**
@@ -668,11 +715,15 @@ def run_eda_kia():
         
         with sub_tab1:
 
+            years = sorted(df_sales['연도'].unique())
+            default_year = 2024
+            default_index = years.index(default_year) if default_year in years else len(years) - 1
+
             selected_year = st.selectbox(
-            "연도 선택",
-            options=sorted(df_sales['연도'].unique()),
-            index=len(df_sales['연도'].unique())-1,
-            key='sales_year_sub_tab1'
+                "연도 선택",
+                options=years,
+                index=default_index,
+                key='sales_year_sub_tab1'
             )
 
             # 캐싱 적용된 상위 차종 추출
@@ -691,18 +742,36 @@ def run_eda_kia():
                     (_df['연도'] == year) & 
                     (_df['차종'].isin(models))
                 ].groupby('차종')['연간합계'].sum().sort_values(ascending=False)
-                
-                fig, ax = plt.subplots(figsize=(10, 6))
-                sns.barplot(x=top_data.values, y=top_data.index, palette='rocket')
-                for i, v in enumerate(top_data.values):
-                    ax.text(v + 50, i, f"{v:,}", va='center')
-                plt.title(f"{year}년 Top 10 차종", fontsize=14)
-                plt.tight_layout()
-                return fig
 
+                top_df = top_data.reset_index()
+                top_df.columns = ['차종', '연간합계']
+
+                fig = px.bar(
+                    top_df,
+                    x='연간합계',
+                    y='차종',
+                    orientation='h',
+                    text='연간합계',
+                    color='연간합계',
+                    color_continuous_scale='viridis'
+                )
+
+                fig.update_traces(
+                    texttemplate='%{text:,}', 
+                    textposition='outside'
+                )
+                fig.update_layout(
+                    title=f"{year}년 Top 10 차종",
+                    xaxis_title="연간 판매량 (대)",
+                    yaxis=dict(autorange='reversed'),
+                    margin=dict(l=50, r=50, t=60, b=40),
+                    height=600
+                )
+                return fig
             st.subheader("차종별 연간 판매량 Top 10")
             fig1 = get_top_models_chart(df_sales, selected_year, top_models)
-            st.pyplot(fig1)
+            st.plotly_chart(fig1, use_container_width=True)
+
             
             top_model_share = df_sales[(df_sales['차종']==top_models[0]) & (df_sales['연도']==selected_year)]['연간합계'].sum()/df_sales[df_sales['연도']==selected_year]['연간합계'].sum()*100
             ev_models = [m for m in top_models if get_powertrain_type(m)=='전기차']
@@ -731,18 +800,33 @@ def run_eda_kia():
                 top_type = _df[
                     (_df['연도'] == year) &
                     (_df['차종'].isin(models))
-                ].groupby(['차종', '거래 유형'])['연간합계'].sum().unstack()
-                
-                fig, ax = plt.subplots(figsize=(10, 6))
-                top_type.plot(kind='barh', stacked=True, ax=ax)
-                plt.legend(title="거래 유형", bbox_to_anchor=(1.05, 1))
-                plt.title("국내/수출 비율", fontsize=14)
-                plt.tight_layout()
+                ].groupby(['차종', '거래 유형'])['연간합계'].sum().reset_index()
+
+                fig = px.bar(
+                    top_type,
+                    x='연간합계',
+                    y='차종',
+                    color='연간합계',
+                    orientation='h',
+                    text='연간합계'
+                )
+
+                fig.update_traces(texttemplate='%{text:,}', textposition='inside')
+                fig.update_layout(
+                    barmode='stack',
+                    title="국내/수출 비율",
+                    xaxis_title="연간 판매량 (대)",
+                    yaxis=dict(autorange='reversed'),
+                    margin=dict(l=50, r=50, t=60, b=40),
+                    height=600,
+                    legend_title_text="거래 유형"
+                )
+
                 return fig
 
             st.subheader("상위 차종별 거래 유형")
             fig2 = get_sales_composition(df_sales, selected_year, top_models)
-            st.pyplot(fig2)
+            st.plotly_chart(fig2, use_container_width=True)
             
             avg_export_ratio = df_sales[df_sales['연도']==selected_year].groupby('차종')['연간합계'].sum().nlargest(10).index.to_series().apply(
                 lambda x: df_sales[(df_sales['차종']==x) & (df_sales['연도']==selected_year)].groupby('거래 유형')['연간합계'].sum().get('수출', 0)/df_sales[(df_sales['차종']==x) & (df_sales['연도']==selected_year)]['연간합계'].sum()
@@ -786,22 +870,37 @@ def run_eda_kia():
                 monthly_top5 = _melt[
                     (_melt['연도'] == year) & 
                     (_melt['차종'].isin(top5))
-                ].groupby(['월', '차종'])['판매량'].sum().unstack()
-                
-                fig, ax = plt.subplots(figsize=(12, 6))
-                monthly_top5.plot(kind='bar', stacked=True, ax=ax, width=0.8)
-                plt.title("월별 판매 동향 - 상위 5개 차종 (누적)", fontsize=14)
-                plt.xlabel("월")
-                plt.ylabel("판매량 (누적)")
-                plt.xticks(range(12), range(1, 13), rotation=0)  # 1월~12월 표시
-                plt.grid(axis='y', alpha=0.3)
-                plt.legend(title='차종', bbox_to_anchor=(1.05, 1), loc='upper left')
-                plt.tight_layout()
+                ].groupby(['월', '차종'])['판매량'].sum().reset_index()
+
+
+                fig = px.bar(
+                    monthly_top5,
+                    x='월',
+                    y='판매량',
+                    color='차종',
+                    text='판매량',
+                    color_continuous_scale='Viridis'
+                )
+
+                fig.update_traces(texttemplate='%{text:,}', textposition='inside')
+                fig.update_layout(
+                    barmode='stack',
+                    title="월별 판매 동향 - 상위 5개 차종 (누적)",
+                    xaxis_title="월",
+                    yaxis_title="판매량 (대)",
+                    xaxis=dict(tickmode='linear', tick0=1, dtick=1),
+                    margin=dict(l=50, r=50, t=60, b=40),
+                    height=600,
+                    legend_title_text="차종",
+                    bargap=0.1
+                )
+
                 return fig
+
 
             st.subheader("상위 5개 차종 월별 추이")
             fig3 = get_monthly_trend_top5(melt_sales, selected_year, top_models)
-            st.pyplot(fig3)
+            st.plotly_chart(fig3, use_container_width=True)
 
             model1_pattern = get_seasonality_pattern(melt_sales[(melt_sales['차종']==top_models[0]) & (melt_sales['연도']==selected_year)].groupby('월')['판매량'].sum())
             model2_pattern = get_seasonality_pattern(melt_sales[(melt_sales['차종']==top_models[2]) & (melt_sales['연도']==selected_year)].groupby('월')['판매량'].sum())
@@ -825,21 +924,40 @@ def run_eda_kia():
             - 11월: 전기차 보조금 마감 기간 집중 홍보
             """)
 
-            # 4. 상위 차종 비교 (기존 막대그래프 유지)
+            # 4. 상위 차종 비교 (Plotly + 유저 선택 반영)
             @st.cache_data(ttl=300)
             def get_model_comparison(_melt, year, model1, model2):
                 compare = _melt[
                     (_melt['차종'].isin([model1, model2])) &
                     (_melt['연도'] == year)
-                ].pivot_table(index='월', columns='차종', values='판매량', aggfunc='sum')
-                
-                fig, ax = plt.subplots(figsize=(10, 5))
-                compare.plot(kind='bar', ax=ax, width=0.8)
-                plt.title(f"{model1} vs {model2}", fontsize=14)
-                plt.xlabel("월")
-                plt.tight_layout()
+                ].groupby(['월', '차종'])['판매량'].sum().reset_index()
+
+
+                fig = px.bar(
+                    compare,
+                    x='월',
+                    y='판매량',
+                    color='차종',
+                    barmode='group',
+                    text='판매량',
+                    color_continuous_scale='sunset'
+                )
+
+                fig.update_traces(texttemplate='%{text:,}', textposition='outside')
+                fig.update_layout(
+                    title=f"{model1} vs {model2}",
+                    xaxis_title="월",
+                    yaxis_title="판매량 (대)",
+                    xaxis=dict(tickmode='linear', tick0=1, dtick=1),
+                    height=500,
+                    margin=dict(l=40, r=40, t=60, b=40),
+                    legend_title_text="차종"
+                )
+
                 return fig
 
+
+            # 👉 Streamlit UI + 그래프 출력
             st.subheader("상위 차종 직접 비교")
             col1, col2 = st.columns(2)
             with col1:
@@ -858,7 +976,8 @@ def run_eda_kia():
                 )
 
             fig4 = get_model_comparison(melt_sales, selected_year, model1, model2)
-            st.pyplot(fig4)
+            st.plotly_chart(fig4, use_container_width=True)
+
 
             # 모델 비교 분석을 위한 추가 계산
             model1_total = melt_sales[(melt_sales['차종']==model1) & (melt_sales['연도']==selected_year)]['판매량'].sum()
@@ -1158,32 +1277,56 @@ def run_eda_kia():
 
     with main_tabs[2] if current_tab == "🏭 해외공장 판매 분석" else main_tabs[2]:
         sub_tab1, sub_tab2 = st.tabs(["🏗️ 공장별 분석", "🚙 차종별 분석"])
-        
-        selected_year_factory = st.selectbox(
-            "연도 선택",
-            options=sorted(df_factory['연도'].unique()),
-            index=len(df_factory['연도'].unique())-1,
-            key='factory_year'
-        )
-        
         with sub_tab1:
+            years = sorted(df_factory['연도'].unique())
+            default_year = 2024
+            default_index = years.index(default_year) if default_year in years else len(years) - 1
+
+            selected_year_factory = st.selectbox(
+                "연도 선택",
+                options=years,
+                index=default_index,
+                key='factory_year1'
+            )
+
             # 1. 공장별 총 판매량 (캐싱 적용)
             @st.cache_data(ttl=300)
             def get_factory_total(_df, year):
+                # 연도별 공장 총 판매량 계산
                 factory_total = _df[_df['연도'] == year]\
-                            .groupby('공장명(국가)')['연간합계'].sum().sort_values(ascending=False)
-                
-                fig, ax = plt.subplots(figsize=(10, 6))
-                sns.barplot(x=factory_total.values, y=factory_total.index, palette='mako')
-                for i, v in enumerate(factory_total.values):
-                    ax.text(v + 100, i, f"{v:,}", va='center')
-                plt.title(f"{year}년 공장별 총 판매량", fontsize=14)
-                plt.tight_layout()
+                    .groupby('공장명(국가)')['연간합계'].sum()\
+                    .sort_values(ascending=False)
+
+                factory_df = factory_total.reset_index()
+                factory_df.columns = ['공장명', '판매량']
+
+                # Plotly 그래프 생성
+                fig = px.bar(
+                    factory_df,
+                    x='판매량',
+                    y='공장명',
+                    orientation='h',
+                    text='판매량',
+                    color='판매량',
+                    color_continuous_scale='sunset',
+                    title=f"{year}년 공장별 총 판매량"
+                )
+                fig.update_traces(texttemplate='%{text:,}', textposition='outside')
+                fig.update_layout(
+                    yaxis=dict(autorange='reversed'),
+                    xaxis_title="판매량 (대)",
+                    margin=dict(l=50, r=50, t=60, b=40),
+                    height=600,
+                    coloraxis_showscale=False
+                )
+
                 return fig
+
 
             st.subheader("공장별 연간 총 판매량")
             fig1 = get_factory_total(df_factory, selected_year_factory)
-            st.pyplot(fig1)
+            st.plotly_chart(fig1, use_container_width=True)
+
             
             top_factory = df_factory[df_factory['연도']==selected_year_factory].groupby('공장명(국가)')['연간합계'].sum().idxmax()
             top_factory_share = df_factory[df_factory['연도']==selected_year_factory].groupby('공장명(국가)')['연간합계'].sum().max()/df_factory[df_factory['연도']==selected_year_factory]['연간합계'].sum()*100
@@ -1247,27 +1390,59 @@ def run_eda_kia():
         
         with sub_tab2:
             # 3. 차종별 공장 분포 (캐싱 적용)
+            years = sorted(df_factory['연도'].unique())
+            default_year = 2024
+            default_index = years.index(default_year) if default_year in years else len(years) - 1
+
+            selected_year_factory = st.selectbox(
+                "연도 선택",
+                options=years,
+                index=default_index,
+                key='factory_year2'
+            )
             @st.cache_data(ttl=300)
             def get_model_factory(_df, year, n=10):
+                # 상위 차종 n개 추출
                 top_models = _df[_df['연도'] == year]\
-                        .groupby('차종')['연간합계'].sum()\
-                        .nlargest(n).index.tolist()
+                    .groupby('차종')['연간합계'].sum()\
+                    .nlargest(n).index.tolist()
                 
+                # 차종별 공장 분포 테이블
                 model_factory = _df[
                     (_df['연도'] == year) &
                     (_df['차종'].isin(top_models))
-                ].groupby(['차종', '공장명(국가)'])['연간합계'].sum().unstack()
-                
-                fig, ax = plt.subplots(figsize=(12, 6))
-                model_factory.plot(kind='barh', stacked=True, ax=ax)
-                plt.title("차종별 생산 공장 분포", fontsize=14)
-                plt.legend(title="공장명", bbox_to_anchor=(1.05, 1))
-                plt.tight_layout()
+                ].groupby(['차종', '공장명(국가)'])['연간합계'].sum().unstack().fillna(0)
+
+                # Plotly용 long-form 데이터프레임으로 변환
+                plot_df = model_factory.reset_index().melt(id_vars='차종', var_name='공장', value_name='생산량')
+
+                # Plotly 그래프 생성
+                fig = px.bar(
+                    plot_df,
+                    x='생산량',
+                    y='차종',
+                    color='공장',
+                    orientation='h',
+                    text='생산량',
+                    title="차종별 생산 공장 분포",
+                    color_discrete_sequence=px.colors.qualitative.Pastel
+                )
+                fig.update_traces(texttemplate='%{text:,}', textposition='inside')
+                fig.update_layout(
+                    barmode='stack',
+                    xaxis_title='생산량 (대)',
+                    yaxis_title='차종',
+                    margin=dict(l=50, r=50, t=60, b=40),
+                    height=600,
+                    legend_title_text="공장명"
+                )
+
                 return fig
+
 
             st.subheader("차종별 생산 공장 분포 (Top 10)")
             fig3 = get_model_factory(df_factory, selected_year_factory)
-            st.pyplot(fig3)
+            st.plotly_chart(fig3, use_container_width=True)
             
             most_produced_model = df_factory[df_factory['연도']==selected_year_factory].groupby('차종')['연간합계'].sum().idxmax()
             model_factories = df_factory[(df_factory['연도']==selected_year_factory) & (df_factory['차종']==most_produced_model)]['공장명(국가)'].nunique()
@@ -1314,18 +1489,29 @@ def run_eda_kia():
                     (_melt['연도'] == year)
                 ]
                 
-                fig, ax = plt.subplots(figsize=(12, 6))
-                sns.lineplot(data=model_data, x='월', y='판매량', hue='공장명(국가)', 
-                            marker='o', linewidth=2.5)
-                plt.title(f"{model} 월별 판매 추이 ({year}년)", fontsize=14)
-                plt.xticks(range(1, 13))
-                plt.grid(True, alpha=0.3)
-                plt.tight_layout()
+                fig = px.line(
+                    model_data,
+                    x='월',
+                    y='판매량',
+                    color='공장명(국가)',
+                    markers=True,
+                    title=f"{model} 월별 판매 추이 ({year}년)",
+                    line_shape='linear'
+                )
+                fig.update_traces(mode='lines+markers')
+                fig.update_layout(
+                    xaxis=dict(tickmode='linear', tick0=1, dtick=1),
+                    xaxis_title="월",
+                    yaxis_title="판매량",
+                    margin=dict(l=50, r=50, t=60, b=40),
+                    height=600,
+                    legend_title_text="공장명"
+                )
                 return fig
 
             st.subheader("차종 상세 분석")
             fig4 = get_model_trend(melt_factory, selected_year_factory, selected_model)
-            st.pyplot(fig4)
+            st.plotly_chart(fig4, use_container_width=True)
             
             model_main_factory = melt_factory[(melt_factory['차종']==selected_model) & (melt_factory['연도']==selected_year_factory)].groupby('공장명(국가)')['판매량'].sum().idxmax()
             model_volatility = (melt_factory[(melt_factory['차종']==selected_model) & (melt_factory['연도']==selected_year_factory)].groupby('월')['판매량'].sum().std() / melt_factory[(melt_factory['차종']==selected_model) & (melt_factory['연도']==selected_year_factory)].groupby('월')['판매량'].sum().mean()) * 100
@@ -1351,13 +1537,6 @@ def run_eda_kia():
     with main_tabs[3]:  # 📊 해외현지 판매 분석 탭
         sub_tab1, sub_tab2 = st.tabs(["🌍 국가별 분석", "🚙 차종별 분석"])
         
-        selected_year = st.selectbox(
-            "연도 선택",
-            options=sorted(df_overseas['연도'].unique()),
-            index=len(df_overseas['연도'].unique())-1,
-            key='overseas_year'
-        )
-
         # 월별 컬럼 리스트
         months = ['1월', '2월', '3월', '4월', '5월', '6월', 
                 '7월', '8월', '9월', '10월', '11월', '12월']
@@ -1368,7 +1547,16 @@ def run_eda_kia():
         # ----------------------------------
         with sub_tab1:
             st.subheader("📍 국가별 월별 판매 분석")
-            
+            years = sorted(df_overseas['연도'].unique())
+            default_year = 2024
+            default_index = years.index(default_year) if default_year in years else len(years) - 1
+
+            selected_year = st.selectbox(
+                "연도 선택",
+                options=years,
+                index=default_index,
+                key='country_monthly1'
+            )
             # 국가 선택 위젯
             country_list = df_overseas['국가명'].unique().tolist()
             selected_country = st.selectbox(
@@ -1384,29 +1572,50 @@ def run_eda_kia():
                     (_df['연도'] == year) & 
                     (_df['국가명'] == country)
                 ][months].sum()
-                
-                fig, ax = plt.subplots(figsize=(12, 5))
-                sns.lineplot(
-                    x=months_clean, 
-                    y=country_data.values,
-                    color='#3498db', 
-                    marker='o',
-                    linewidth=2.5
+
+                plot_df = pd.DataFrame({
+                    '월': list(range(1, 13)),  # 숫자형 월
+                    '판매량': country_data.values
+                })
+
+                max_month = plot_df.loc[plot_df['판매량'].idxmax(), '월']
+                min_month = plot_df.loc[plot_df['판매량'].idxmin(), '월']
+
+                fig = px.line(
+                    plot_df,
+                    x='월',
+                    y='판매량',
+                    markers=True,
+                    title=f"{year}년 {country} 월별 판매량"
                 )
-                plt.title(f"{year}년 {country} 월별 판매량", fontsize=14)
-                plt.xlabel("월")
-                plt.ylabel("판매량 (대)")
-                plt.grid(True, alpha=0.3)
-                plt.ylim(0, country_data.max() * 1.2)
-                
-                # 최대/최소값 강조
-                max_month = months_clean[country_data.argmax()]
-                min_month = months_clean[country_data.argmin()]
-                ax.axvline(x=max_month, color='r', linestyle='--', alpha=0.3)
-                ax.axvline(x=min_month, color='g', linestyle='--', alpha=0.3)
+
+                fig.add_vline(
+                    x=max_month,
+                    line_dash='dash',
+                    line_color='red',
+                    annotation_text="최대",
+                    annotation_position="top left"
+                )
+                fig.add_vline(
+                    x=min_month,
+                    line_dash='dash',
+                    line_color='green',
+                    annotation_text="최소",
+                    annotation_position="bottom left"
+                )
+
+                fig.update_layout(
+                    xaxis_title="월",
+                    yaxis_title="판매량 (대)",
+                    margin=dict(l=40, r=40, t=60, b=40),
+                    height=500
+                )
                 return fig
 
-            st.pyplot(plot_country_monthly(df_overseas, selected_year, selected_country))
+
+
+            st.plotly_chart(plot_country_monthly(df_overseas, selected_year, selected_country), use_container_width=True)
+
 
             country_total = df_overseas[(df_overseas['연도']==selected_year) & (df_overseas['국가명']==selected_country)]['월별합계'].sum()
             country_peak = df_overseas[(df_overseas['연도']==selected_year) & (df_overseas['국가명']==selected_country)][months].sum().idxmax().replace('월','')
@@ -1440,33 +1649,38 @@ def run_eda_kia():
                 default=['U.S.A', 'China', 'Asia Pacific'][:min(3, len(country_list))],
                 max_selections=5
             )
-            
+                        
             @st.cache_data(ttl=300)
             def plot_country_comparison(_df, year, countries):
                 comparison_data = _df[
                     (_df['연도'] == year) & 
                     (_df['국가명'].isin(countries))
                 ].groupby('국가명')[months].sum().T
-                
-                fig, ax = plt.subplots(figsize=(12, 6))
+
+                comparison_data.index = list(range(1, 13))  # 월을 숫자(1~12)로 처리
+
+                fig = go.Figure()
                 for country in countries:
-                    sns.lineplot(
-                        x=months_clean,
+                    fig.add_trace(go.Scatter(
+                        x=comparison_data.index,
                         y=comparison_data[country],
-                        label=country,
-                        marker='o',
-                        linewidth=2.5
-                    )
-                plt.title(f"{year}년 국가별 월별 판매 비교", fontsize=14)
-                plt.xlabel("월")
-                plt.ylabel("판매량 (대)")
-                plt.grid(True, alpha=0.3)
-                plt.legend(title="국가", bbox_to_anchor=(1.05, 1))
+                        mode='lines+markers',
+                        name=country
+                    ))
+
+                fig.update_layout(
+                    title=f"{year}년 국가별 월별 판매 비교",
+                    xaxis=dict(title="월", tickmode='linear'),
+                    yaxis=dict(title="판매량 (대)"),
+                    height=500,
+                    margin=dict(l=40, r=40, t=60, b=40)
+                )
                 return fig
 
+
             if selected_countries:
-                st.pyplot(plot_country_comparison(df_overseas, selected_year, selected_countries))
-                
+                st.plotly_chart(plot_country_comparison(df_overseas, selected_year, selected_countries), use_container_width=True)
+
                 fastest_grower = get_fastest_growing_country(df_overseas, selected_countries, selected_year)
                 seasonal_pattern = identify_seasonal_pattern(df_overseas, selected_countries)
                 
@@ -1494,6 +1708,16 @@ def run_eda_kia():
         # 2. 차종별 분석 서브탭
         # ----------------------------------
         with sub_tab2:
+            years = sorted(df_overseas['연도'].unique())
+            default_year = 2024
+            default_index = years.index(default_year) if default_year in years else len(years) - 1
+
+            selected_year = st.selectbox(
+                "연도 선택",
+                options=years,
+                index=default_index,
+                key='country_monthly2'
+            )
             # 2-1. 차종별 월별 판매 패턴 (히트맵)
             st.subheader("🔥 차종별 월별 판매 히트맵")
             
@@ -1502,7 +1726,7 @@ def run_eda_kia():
                 # 상위 5개 차종 선택
                 top_models = _df[_df['연도'] == year]\
                             .groupby('차종')['월별합계'].sum()\
-                            .nlargest(5).index
+                            .nlargest(5).index.tolist()
                 
                 # 해당 차종들의 월별 데이터 추출 및 전치
                 heatmap_data = _df[
@@ -1510,18 +1734,39 @@ def run_eda_kia():
                     (_df['차종'].isin(top_models))
                 ].groupby('차종')[months].sum().T
                 
-                # 컬럼명에서 '월' 제거 (1월 → 1)
+                # 인덱스에서 '월' 제거 및 정수형으로 변환
                 heatmap_data.index = heatmap_data.index.str.replace('월', '')
-                
-                fig, ax = plt.subplots(figsize=(10, 6))
-                sns.heatmap(heatmap_data, cmap="YlGnBu", annot=True, fmt=",.0f",
-                            linewidths=0.5, cbar_kws={'label': '판매량 (대)'})
-                plt.title(f"{year}년 인기 차종 월별 판매량", fontsize=14)
-                plt.xlabel("차종")
-                plt.ylabel("월")
+                heatmap_data.index = heatmap_data.index.astype(int)
+                heatmap_data = heatmap_data.sort_index()  # 1~12월 순서 정렬
+
+                # Plotly heatmap
+                fig = go.Figure(
+                    data=go.Heatmap(
+                        z=heatmap_data.values,
+                        x=heatmap_data.columns,
+                        y=heatmap_data.index,
+                        colorscale='YlGnBu',
+                        colorbar=dict(title='판매량 (대)'),
+                        text=heatmap_data.values,
+                        texttemplate="%{text:,}",
+                        hovertemplate="차종: %{x}<br>월: %{y}월<br>판매량: %{z:,}<extra></extra>"
+                    )
+                )
+
+                fig.update_layout(
+                    title=f"{year}년 인기 차종 월별 판매량",
+                    xaxis_title="차종",
+                    yaxis_title="월",
+                    yaxis=dict(tickmode='linear'),
+                    height=500,
+                    margin=dict(l=40, r=40, t=60, b=40)
+                )
+
                 return fig
 
-            st.pyplot(plot_vehicle_heatmap(df_overseas, selected_year))
+            # 출력
+            st.plotly_chart(plot_vehicle_heatmap(df_overseas, selected_year), use_container_width=True)
+
 
             year_round_models = get_year_round_models(df_overseas)
             seasonal_models = get_seasonal_models(df_overseas)
@@ -1565,52 +1810,86 @@ def run_eda_kia():
                     powertrain_data = _df[
                         (_df['연도'] == year) & 
                         (_df['국가명'] == country)
-                    ].groupby('파워트레인')['월별합계'].sum()
-                    
-                    fig, ax = plt.subplots(figsize=(8, 6))
-                    if not powertrain_data.empty:
-                        powertrain_data.plot(
-                            kind='pie',
-                            autopct='%.1f%%',
-                            colors=['#FF9999', '#66B2FF', '#99FF99'],
-                            startangle=90,
-                            ax=ax,
-                            wedgeprops={'linewidth': 1, 'edgecolor': 'white'}
+                    ].groupby('파워트레인')['월별합계'].sum().reset_index()
+
+                    if powertrain_data.empty:
+                        fig = go.Figure()
+                        fig.add_annotation(
+                            text="데이터 없음",
+                            xref="paper", yref="paper",
+                            x=0.5, y=0.5, showarrow=False,
+                            font=dict(size=20)
                         )
-                        plt.title(f"{country} 파워트레인 비율 ({year}년)", fontsize=14)
-                        plt.ylabel("")
-                    else:
-                        ax.text(0.5, 0.5, "데이터 없음", ha='center', va='center')
+                        fig.update_layout(height=400)
+                        return fig
+
+                    fig = px.pie(
+                        powertrain_data,
+                        names='파워트레인',
+                        values='월별합계',
+                        title=f"{country} 파워트레인 비율 ({year}년)",
+                        color_discrete_sequence=['#FF9999', '#66B2FF', '#99FF99'],
+                        hole=0.3
+                    )
+                    
+                    fig.update_traces(textinfo='percent+label', textfont_size=14)
+                    fig.update_layout(
+                        height=500,
+                        margin=dict(l=50, r=50, t=60, b=40)
+                    )
                     return fig
 
-                st.pyplot(plot_powertrain_pie(df_overseas, selected_year, selected_power_country))
+                # 출력
+                st.plotly_chart(plot_powertrain_pie(df_overseas, selected_year, selected_power_country), use_container_width=True)
 
             with col2:
                 # 2-2. 파워트레인 연도별 추이 (막대 그래프)
                 @st.cache_data(ttl=300)
                 def plot_powertrain_trend(_df, country):
                     trend_data = _df[_df['국가명'] == country]\
-                            .groupby(['연도', '파워트레인'])['월별합계'].sum()\
-                            .unstack()
-                    
-                    fig, ax = plt.subplots(figsize=(10, 6))
-                    if not trend_data.empty:
-                        trend_data.plot(
-                            kind='bar',
-                            stacked=True,
-                            color=['#FF9999', '#66B2FF', '#99FF99'],
-                            ax=ax
+                                .groupby(['연도', '파워트레인'])['월별합계'].sum()\
+                                .unstack().fillna(0)
+
+                    if trend_data.empty:
+                        fig = go.Figure()
+                        fig.add_annotation(
+                            text="데이터 없음",
+                            xref="paper", yref="paper",
+                            x=0.5, y=0.5, showarrow=False,
+                            font=dict(size=20)
                         )
-                        plt.title(f"{country} 파워트레인 연도별 추이", fontsize=14)
-                        plt.xlabel("연도")
-                        plt.ylabel("판매량 (대)")
-                        plt.legend(title="파워트레인", bbox_to_anchor=(1.05, 1))
-                        plt.grid(True, axis='y', alpha=0.3)
-                    else:
-                        ax.text(0.5, 0.5, "데이터 없음", ha='center', va='center')
+                        fig.update_layout(height=300)
+                        return fig
+
+                    # Long-form 데이터로 변환
+                    plot_df = trend_data.reset_index().melt(id_vars='연도', var_name='파워트레인', value_name='판매량')
+
+                    fig = px.bar(
+                        plot_df,
+                        x='연도',
+                        y='판매량',
+                        color='파워트레인',
+                        barmode='stack',
+                        text='판매량',
+                        color_discrete_sequence=['#FF9999', '#66B2FF', '#99FF99'],
+                        title=f"{country} 파워트레인 연도별 추이"
+                    )
+
+                    fig.update_traces(texttemplate='%{text:,}', textposition='inside')
+                    fig.update_layout(
+                        xaxis_title="연도",
+                        yaxis_title="판매량 (대)",
+                        legend_title_text="파워트레인",
+                        height=500,
+                        margin=dict(l=40, r=40, t=60, b=40),
+                        bargap=0.2
+                    )
+                    
                     return fig
 
-                st.pyplot(plot_powertrain_trend(df_overseas, selected_power_country))
+                # 출력
+                st.plotly_chart(plot_powertrain_trend(df_overseas, selected_power_country), use_container_width=True)
+
 
             ev_share = df_overseas[(df_overseas['국가명']==selected_power_country) & (df_overseas['연도']==selected_year) & (df_overseas['파워트레인']=='전기차')]['월별합계'].sum()/df_overseas[(df_overseas['국가명']==selected_power_country) & (df_overseas['연도']==selected_year)]['월별합계'].sum()*100
             ice_share = df_overseas[(df_overseas['국가명']==selected_power_country) & (df_overseas['연도']==selected_year) & (df_overseas['파워트레인']=='내연기관')]['월별합계'].sum()/df_overseas[(df_overseas['국가명']==selected_power_country) & (df_overseas['연도']==selected_year)]['월별합계'].sum()*100
@@ -1639,29 +1918,44 @@ def run_eda_kia():
             
             @st.cache_data(ttl=300)
             def plot_global_powertrain(_df, year):
+                # Top 10 국가 추출
                 top_countries = _df[_df['연도'] == year]\
-                            .groupby('국가명')['월별합계'].sum()\
-                            .nlargest(10).index
-                
+                    .groupby('국가명')['월별합계'].sum()\
+                    .nlargest(10).index
+
+                # 파워트레인별 집계
                 power_data = _df[
                     (_df['연도'] == year) & 
                     (_df['국가명'].isin(top_countries))
-                ].groupby(['국가명', '파워트레인'])['월별합계'].sum().unstack()
-                
-                fig, ax = plt.subplots(figsize=(12, 6))
-                power_data.plot(
-                    kind='barh',
-                    stacked=True,
-                    color=['#FF9999', '#66B2FF', '#99FF99'],
-                    ax=ax
+                ].groupby(['국가명', '파워트레인'])['월별합계'].sum().reset_index()
+
+                # Plotly stacked bar chart
+                fig = px.bar(
+                    power_data,
+                    x='월별합계',
+                    y='국가명',
+                    color='파워트레인',
+                    orientation='h',
+                    title=f"Top 10 국가 파워트레인 현황 ({year}년)",
+                    color_discrete_sequence=['#FF9999', '#66B2FF', '#99FF99'],
+                    text='월별합계'
                 )
-                plt.title(f"Top 10 국가 파워트레인 현황 ({year}년)", fontsize=14)
-                plt.xlabel("총 판매량 (대)")
-                plt.legend(title="파워트레인", bbox_to_anchor=(1.05, 1))
-                plt.grid(True, axis='x', alpha=0.3)
+
+                fig.update_traces(texttemplate='%{text:,}', textposition='inside')
+                fig.update_layout(
+                    barmode='stack',
+                    xaxis_title="총 판매량 (대)",
+                    yaxis_title="국가",
+                    margin=dict(l=50, r=50, t=60, b=40),
+                    height=600,
+                    legend_title_text="파워트레인"
+                )
+
                 return fig
 
-            st.pyplot(plot_global_powertrain(df_overseas, selected_year))
+            # 출력
+            st.plotly_chart(plot_global_powertrain(df_overseas, selected_year), use_container_width=True)
+
 
             ev_leader = get_ev_leader(df_overseas[df_overseas['연도']==selected_year])
             ice_dependent = get_ice_dependent(df_overseas[df_overseas['연도']==selected_year])
