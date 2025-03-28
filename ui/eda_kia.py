@@ -18,48 +18,40 @@ months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월'
 @st.cache_data(ttl=3600, show_spinner="데이터 로드 중...")
 def load_data():
     months = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
-    
     # 지역별 수출 데이터
-    df_export = pd.read_csv("data/기아_지역별수출실적_전처리.csv")
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    df_export = pd.read_csv(os.path.join(BASE_DIR, "data/기아_지역별수출실적_전처리.csv"))
     df_export['연간합계'] = df_export[months].sum(axis=1)
     df_export['차량유형'] = df_export['차량 구분'].str.split('(').str[0]
-    
-    melt_export = df_export.melt(id_vars=['차량유형', '국가명', '연도'], 
+    melt_export = df_export.melt(id_vars=['차량유형', '국가명', '연도'],
                                value_vars=months,
-                               var_name='월', 
+                               var_name='월',
                                value_name='수출량')
     melt_export['월'] = melt_export['월'].str.replace('월', '').astype(int)
-    
     # 차종별 판매 데이터
-    df_sales = pd.read_csv("data/기아_차종별판매실적.csv")
+    df_sales = pd.read_csv(os.path.join(BASE_DIR, "data/기아_차종별판매실적.csv"))
     df_sales['연간합계'] = df_sales[months].sum(axis=1)
-    
     melt_sales = df_sales.melt(id_vars=['차종', '차량 구분', '거래 유형', '연도'],
                              value_vars=months,
                              var_name='월',
                              value_name='판매량')
     melt_sales['월'] = melt_sales['월'].str.replace('월', '').astype(int)
-    
     # 해외공장 판매 데이터
-    df_factory = pd.read_csv("data/기아_해외공장판매실적_전처리.csv")
+    df_factory = pd.read_csv(os.path.join(BASE_DIR, "data/기아_해외공장판매실적_전처리.csv"))
     df_factory['연간합계'] = df_factory[months].sum(axis=1)
-    
     melt_factory = df_factory.melt(id_vars=['공장명(국가)', '공장 코드', '차종', '연도'],
                                  value_vars=months,
                                  var_name='월',
                                  value_name='판매량')
     melt_factory['월'] = melt_factory['월'].str.replace('월', '').astype(int)
-    
     # 해외현지판매 데이터
-    df_overseas = pd.read_csv("data/기아_해외현지판매_전처리.CSV")
+    df_overseas = pd.read_csv(os.path.join(BASE_DIR, "data/기아_해외현지판매_전처리.csv"))
     df_overseas['월별합계'] = df_overseas[months].sum(axis=1)
-    
     melt_overseas = df_overseas.melt(id_vars=['국가명', '공장명(국가)', '차종', '연도'],
                                     value_vars=months,
                                     var_name='월',
                                     value_name='판매량')
     melt_overseas['월'] = melt_overseas['월'].str.replace('월', '').astype(int)
-    
     return df_export, melt_export, df_sales, melt_sales, df_factory, melt_factory, df_overseas, melt_overseas
 
 # 차트 생성 함수 (캐싱 적용)
