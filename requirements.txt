@@ -10,13 +10,12 @@ joblib
 scipy
 streamlit_option_menu
 streamlit-lottie
-streamlit-cards
 tensorflow
 transformers
 torch
 requests
 openai
 prophet
-PIL
 yfinance
 lightgbm
+fpdf
