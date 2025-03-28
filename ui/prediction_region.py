@@ -13,7 +13,7 @@ import datetime
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-TEST_MODE = False
+TEST_MODE = True
 
 def load_model(channel, selected_market, model_dir):
     channel_key_map = {
