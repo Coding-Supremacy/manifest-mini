@@ -264,25 +264,33 @@ def run_prediction_region():
             st.markdown("#### 📀 보고서를 PDF로 저장하기")
             
             def generate_pdf():
+                import shutil
+
                 pdf = FPDF()
                 pdf.add_page()
                 pdf.set_auto_page_break(auto=True, margin=15)
-                
-                base_dir = os.path.dirname(os.path.abspath(__file__))
-                FONT_PATH = "/mount/src/manifest-mini/custom_fonts/NanumGothic.ttf"
-                st.write("폰트 경로:", FONT_PATH)
-                st.write("폰트 존재 여부:", os.path.exists(FONT_PATH))
-                if os.path.exists(FONT_PATH):
-                    pdf.add_font("NanumGothic", "", FONT_PATH, uni=True)
+
+                FONT_PATH_ORIG = "/mount/src/manifest-mini/custom_fonts/NanumGothic.ttf"
+                TEMP_FONT_PATH = os.path.join(tempfile.gettempdir(), "NanumGothic.ttf")
+
+                # 임시 경로에 복사
+                try:
+                    shutil.copy(FONT_PATH_ORIG, TEMP_FONT_PATH)
+                except Exception as e:
+                    st.error(f"폰트 복사 중 오류 발생: {e}")
+                    return None
+
+                if os.path.exists(TEMP_FONT_PATH):
+                    pdf.add_font("NanumGothic", "", TEMP_FONT_PATH, uni=True)
                     pdf.set_font("NanumGothic", size=10)
                 else:
                     pdf.set_font("Arial", size=10)
-                
+
                 lines = st.session_state.report_text.split('\n')
                 for line in lines:
                     for i in range(0, len(line), 60):
                         pdf.cell(0, 10, line[i:i+60], ln=1)
-                
+
                 return bytes(pdf.output(dest='S'))
 
             st.download_button(
