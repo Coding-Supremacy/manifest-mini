@@ -272,7 +272,6 @@ def run_prediction_region():
                 FONT_PATH = "/mount/src/manifest-mini/custom_fonts/NanumGothic.ttf"
                 st.write("폰트 경로:", FONT_PATH)
                 st.write("폰트 존재 여부:", os.path.exists(FONT_PATH))
-                st.write("현재 디렉토리 내용:", os.listdir(base_dir))
                 if os.path.exists(FONT_PATH):
                     pdf.add_font("NanumGothic", "", FONT_PATH, uni=True)
                     pdf.set_font("NanumGothic", size=10)
