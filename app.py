@@ -45,9 +45,7 @@ def main_menu():
         
         return option_menu(
             menu_title=None,
-            options=["🏠 홈", "📝 프로젝트 개요", 
-                    "🚗 기아 분석", "🚙 현대 분석",
-                    "📈 시장 트렌드", "🔮 지역별 예측", "🌦️ 기후별 예측"],
+            options=["홈", "기아 분석", "현대 분석","시장 트렌드", "지역별 예측", "기후별 예측","프로젝트 개발과정"],
             icons=["house", "file-earmark-text",
                   "car-front", "car-front",
                   "graph-up", "globe"],
@@ -61,13 +59,13 @@ def main_menu():
 def route_pages(selected_page):
     """페이지 라우팅 처리"""
     page_functions = {
-        "🏠 홈": run_home,
-        "📝 프로젝트 개요": run_description,
-        "🚗 기아 분석": run_eda_kia,
-        "🚙 현대 분석": run_eda_hyundai,
-        "📈 시장 트렌드": run_trend,
-        "🔮 지역별 예측": run_prediction_region,
-        "🌦️ 기후별 예측": run_ho
+        "홈": run_home,
+        "기아 분석": run_eda_kia,
+        "현대 분석": run_eda_hyundai,
+        "시장 트렌드": run_trend,
+        "지역별 예측": run_prediction_region,
+        "기후별 예측": run_ho,
+        "프로젝트 개발과정": run_description
     }
     
     if selected_page in page_functions:
