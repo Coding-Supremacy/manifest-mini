@@ -788,3 +788,39 @@ def run_trend():
                             </div>
                         </a>
                         """, unsafe_allow_html=True)
+
+# 원본데이터 보기 버튼 추가
+if st.button('🔍 원본데이터 보기'):
+    st.subheader("📁 원본 데이터 (7개 행씩 표시)")
+    
+    # 페이지네이션 구현
+    page_size = 7
+    total_pages = (len(df) // page_size) + (1 if len(df) % page_size != 0 else 0)
+    
+    # 페이지 선택 (세션 상태로 관리)
+    if 'page' not in st.session_state:
+        st.session_state.page = 1
+    
+    # 페이지 이동 버튼
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col1:
+        if st.button('◀ 이전'):
+            if st.session_state.page > 1:
+                st.session_state.page -= 1
+    with col2:
+        st.write(f"페이지 {st.session_state.page}/{total_pages}")
+    with col3:
+        if st.button('다음 ▶'):
+            if st.session_state.page < total_pages:
+                st.session_state.page += 1
+    
+    # 현재 페이지 데이터 표시
+    start_idx = (st.session_state.page - 1) * page_size
+    end_idx = start_idx + page_size
+    st.dataframe(df.iloc[start_idx:end_idx], height=300)
+    
+    # 데이터 요약 정보 표시
+    with st.expander("📊 데이터 요약 정보 보기"):
+        st.write(f"총 행 수: {len(df)}")
+        st.write("컬럼 정보:")
+        st.json(dict(zip(df.columns, df.dtypes.astype(str).tolist())))
