@@ -296,7 +296,7 @@ def run_prediction_region():
                     for i in range(0, len(line), 60):
                         pdf.cell(0, 10, line[i:i+60], ln=1)
 
-                return bytes(pdf.output(dest='S'))
+                return pdf.output(dest='S').encode('latin-1')
 
             st.download_button(
                 label="📥 PDF 다운로드",
