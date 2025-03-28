@@ -475,7 +475,80 @@ def create_tab_buttons():
     
     return st.session_state.current_tab
 
-
+def create_pydeck_map(data, selected_country):
+    """PyDeck을 사용한 지도 생성"""
+    # 모든 국가에 대한 데이터 준비
+    all_countries = data.groupby("국가명")["수출량"].sum().reset_index()
+    
+    # 국가 좌표 데이터
+    country_coords = {
+        '미국': {'lat': 37.0902, 'lon': -95.7129},
+        '중국': {'lat': 35.8617, 'lon': 104.1954},
+        '일본': {'lat': 36.2048, 'lon': 138.2529},
+        '독일': {'lat': 51.1657, 'lon': 10.4515},
+        '영국': {'lat': 55.3781, 'lon': -3.4360},
+        '프랑스': {'lat': 46.2276, 'lon': 2.2137},
+        '한국': {'lat': 35.9078, 'lon': 127.7669},
+        '인도': {'lat': 20.5937, 'lon': 78.9629},
+        '브라질': {'lat': -14.2350, 'lon': -51.9253},
+        '캐나다': {'lat': 56.1304, 'lon': -106.3468},
+        '호주': {'lat': -25.2744, 'lon': 133.7751},
+        '이탈리아': {'lat': 41.8719, 'lon': 12.5675},
+        '스페인': {'lat': 40.4637, 'lon': -3.7492},
+        '멕시코': {'lat': 23.6345, 'lon': -102.5528},
+        '인도네시아': {'lat': -0.7893, 'lon': 113.9213},
+        '터키': {'lat': 38.9637, 'lon': 35.2433},
+        '네덜란드': {'lat': 52.1326, 'lon': 5.2913},
+        '스위스': {'lat': 46.8182, 'lon': 8.2275},
+        '사우디아라비아': {'lat': 23.8859, 'lon': 45.0792},
+        '아르헨티나': {'lat': -38.4161, 'lon': -63.6167}
+    }
+    
+    # 데이터프레임에 좌표 추가
+    all_countries['lat'] = all_countries['국가명'].map(lambda x: country_coords.get(x, {}).get('lat', 0))
+    all_countries['lon'] = all_countries['국가명'].map(lambda x: country_coords.get(x, {}).get('lon', 0))
+    all_countries['radius'] = all_countries['수출량'] / all_countries['수출량'].max() * 500000
+    all_countries['color'] = all_countries['국가명'].apply(lambda x: [255, 0, 0, 200] if x == selected_country else [0, 0, 255, 120])
+    
+    # 초기 뷰포트 설정 (선택 국가에 초점)
+    selected_lat = country_coords.get(selected_country, {}).get('lat', 0)
+    selected_lon = country_coords.get(selected_country, {}).get('lon', 0)
+    view_state = pdk.ViewState(
+        latitude=selected_lat,
+        longitude=selected_lon,
+        zoom=3,
+        pitch=50
+    )
+    
+    # 레이어 생성
+    layer = pdk.Layer(
+        "ScatterplotLayer",
+        data=all_countries,
+        get_position=['lon', 'lat'],
+        get_radius='radius',
+        get_fill_color='color',
+        pickable=True,
+        auto_highlight=True
+    )
+    
+    # 툴팁 설정
+    tooltip = {
+        "html": "<b>국가:</b> {국가명}<br><b>수출량:</b> {수출량:,.0f}",
+        "style": {
+            "backgroundColor": "white",
+            "color": "black"
+        }
+    }
+    
+    # 지도 생성
+    r = pdk.Deck(
+        layers=[layer],
+        initial_view_state=view_state,
+        tooltip=tooltip,
+        map_style="mapbox://styles/mapbox/light-v9"
+    )
+    
+    return r
 
 def run_ho():
     # 모델 및 데이터 로드
@@ -753,23 +826,7 @@ def run_ho():
                         </div>
                         """, unsafe_allow_html=True)
                         
-                       
-                        st.markdown(f"""
-                        <div style="background-color:{'#e6f7e6' if yearly_change >=5 else ('#fce8e8' if yearly_change <=-5 else '#fff8e1')}; 
-                                    border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; 
-                                    border-left: 4px solid {'#28a745' if yearly_change >=5 else ('#dc3545' if yearly_change <=-5 else '#ffc107')};">
-                            <div style="font-size:1.2rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
-                                {selected_country} {target_year}년 {target_month}월 예측 수출량
-                            </div>
-                            <div style="font-size:2.5rem; font-weight:bold; text-align:center; margin:1rem 0; color:#2a3f5f;">
-                                {prediction:,.2f}
-                            </div>
-                            <div style="font-size:1.1rem; text-align:center; margin-bottom:1rem;">
-                                전년 동월 대비 <span class="{ 'positive' if yearly_change >= 5 else ('negative' if yearly_change <= -5 else 'neutral') }" style="font-weight:bold;">{abs(yearly_change):.2f}% {"증가" if yearly_change >= 5 else ("감소" if yearly_change <= -5 else "유지")}</span> {"📈" if yearly_change >= 5 else ("📉" if yearly_change <= -5 else "➡️")}
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
+                        # 주요 지표 표시
                         st.markdown("""
                         <div class="key-metrics-box">
                             <div style="font-size:1.1rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
@@ -810,6 +867,25 @@ def run_ho():
                             prev_year_export,
                             auto_current_export
                         ), unsafe_allow_html=True)
+                        
+                        # 변화 원인 분석 (색상 변경)
+                        st.markdown(f"""
+                        <div class="{change_info['box_class']}">
+                            <div style="font-size:1.1rem; font-weight:bold; color:#2a3f5f; margin-bottom:1rem;">
+                                📌 변화 원인 분석 ({change_info['text']})
+                            </div>
+                            <div style="font-size:0.95rem; margin-bottom:1rem;">
+                                <b>주요 원인:</b><br>
+                                {''.join([f'• {reason}<br>' for reason in change_info['reason']])}
+                            </div>
+                            <div style="font-size:0.95rem;">
+                                <b>제안 사항:</b><br>
+                                {''.join([f'• {suggestion}<br>' for suggestion in change_info['suggestion']])}
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        st.markdown('</div>', unsafe_allow_html=True)  # info-container 닫기
                 
                 # 2. 국가별 차량 수출량 비교 & 차량 종류별 수출량 비교
                 st.write("")
