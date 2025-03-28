@@ -336,6 +336,9 @@ def run_eda_기아():
         # 국내 차트 출력
         st.plotly_chart(fig_domestic, use_container_width=True)
 
+        st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+        st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+
         # 차트별 분석 내용
         if selected_type == '세단':
             st.markdown("""
@@ -371,7 +374,9 @@ def run_eda_기아():
 
         # 해외 차트 출력
         st.plotly_chart(fig_international, use_container_width=True)
-        
+        st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+        st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
+
         # 차트별 분석 내용
         if selected_type == '세단':
             st.markdown("""
@@ -408,9 +413,9 @@ def run_eda_기아():
 
         st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
 
-        # 기아 지역별 수출실적 분석 요약표 작업
 
-        
+
+        # 기아 차종별 판매실적 분석 요약표 작업
         
         df_sales_melted =  df_sales.melt(id_vars=['차종', '차량 구분', '거래 유형', '연도'], 
                                 value_vars=["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"] ,
@@ -425,8 +430,9 @@ def run_eda_기아():
         # df_sales에 카테고리 컬럼 추가
         df_sales_melted['카테고리'] = df_sales_melted['차종'].map(car_category_map)
         
-        st.subheader("📌 기아 차종별 판매실적 통계 요약")
-        st.write('')
+        st.divider()
+        st.subheader("📊 기아 차종별 판매실적 통계 요약")
+        
 
         차종_연도_피벗 = df_sales_melted.pivot_table(
                 index='카테고리',
@@ -460,51 +466,72 @@ def run_eda_기아():
             .background_gradient(cmap='Blues')
         )
         
-        
+        st.write('')
         st.write("""##### 🌍 차종 카테고리별 판매량(2023년~2025년)""")
         st.dataframe(styled_차종_연도, use_container_width=True)
-
-
-        col1, col2 = st.columns(2)
         
-        with col1:
-            st.write('📅 국가 연도별 판매량')
-            국가_연도별_피벗 = df_export_melted.pivot_table(index='국가명', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
-            총합 = 국가_연도별_피벗.sum(axis=1)
-            국가_연도별_피벗.insert(0, '총합', 총합)
-            국가_연도별_피벗 = 국가_연도별_피벗.sort_values(by='총합', ascending=False)
 
-            st.dataframe(국가_연도별_피벗)
+        국내 = df_sales_melted.loc[df_sales_melted['거래 유형'] == '국내']
+        해외 = df_sales_melted.loc[df_sales_melted['거래 유형'] != '국내']
 
-            차량_연도별_피벗 = df_export_melted.pivot_table(index='차량 구분', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
-            총합 = 차량_연도별_피벗.sum(axis=1)
-            차량_연도별_피벗.insert(0, '총합', 총합)
-            차량_연도별_피벗 = 차량_연도별_피벗.sort_values(by='총합', ascending=False)
+        st.write('')
+        st.write("""##### 🚙 카테고리별 차종 판매량 (연도 기준) """)
+        st.info('##### - 국내 카테고리별 차종')
+        col1, col2, col3 = st.columns(3)    
+        # 국내 카테고리별 차종 판매량
+        with col1: 
 
-            st.write('📅 차량 연도별 판매량')                
             
-            st.dataframe(차량_연도별_피벗)
+            국내_세단 = 국내.loc[국내['카테고리'] == '세단']
+            국내_세단_피벗 = 국내_세단.pivot_table(index='차종', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
             
+            st.markdown("<h5 style='text-align:center;'>세단</h5>", unsafe_allow_html=True)
+            st.dataframe(국내_세단_피벗)
+
         with col2:
-            st.write('📆 국가 월별 통계 (2023년~2025년 누적 기준)')
 
-            # 월 순서를 올바르게 정의
-            month_order = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월']
+            국내_SUV = 국내.loc[국내['카테고리'] == 'SUV']
+            국내_SUV_피벗 = 국내_SUV.pivot_table(index='차종', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
 
-            국가_월_피벗 = df_export_melted.pivot_table(index='국가명', columns='월', values='판매량', aggfunc='sum', fill_value=0).reindex(columns=month_order)
-            총합 = 국가_월_피벗.sum(axis=1)
-            국가_월_피벗.insert(0, '총합', 총합)
-            국가_월_피벗 = 국가_월_피벗.sort_values(by='총합', ascending=False)
+            st.markdown("<h5 style='text-align:center;'>SUV</h5>", unsafe_allow_html=True)
+            st.dataframe(국내_SUV_피벗)    
 
-            st.dataframe(국가_월_피벗)
+        with col3:
 
-            차량_월_피벗 = df_export_melted.pivot_table(index='차량 구분', columns='월', values='판매량', aggfunc='sum', fill_value=0).reindex(columns=month_order)
-            총합 = 차량_월_피벗.sum(axis=1)
-            차량_월_피벗.insert(0, '총합', 총합)
-            차량_월_피벗 = 차량_월_피벗.sort_values(by='총합', ascending=False)
+            국내_기타 = 국내.loc[국내['카테고리'] == '기타']
+            국내_기타_피벗 = 국내_기타.pivot_table(index='차종', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+            st.markdown("<h5 style='text-align:center;'>기타</h5>", unsafe_allow_html=True)
+            st.dataframe(국내_기타_피벗)
+
+        st.success('##### - 해외 카테고리별 차종')
+        col1, col2, col3 = st.columns(3)    
+        # 해외 카테고리 차종별 판매량
+        with col1: 
             
-            st.write('📆 차량 월별 판매량')
-            st.dataframe(차량_월_피벗)
+            해외_세단 = 해외.loc[해외['카테고리'] == '세단']
+            해외_세단_피벗 = 해외_세단.pivot_table(index='차종', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+            
+            st.markdown("<h5 style='text-align:center;'>세단</h5>", unsafe_allow_html=True)
+            st.dataframe(해외_세단_피벗)
+
+        with col2:
+
+            해외_SUV = 해외.loc[해외['카테고리'] == 'SUV']
+            해외_SUV_피벗 = 해외_SUV.pivot_table(index='차종', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+            st.markdown("<h5 style='text-align:center;'>SUV</h5>", unsafe_allow_html=True)
+            st.dataframe(해외_SUV_피벗)    
+
+        with col3:
+
+            해외_기타 = 해외.loc[해외['카테고리'] == '기타']
+            해외_기타_피벗 = 해외_기타.pivot_table(index='차종', columns='연도', values='판매량', aggfunc='sum', fill_value=0)
+
+            st.markdown("<h5 style='text-align:center;'>기타</h5>", unsafe_allow_html=True)
+            st.dataframe(해외_기타_피벗)
+
+        
 
 
         with st.expander("📊 분석 내용"):
