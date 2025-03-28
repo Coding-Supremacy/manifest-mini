@@ -9,7 +9,11 @@ import requests
 from PIL import Image
 import yfinance as yf
 import matplotlib.colors as mcolors
+# 지도 관련 라이브러리(pydeck)는 제거합니다.
 
+
+
+# CSS 스타일 (최종 버전)
 st.markdown("""
 <style>
     .main {
@@ -648,7 +652,7 @@ def run_ho():
                     st.markdown("### 🌦️ 기후대별 차량 수출량 분석")
                     with st.container():
                         climate_data = df_long[
-                            ((df_long["차종 구분"] == selected_car_type) | (df_long["차량 구분"] == selected_car)) |
+                            ((df_long["차종 구분"] == selected_car_type) | (df_long["차량 구분"] == selected_car)) &
                             (df_long["날짜"].dt.year == target_year-1)
                         ].groupby("기후대")["수출량"].sum().reset_index()
                         
