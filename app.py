@@ -1,86 +1,89 @@
 import streamlit as st
-from streamlit_option_menu import option_menu
 
-from ui.prediction_region import run_prediction_region
-
-# 페이지 설정
+# set_page_config는 반드시 첫 번째 Streamlit 명령이어야 함
 st.set_page_config(
+    page_title="자동차 판매 분석 시스템",
     page_icon="🚗",
-    page_title="현대 & 기아 판매현황 관리 자동화 및 추천 시스템",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
-# 각 페이지 함수 불러오기
+# 나머지 임포트
+from streamlit_option_menu import option_menu
+import warnings
+
+# 경고 메시지 무시
+warnings.filterwarnings("ignore")
+
+# 페이지 모듈 임포트
 from ui.home import run_home
 from ui.description import run_description
-from ui.eda_kia import run_eda_기아
-from ui.eda_hyundai import run_eda_현대
-st.markdown(
-    """
+from ui.eda_kia import run_eda_kia
+from ui.eda_hyundai import run_eda_hyundai
+from ui.trend import run_trend
+from ui.prediction_region import run_prediction_region
+from ui.ho import run_ho
+
+def configure_page():
+    """스트림릿 페이지 기본 설정"""
+    # CSS 스타일 적용
+    st.markdown("""
     <style>
-    
-        /* 배경색 설정 */
-        .stApp {
-            background-color: #ffffff; 
-        }
-        /* 컨텐츠 정렬 */
-        .block-container {
-            max-width: 1100px; /* 중앙 정렬을 위한 최대 너비 */
-            margin: auto;
-            padding: 2rem;
-            border-radius: 10px;
-            background-color: #F8F9FA; /* 컨텐츠 부분만 흰색 */
-            box-shadow: 2px 2px 10px rgba(0,0,0,0.1); /* 살짝 그림자 효과 */
-        }
-
-        /* 제목 스타일 */
-        h1, h2, h3 {
-            color: #343a40; /* 다크 그레이 */
-        }
+        .main { padding: 2rem; }
+        .sidebar .sidebar-content { padding: 1rem; }
+        div[data-testid="stSidebarUserContent"] { padding: 1rem; }
+        .stButton>button { width: 100%; }
+        .stDownloadButton>button { width: 100%; }
     </style>
-    """,
-    unsafe_allow_html=True
-)
+    """, unsafe_allow_html=True)
 
-
-def run_app():
+def main_menu():
+    """사이드바 메뉴 구성"""
     with st.sidebar:
-        st.markdown("### 📂 메뉴 선택")
-
-        menu = option_menu(
+        st.markdown("## 메뉴 선택")
+        
+        return option_menu(
             menu_title=None,
-            options=[
-                "홈", "개발 과정",
-                "기아 자동차 분석", "현대 자동차 분석",
-                "국가별 자동차 판매량 예측", "기후별 자동차 판매량 예측"
-            ],
-            icons=[
-                "house", "code-slash",
-                "car-front", "car-front-fill",
-                "bi bi-bar-chart-line", "bi bi-bar-chart-line-fill"
-            ],
+            options=["홈", "기아 분석", "현대 분석","시장 트렌드", "지역별 예측", "기후별 예측","프로젝트 개발과정"],
+            icons=["house", "file-earmark-text",
+                  "car-front", "car-front",
+                  "graph-up", "globe"],
             default_index=0,
-            key="main_menu"
+            styles={
+                "container": {"padding": "0!important"},
+                "nav-link": {"font-size": "14px", "margin": "5px 0"},
+            }
         )
 
-    # 페이지 매핑
-    if menu == "홈":
-        run_home()
+def route_pages(selected_page):
+    """페이지 라우팅 처리"""
+    page_functions = {
+        "홈": run_home,
+        "기아 분석": run_eda_kia,
+        "현대 분석": run_eda_hyundai,
+        "시장 트렌드": run_trend,
+        "지역별 예측": run_prediction_region,
+        "기후별 예측": run_ho,
+        "프로젝트 개발과정": run_description
+    }
+    
+    if selected_page in page_functions:
+        page_functions[selected_page]()
+    else:
+        st.warning("페이지를 찾을 수 없습니다")
 
-    elif menu == "개발 과정":
-        run_description()
+# 데이터 로딩 캐싱 설정
+@st.cache_data(ttl=3600)
+def load_all_data():
+    # 모든 데이터 로딩 함수 통합
+    return True
 
-    elif menu == "기아 자동차 분석":
-        run_eda_기아()
-
-    elif menu == "현대 자동차 분석":
-        run_eda_현대()
-
-    elif menu == "국가별 자동차 판매량 예측":
-        run_prediction_region()
-
-    elif menu == "기후별 자동차 판매량 예측":
-        st.warning("📦 수출 및 생산량 분석 페이지는 아직 준비 중입니다.")
+def main():
+    """메인 애플리케션 실행"""
+    load_all_data()
+    configure_page()
+    selected_page = main_menu()
+    route_pages(selected_page)
 
 if __name__ == "__main__":
-    run_app()
+    main()
