@@ -463,7 +463,7 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     
     # UTF-8 인코딩으로 출력
     try:
-        return pdf.output(dest='S').encode('utf-8')
+        return pdf.output(dest='S').encode('latin-1')
     except Exception as e:
         st.error(f"PDF 생성 오류: {str(e)}")
         return None
