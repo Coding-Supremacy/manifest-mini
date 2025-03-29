@@ -210,12 +210,12 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     
     # 폰트 설정 (나눔고딕 -> 실패 시 기본 폰트)
     try:
-        pdf.set_font("NanumGothic", "", 24)
+        pdf.set_font("NanumGothic", "B", 24)
     except:
         try:
-            pdf.set_font("Malgun", "", 24)
+            pdf.set_font("Malgun", "B", 24)
         except:
-            pdf.set_font("helvetica", "", 24)
+            pdf.set_font("helvetica", "B", 24)
     
     # 제목 페이지 디자인
     pdf.set_text_color(0, 51, 102)
@@ -463,7 +463,7 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     
     # UTF-8 인코딩으로 출력
     try:
-        return pdf.output(dest='S').encode('utf-8')
+        return pdf.output(dest='S').encode('latin-1')
     except Exception as e:
         st.error(f"PDF 생성 오류: {str(e)}")
         return None
@@ -533,13 +533,9 @@ def run_trend():
                 
                 pdf = create_pdf_report(selected_region, selected_year, selected_column, analysis_data)
                 
-                # PDF 다운로드 버튼 생성
-                try:
-                    pdf_output = pdf.output(dest='S').encode('latin1', 'replace')
-                except:
-                    pdf_output = pdf.output(dest='S').encode('utf-8')
                 
-                b64 = base64.b64encode(pdf_output).decode()
+                
+                b64 = base64.b64encode(pdf).decode()
                 href = f'<a href="data:application/octet-stream;base64,{b64}" download="현대기아차_{selected_region}_수출분석.pdf">📥 리포트 다운로드</a>'
                 st.markdown(href, unsafe_allow_html=True)
                 st.success("리포트 생성이 완료되었습니다. 위 링크를 클릭하여 다운로드하세요.")
