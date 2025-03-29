@@ -210,12 +210,12 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     
     # 폰트 설정 (나눔고딕 -> 실패 시 기본 폰트)
     try:
-        pdf.set_font("NanumGothic", "B", 24)
+        pdf.set_font("NanumGothic", "", 24)
     except:
         try:
-            pdf.set_font("Malgun", "B", 24)
+            pdf.set_font("Malgun", "", 24)
         except:
-            pdf.set_font("helvetica", "B", 24)
+            pdf.set_font("helvetica", "", 24)
     
     # 제목 페이지 디자인
     pdf.set_text_color(0, 51, 102)
