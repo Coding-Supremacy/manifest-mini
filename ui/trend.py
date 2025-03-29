@@ -530,11 +530,14 @@ def run_trend():
                 
                 pdf = create_pdf_report(selected_region, selected_year, selected_column, analysis_data)
                 
-                # PDF 다운로드 버튼 생성
-                try:
-                    pdf_output = pdf.output(dest='S').encode('latin1', 'replace')
-                except:
-                    pdf_output = pdf.output(dest='S').encode('utf-8')
+                # Ensure 'pdf' is an FPDF instance before calling .output()
+                if isinstance(pdf, FPDF):
+                    try:
+                        pdf_output = pdf.output(dest='S').encode('latin1', 'replace')
+                    except Exception as e:
+                        st.error(f"PDF 생성 오류: {str(e)}")
+                else:
+                    st.error("PDF 객체가 올바르지 않습니다. FPDF 인스턴스로 초기화되었는지 확인하세요.")
                 
                 b64 = base64.b64encode(pdf_output).decode()
                 href = f'<a href="data:application/octet-stream;base64,{b64}" download="현대기아차_{selected_region}_수출분석.pdf">📥 리포트 다운로드</a>'
