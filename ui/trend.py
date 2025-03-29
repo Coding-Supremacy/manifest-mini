@@ -819,7 +819,7 @@ def run_trend():
 
     # 🔹 데이터 표시 영역
     if st.session_state.show_data:
-        st.subheader("📁 원본 데이터 (7개 행씩 표시)")
+        st.subheader("📁 원본 데이터")
         
         # 페이지네이션 설정
         page_size = 7
