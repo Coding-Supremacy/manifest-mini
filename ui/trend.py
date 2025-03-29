@@ -39,6 +39,18 @@ def fontRegistered():
     font_manager._load_fontmanager(try_read_cache=False)
 
 
+class KoreanPDF(FPDF):
+    def __init__(self):
+        super().__init__()
+        try:
+            self.add_font("NotoSansKR", "", "NotoSansKR-Regular.ttf", uni=True)
+            self.add_font("NotoSansKR", "B", "NotoSansKR-Bold.ttf", uni=True)
+            self.set_font("NotoSansKR", size=12)
+        except Exception as e:
+            print(f"폰트 로드 실패: {e}. 기본 폰트 사용")
+            self.set_font("Arial", size=12)
+
+
 
 # 데이터 로드 함수
 @st.cache_resource
@@ -181,31 +193,8 @@ def get_news_query(region, column=None, value=None):
     return base_query
 
 def create_pdf_report(selected_region, selected_year, selected_column, analysis_data):
-    class KoreanPDF(FPDF):
-        def __init__(self):
-            super().__init__()
-            self.title_font = "helvetica"
-            try:
-                # 폰트 추가
-                self.add_font("NotoSansKR", "", "NotoSansKR-Regular.ttf", uni=True)
-                self.add_font("NotoSansKR", "B", "NotoSansKR-Bold.ttf", uni=True)
-                self.title_font = "NotoSansKR"
-            except Exception as e:
-                print(f"폰트 로드 실패: {e}. 기본 폰트 사용")
-    
     pdf = KoreanPDF()
     pdf.add_page()
-    pdf.set_font(pdf.title_font, "B", 24)
-    pdf.cell(0, 10, txt="현대기아차 글로벌 시장 분석 리포트", ln=1, align='C')
-    
-    # 폰트 설정 (시스템 기본 한글 폰트 -> 실패 시 기본 폰트)
-    try:
-        pdf.set_font("NotoSansKR", "B", 24)
-    except:
-        try:
-            pdf.set_font("Malgun", "B", 24)
-        except:
-            pdf.set_font("helvetica", "B", 24)
     
     # 제목 페이지 디자인
     pdf.set_text_color(0, 51, 102)
