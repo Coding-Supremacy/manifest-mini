@@ -186,7 +186,7 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
             # 현재 스크립트 위치 기준으로 폰트 경로 생성
             import os
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            font_path = os.path.join(current_dir, "fonts", "NanumGothic.ttf")
+            font_path = os.path.join(current_dir, ".." ,"fonts", "NanumGothic.ttf")
             
             
             try:
