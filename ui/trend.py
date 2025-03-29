@@ -537,7 +537,7 @@ def run_trend():
                 try:
                     pdf_output = pdf.output(dest='S').encode('latin1', 'replace')
                 except:
-                    pdf_output = pdf.output(dest='S').encode('utf-8')
+                    pdf_output = pdf.output(dest='S').encode('latin-1')
                 
                 b64 = base64.b64encode(pdf_output).decode()
                 href = f'<a href="data:application/octet-stream;base64,{b64}" download="현대기아차_{selected_region}_수출분석.pdf">📥 리포트 다운로드</a>'
