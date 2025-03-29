@@ -184,26 +184,19 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     class KoreanPDF(FPDF):
         def __init__(self):
             super().__init__()
-            self.title_font = "helvetica"  # 기본값 초기화
-            
+            self.title_font = "helvetica"
             try:
-                # 시스템 기본 폰트 사용 시도 (Streamlit Cloud에서는 기본 폰트만 사용 가능)
+                # 폰트 추가
                 self.add_font("NotoSansKR", "", "NotoSansKR-Regular.ttf", uni=True)
                 self.add_font("NotoSansKR", "B", "NotoSansKR-Bold.ttf", uni=True)
                 self.title_font = "NotoSansKR"
-                print("Noto Sans KR 폰트 사용 시도")
-            except:
-                try:
-                    # 기본 한글 폰트 시도
-                    self.add_font("Malgun", "", "malgun.ttf", uni=True)
-                    self.add_font("Malgun", "B", "malgunbd.ttf", uni=True)
-                    self.title_font = "Malgun"
-                    print("Malgun 폰트 사용 시도")
-                except Exception as e:
-                    print(f"❌ 폰트 로드 실패: {str(e)}. 기본 폰트 사용")
-
+            except Exception as e:
+                print(f"폰트 로드 실패: {e}. 기본 폰트 사용")
+    
     pdf = KoreanPDF()
     pdf.add_page()
+    pdf.set_font(pdf.title_font, "B", 24)
+    pdf.cell(0, 10, txt="현대기아차 글로벌 시장 분석 리포트", ln=1, align='C')
     
     # 폰트 설정 (시스템 기본 한글 폰트 -> 실패 시 기본 폰트)
     try:
@@ -458,9 +451,9 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     pdf.cell(0, 10, txt=f"Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=1, align='C')
     pdf.cell(0, 10, txt="© 2023 현대기아차 글로벌 전략팀. All Rights Reserved.", ln=1, align='C')
     
-    # PDF 출력 방식 변경 (인코딩 문제 해결)
+    # PDF 출력
     try:
-        return pdf.output(dest='S').encode('latin-1')
+        return pdf.output(dest='S').encode('utf-8')  # UTF-8로 인코딩
     except Exception as e:
         st.error(f"PDF 생성 오류: {str(e)}")
         return None
