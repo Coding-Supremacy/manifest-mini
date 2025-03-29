@@ -39,18 +39,6 @@ def fontRegistered():
     font_manager._load_fontmanager(try_read_cache=False)
 
 
-class KoreanPDF(FPDF):
-    def __init__(self):
-        super().__init__()
-        try:
-            self.add_font("NotoSansKR", "", "NotoSansKR-Regular.ttf", uni=True)
-            self.add_font("NotoSansKR", "B", "NotoSansKR-Bold.ttf", uni=True)
-            self.set_font("NotoSansKR", size=12)
-        except Exception as e:
-            print(f"폰트 로드 실패: {e}. 기본 폰트 사용")
-            self.set_font("Arial", size=12)
-
-
 
 # 데이터 로드 함수
 @st.cache_resource
@@ -193,8 +181,41 @@ def get_news_query(region, column=None, value=None):
     return base_query
 
 def create_pdf_report(selected_region, selected_year, selected_column, analysis_data):
+    class KoreanPDF(FPDF):
+        def __init__(self):
+            super().__init__()
+            
+            
+            try:
+                # 원본 폰트 경로 (Streamlit Cloud 배포 경로)
+                FONT_PATH_ORIG = "/mount/src/manifest-mini/custom_fonts/NanumGothic.ttf"
+                TEMP_FONT_PATH = os.path.join(tempfile.gettempdir(), "NanumGothic.ttf")
+                
+                # 임시 폴더에 폰트 복사 (권한 문제 해결)
+                if os.path.exists(FONT_PATH_ORIG):
+                    shutil.copyfile(FONT_PATH_ORIG, TEMP_FONT_PATH)
+                    
+                    # 폰트 등록
+                    self.add_font("NanumGothic", "", TEMP_FONT_PATH, uni=True)
+                    self.add_font("NanumGothic", "B", TEMP_FONT_PATH, uni=True)
+                    self.title_font = "NanumGothic"
+                    print(f"폰트 로드 성공: {TEMP_FONT_PATH}")
+                else:
+                    print(f"⚠️ 원본 폰트 없음: {FONT_PATH_ORIG}")
+            except Exception as e:
+                print(f"❌ 폰트 로드 실패: {str(e)}")
+
     pdf = KoreanPDF()
     pdf.add_page()
+    
+    # 폰트 설정 (나눔고딕 -> 실패 시 기본 폰트)
+    try:
+        pdf.set_font("NanumGothic", "B", 24)
+    except:
+        try:
+            pdf.set_font("Malgun", "B", 24)
+        except:
+            pdf.set_font("helvetica", "B", 24)
     
     # 제목 페이지 디자인
     pdf.set_text_color(0, 51, 102)
@@ -440,9 +461,9 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     pdf.cell(0, 10, txt=f"Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=1, align='C')
     pdf.cell(0, 10, txt="© 2023 현대기아차 글로벌 전략팀. All Rights Reserved.", ln=1, align='C')
     
-    # PDF 출력
+    # UTF-8 인코딩으로 출력
     try:
-        return pdf.output(dest='S').encode('utf-8')  # UTF-8로 인코딩
+        return pdf.output(dest='S').encode('utf-8')
     except Exception as e:
         st.error(f"PDF 생성 오류: {str(e)}")
         return None
@@ -512,14 +533,11 @@ def run_trend():
                 
                 pdf = create_pdf_report(selected_region, selected_year, selected_column, analysis_data)
                 
-                # Ensure 'pdf' is an FPDF instance before calling .output()
-                if isinstance(pdf, FPDF):
-                    try:
-                        pdf_output = pdf.output(dest='S').encode('latin1', 'replace')
-                    except Exception as e:
-                        st.error(f"PDF 생성 오류: {str(e)}")
-                else:
-                    st.error("PDF 객체가 올바르지 않습니다. FPDF 인스턴스로 초기화되었는지 확인하세요.")
+                # PDF 다운로드 버튼 생성
+                try:
+                    pdf_output = pdf.output(dest='S').encode('latin1', 'replace')
+                except:
+                    pdf_output = pdf.output(dest='S').encode('utf-8')
                 
                 b64 = base64.b64encode(pdf_output).decode()
                 href = f'<a href="data:application/octet-stream;base64,{b64}" download="현대기아차_{selected_region}_수출분석.pdf">📥 리포트 다운로드</a>'
