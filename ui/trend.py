@@ -182,8 +182,8 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     # 1. 폰트 설정 (Streamlit Cloud 최적화) ----------------------------
     try:
         # 앱 내장 폰트 사용 (프로젝트 폴더에 fonts/NanumGothic.ttf 파일이 있어야 함)
-        pdf.add_font("NanumGothic", "", "custom_fonts/NanumGothic.ttf", uni=True)
-        pdf.add_font("NanumGothic", "B", "custom_fonts/NanumGothic.ttf", uni=True)
+        pdf.add_font("NanumGothic", "", "fonts/NanumGothic.ttf", uni=True)
+        pdf.add_font("NanumGothic", "B", "fonts/NanumGothic.ttf", uni=True)
         title_font = "NanumGothic"
     except Exception as e:
         try:
@@ -193,7 +193,7 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
             title_font = "Malgun"
         except:
             # 모두 실패 시 시스템 폰트 사용 (한글 미지원)
-            title_font = "helvetica"
+            title_font = "Arial"
             st.warning("한글 폰트 로드 실패. 기본 폰트로 생성됩니다.")
     pdf.add_page()
     
