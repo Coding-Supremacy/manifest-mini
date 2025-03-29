@@ -187,30 +187,27 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
             self.title_font = "helvetica"  # 기본값 초기화
             
             try:
-                # 원본 폰트 경로 (Streamlit Cloud 배포 경로)
-                FONT_PATH_ORIG = "/mount/src/manifest-mini/custom_fonts/NanumGothic.ttf"
-                TEMP_FONT_PATH = os.path.join(tempfile.gettempdir(), "NanumGothic.ttf")
-                
-                # 임시 폴더에 폰트 복사 (권한 문제 해결)
-                if os.path.exists(FONT_PATH_ORIG):
-                    shutil.copyfile(FONT_PATH_ORIG, TEMP_FONT_PATH)
-                    
-                    # 폰트 등록
-                    self.add_font("NanumGothic", "", TEMP_FONT_PATH, uni=True)
-                    self.add_font("NanumGothic", "B", TEMP_FONT_PATH, uni=True)
-                    self.title_font = "NanumGothic"
-                    print(f"폰트 로드 성공: {TEMP_FONT_PATH}")
-                else:
-                    print(f"⚠️ 원본 폰트 없음: {FONT_PATH_ORIG}")
-            except Exception as e:
-                print(f"❌ 폰트 로드 실패: {str(e)}")
+                # 시스템 기본 폰트 사용 시도 (Streamlit Cloud에서는 기본 폰트만 사용 가능)
+                self.add_font("NotoSansKR", "", "NotoSansKR-Regular.ttf", uni=True)
+                self.add_font("NotoSansKR", "B", "NotoSansKR-Bold.ttf", uni=True)
+                self.title_font = "NotoSansKR"
+                print("Noto Sans KR 폰트 사용 시도")
+            except:
+                try:
+                    # 기본 한글 폰트 시도
+                    self.add_font("Malgun", "", "malgun.ttf", uni=True)
+                    self.add_font("Malgun", "B", "malgunbd.ttf", uni=True)
+                    self.title_font = "Malgun"
+                    print("Malgun 폰트 사용 시도")
+                except Exception as e:
+                    print(f"❌ 폰트 로드 실패: {str(e)}. 기본 폰트 사용")
 
     pdf = KoreanPDF()
     pdf.add_page()
     
-    # 폰트 설정 (나눔고딕 -> 실패 시 기본 폰트)
+    # 폰트 설정 (시스템 기본 한글 폰트 -> 실패 시 기본 폰트)
     try:
-        pdf.set_font("NanumGothic", "B", 24)
+        pdf.set_font("NotoSansKR", "B", 24)
     except:
         try:
             pdf.set_font("Malgun", "B", 24)
@@ -461,7 +458,7 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     pdf.cell(0, 10, txt=f"Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=1, align='C')
     pdf.cell(0, 10, txt="© 2023 현대기아차 글로벌 전략팀. All Rights Reserved.", ln=1, align='C')
     
-    # UTF-8 인코딩으로 출력
+    # PDF 출력 방식 변경 (인코딩 문제 해결)
     try:
         return pdf.output(dest='S').encode('latin-1')
     except Exception as e:
@@ -537,7 +534,7 @@ def run_trend():
                 try:
                     pdf_output = pdf.output(dest='S').encode('latin1', 'replace')
                 except:
-                    pdf_output = pdf.output(dest='S').encode('latin-1')
+                    pdf_output = pdf.output(dest='S').encode('utf-8')
                 
                 b64 = base64.b64encode(pdf_output).decode()
                 href = f'<a href="data:application/octet-stream;base64,{b64}" download="현대기아차_{selected_region}_수출분석.pdf">📥 리포트 다운로드</a>'
