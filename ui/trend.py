@@ -13,6 +13,8 @@ from fpdf import FPDF
 from datetime import datetime
 import base64
 import os
+import tempfile
+import shutil
 
 
 
@@ -30,11 +32,13 @@ else:
 
 @st.cache_data
 def fontRegistered():
-    font_dirs = [os.getcwd() + '../font']
+    font_dirs = [os.getcwd() + '../custom_fonts']
     font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
     for font_file in font_files:
         font_manager.fontManager.addfont(font_file)
     font_manager._load_fontmanager(try_read_cache=False)
+
+
 
 # 데이터 로드 함수
 @st.cache_resource
@@ -177,34 +181,47 @@ def get_news_query(region, column=None, value=None):
     return base_query
 
 def create_pdf_report(selected_region, selected_year, selected_column, analysis_data):
-    pdf = FPDF()
+    class KoreanPDF(FPDF):
+        def __init__(self):
+            super().__init__()
+            
+            
+            try:
+                # 원본 폰트 경로 (Streamlit Cloud 배포 경로)
+                FONT_PATH_ORIG = "/mount/src/manifest-mini/custom_fonts/NanumGothic.ttf"
+                TEMP_FONT_PATH = os.path.join(tempfile.gettempdir(), "NanumGothic.ttf")
+                
+                # 임시 폴더에 폰트 복사 (권한 문제 해결)
+                if os.path.exists(FONT_PATH_ORIG):
+                    shutil.copyfile(FONT_PATH_ORIG, TEMP_FONT_PATH)
+                    
+                    # 폰트 등록
+                    self.add_font("NanumGothic", "", TEMP_FONT_PATH, uni=True)
+                    self.add_font("NanumGothic", "B", TEMP_FONT_PATH, uni=True)
+                    self.title_font = "NanumGothic"
+                    print(f"폰트 로드 성공: {TEMP_FONT_PATH}")
+                else:
+                    print(f"⚠️ 원본 폰트 없음: {FONT_PATH_ORIG}")
+            except Exception as e:
+                print(f"❌ 폰트 로드 실패: {str(e)}")
+
+    pdf = KoreanPDF()
     pdf.add_page()
     
-    # 폰트 설정 (한글 지원)
+    # 폰트 설정 (나눔고딕 -> 실패 시 기본 폰트)
     try:
-        # Windows의 경우
-        font_path = "c:/Windows/Fonts/malgun.ttf"
-        pdf.add_font("Malgun", "", font_path, uni=True)
-        pdf.add_font("Malgun", "B", font_path, uni=True)
-        title_font = "Malgun"
+        pdf.set_font("NanumGothic", "B", 24)
     except:
         try:
-            # macOS의 경우
-            font_path = "/System/Library/Fonts/AppleGothic.ttf"
-            pdf.add_font("AppleGothic", "", font_path, uni=True)
-            pdf.add_font("AppleGothic", "B", font_path, uni=True)
-            title_font = "AppleGothic"
+            pdf.set_font("Malgun", "B", 24)
         except:
-            # 기본 폰트 사용 (한글 지원 안됨)
-            title_font = "Arial"
-            st.warning("한글 폰트를 찾을 수 없습니다. 기본 폰트로 생성됩니다.")
+            pdf.set_font("helvetica", "B", 24)
     
     # 제목 페이지 디자인
-    pdf.set_font(title_font, "B", 24)
-    pdf.set_text_color(0, 51, 102)  # 진한 파란색
+    pdf.set_text_color(0, 51, 102)
     pdf.cell(0, 40, txt="현대기아차 글로벌 시장 분석 리포트", ln=1, align='C')
     
-    pdf.set_font(title_font, "", 16)
+    pdf.set_font(pdf.title_font, "", 16)
     pdf.set_text_color(0, 0, 0)
     pdf.cell(0, 20, txt=f"대상 지역: {selected_region}", ln=1, align='C')
     pdf.cell(0, 10, txt=f"분석 연도: {selected_year}", ln=1, align='C')
@@ -219,10 +236,10 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     pdf.add_page()
     
     # 1. 분석 개요 섹션 - 대륙 찾기 로직 수정
-    pdf.set_font(title_font, "B", 18)
+    pdf.set_font(pdf.title_font, "B", 18)
     pdf.set_text_color(0, 51, 102)
     pdf.cell(0, 10, txt="1. 분석 개요", ln=1)
-    pdf.set_font(title_font, "", 12)
+    pdf.set_font(pdf.title_font, "", 12)
     pdf.set_text_color(0, 0, 0)
     
     # 대륙 찾기 (에러 처리 강화)
@@ -257,10 +274,10 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     pdf.ln(10)
     
     # 2. 시장 현황 분석 섹션 (더 전문적인 내용)
-    pdf.set_font(title_font, "B", 18)
+    pdf.set_font(pdf.title_font, "B", 18)
     pdf.set_text_color(0, 51, 102)
     pdf.cell(0, 10, txt="2. 시장 현황 분석", ln=1)
-    pdf.set_font(title_font, "", 12)
+    pdf.set_font(pdf.title_font, "", 12)
     pdf.set_text_color(0, 0, 0)
     
     if selected_column == '브랜드':
@@ -270,14 +287,14 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
         
         # 표 생성
         col_widths = [60, 40, 40, 50]
-        pdf.set_font(title_font, "B", 12)
+        pdf.set_font(pdf.title_font, "B", 12)
         pdf.cell(col_widths[0], 10, txt="브랜드", border=1)
         pdf.cell(col_widths[1], 10, txt="판매량", border=1)
         pdf.cell(col_widths[2], 10, txt="점유율", border=1)
         pdf.cell(col_widths[3], 10, txt="전년대비", border=1)
         pdf.ln()
         
-        pdf.set_font(title_font, "", 12)
+        pdf.set_font(pdf.title_font, "", 12)
         for idx, row in top_brands.iterrows():
             # 전년도 데이터 비교 (간단한 예시)
             prev_year = int(selected_year) - 1
@@ -300,14 +317,14 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
         
         # 표 생성
         col_widths = [60, 40, 40, 50]
-        pdf.set_font(title_font, "B", 12)
+        pdf.set_font(pdf.title_font, "B", 12)
         pdf.cell(col_widths[0], 10, txt="모델명", border=1)
         pdf.cell(col_widths[1], 10, txt="판매량", border=1)
         pdf.cell(col_widths[2], 10, txt="점유율", border=1)
         pdf.cell(col_widths[3], 10, txt="브랜드", border=1)
         pdf.ln()
         
-        pdf.set_font(title_font, "", 12)
+        pdf.set_font(pdf.title_font, "", 12)
         for idx, row in top_models.iterrows():
             brand = region_year_data[region_year_data['모델명'] == row['모델명']]['브랜드'].values[0]
             
@@ -324,14 +341,14 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
         
         # 표 생성
         col_widths = [60, 50, 40, 50]
-        pdf.set_font(title_font, "B", 12)
+        pdf.set_font(pdf.title_font, "B", 12)
         pdf.cell(col_widths[0], 10, txt="파워트레인", border=1)
         pdf.cell(col_widths[1], 10, txt="판매량", border=1)
         pdf.cell(col_widths[2], 10, txt="점유율", border=1)
         pdf.cell(col_widths[3], 10, txt="추세", border=1)
         pdf.ln()
         
-        pdf.set_font(title_font, "", 12)
+        pdf.set_font(pdf.title_font, "", 12)
         for idx, row in top_powertrains.iterrows():
             # 간단한 추세 분석 (예시)
             if row['파워트레인'] == '전기':
@@ -352,10 +369,10 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     pdf.ln(10)
     
     # 3. 경쟁 분석 섹션 (더 전문적인 내용)
-    pdf.set_font(title_font, "B", 18)
+    pdf.set_font(pdf.title_font, "B", 18)
     pdf.set_text_color(0, 51, 102)
     pdf.cell(0, 10, txt="3. 경쟁 분석", ln=1)
-    pdf.set_font(title_font, "", 12)
+    pdf.set_font(pdf.title_font, "", 12)
     pdf.set_text_color(0, 0, 0)
     
     if selected_column == '브랜드':
@@ -400,10 +417,10 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     pdf.ln(10)
     
     # 4. 전략 제안 섹션 (더 실무적인 내용)
-    pdf.set_font(title_font, "B", 18)
+    pdf.set_font(pdf.title_font, "B", 18)
     pdf.set_text_color(0, 51, 102)
     pdf.cell(0, 10, txt="4. 전략적 제안", ln=1)
-    pdf.set_font(title_font, "", 12)
+    pdf.set_font(pdf.title_font, "", 12)
     pdf.set_text_color(0, 0, 0)
     
     recommendations = {
@@ -430,21 +447,26 @@ def create_pdf_report(selected_region, selected_year, selected_column, analysis_
     }
     
     for category, items in recommendations.items():
-        pdf.set_font(title_font, "B", 14)
+        pdf.set_font(pdf.title_font, "B", 14)
         pdf.cell(0, 10, txt=category, ln=1)
-        pdf.set_font(title_font, "", 12)
+        pdf.set_font(pdf.title_font, "", 12)
         for item in items:
             pdf.cell(10)
             pdf.multi_cell(0, 10, txt=f"• {item}")
         pdf.ln(3)
     
-    # 리포트 푸터 수정 (이탤릭체 제거)
-    pdf.set_font(title_font, "", 10)  # "I" → ""로 변경
+    # 리포트 푸터
+    pdf.set_font(pdf.title_font, "", 10)
     pdf.set_text_color(100, 100, 100)
     pdf.cell(0, 10, txt=f"Report generated on {datetime.now().strftime('%Y-%m-%d %H:%M')}", ln=1, align='C')
     pdf.cell(0, 10, txt="© 2023 현대기아차 글로벌 전략팀. All Rights Reserved.", ln=1, align='C')
     
-    return pdf
+    # UTF-8 인코딩으로 출력
+    try:
+        return pdf.output(dest='S').encode('latin-1')
+    except Exception as e:
+        st.error(f"PDF 생성 오류: {str(e)}")
+        return None
 
 # 차트 생성 함수
 def create_plotly_chart(data, x_col, y_col, title, color_sequence=None):
@@ -511,13 +533,9 @@ def run_trend():
                 
                 pdf = create_pdf_report(selected_region, selected_year, selected_column, analysis_data)
                 
-                # PDF 다운로드 버튼 생성
-                try:
-                    pdf_output = pdf.output(dest='S').encode('latin1', 'replace')
-                except:
-                    pdf_output = pdf.output(dest='S').encode('utf-8')
                 
-                b64 = base64.b64encode(pdf_output).decode()
+                
+                b64 = base64.b64encode(pdf).decode()
                 href = f'<a href="data:application/octet-stream;base64,{b64}" download="현대기아차_{selected_region}_수출분석.pdf">📥 리포트 다운로드</a>'
                 st.markdown(href, unsafe_allow_html=True)
                 st.success("리포트 생성이 완료되었습니다. 위 링크를 클릭하여 다운로드하세요.")
@@ -801,7 +819,7 @@ def run_trend():
 
     # 🔹 데이터 표시 영역
     if st.session_state.show_data:
-        st.subheader("📁 원본 데이터 (7개 행씩 표시)")
+        st.subheader("📁 원본 데이터")
         
         # 페이지네이션 설정
         page_size = 7
