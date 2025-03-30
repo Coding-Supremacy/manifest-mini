@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-<<<<<<< Updated upstream
+
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
@@ -669,7 +669,7 @@ def run_ho():
 
 if __name__ == "__main__":
     run_ho()
-=======
+
 import plotly.graph_objects as go
 import plotly.express as px
 from sklearn.preprocessing import LabelEncoder
@@ -677,7 +677,7 @@ from sklearn.preprocessing import LabelEncoder
 # ---------------------------
 # 1) 경로 정의
 # ---------------------------
-RAW_DATA_PATH = r"D:/manifest-mini/hoyeon/기아.csv"  # 실제 파일 경로로 수정 필요
+RAW_DATA_PATH = "hoyeon/기아.csv"  # 실제 파일 경로로 수정 필요
 
 # ---------------------------
 # 2) CSS 스타일 적용
@@ -1331,4 +1331,3 @@ def run_ho():
 
 
 run_ho()
->>>>>>> Stashed changes
