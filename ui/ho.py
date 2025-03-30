@@ -395,7 +395,7 @@ def run_ho():
                 <div class="metric-card">
                     <div style="font-size:0.9rem; color:#666;">국가 GDP</div>
                     <div style="font-size:1.5rem; font-weight:bold;">{gdp_value:,.1f}</div>
-                    <div style="font-size:0.9rem;">10억 달러 (2022년 기준)</div>
+                    <div style="font-size:0.9rem;">10억 달러</div>
                 </div>
                 """, unsafe_allow_html=True)
             
