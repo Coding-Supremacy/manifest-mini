@@ -86,7 +86,7 @@ def fetch_gdp_data(country_name):
     country_code = country_code_map.get(country_name, None)
     if country_code:
         try:
-            url = f"http://api.worldbank.org/v2/country/{country_code}/indicator/NY.GDP.MKTP.CD?format=json&date=2022"
+            url = f"http://api.worldbank.org/v2/country/{country_code}/indicator/NY.GDP.MKTP.CD?format=json"
             response = requests.get(url)
             if response.status_code == 200:
                 data = response.json()
