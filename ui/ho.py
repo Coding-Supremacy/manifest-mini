@@ -177,8 +177,7 @@ def run_ho():
     model = joblib.load("hoyeon/lgbm_tuned_model.pkl")
     scaler = joblib.load("hoyeon/scaler.pkl")
     model_columns = joblib.load("hoyeon/model_columns.pkl")
-  
-    df = pd.read_csv("hoyeon/기아.csv", encoding='utf-8', on_bad_lines='skip') 
+    df = pd.read_csv("hoyeon/기아.csv")
     
     st.title("🚗 기아 자동차 수출량 분석 대시보드")
     st.markdown("""
