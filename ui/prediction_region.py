@@ -153,6 +153,7 @@ def run_prediction_region():
         else:
             st.info("뉴스 데이터를 불러올 수 없습니다.")
 
+
         st.markdown("#### 분석을 원하는 분기를 선택해주세요")
         quarter_options = {
             "2025년 1분기 (1~3월)": datetime.date(2025, 1, 1),
@@ -244,6 +245,10 @@ def run_prediction_region():
 
 보고서는 **전문적이지만 이해하기 쉽게**, **한글로** 작성해주세요.
 """
+
+        st.subheader("🧐 AI 분석가의 시장 해석")
+        if st.button("AI "):
+
             try:
                 if TEST_MODE:
                     st.session_state.report_text = "🧪 [테스트 모드] 실제 보고서 대신 이 문구가 출력됩니다.\nPDF 저장 및 레이아웃 확인용입니다."

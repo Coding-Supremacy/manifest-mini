@@ -86,7 +86,7 @@ def fetch_gdp_data(country_name):
     country_code = country_code_map.get(country_name, None)
     if country_code:
         try:
-            url = f"http://api.worldbank.org/v2/country/{country_code}/indicator/NY.GDP.MKTP.CD?format=json&date=2022"
+            url = f"http://api.worldbank.org/v2/country/{country_code}/indicator/NY.GDP.MKTP.CD?format=json"
             response = requests.get(url)
             if response.status_code == 200:
                 data = response.json()
@@ -395,7 +395,7 @@ def run_ho():
                 <div class="metric-card">
                     <div style="font-size:0.9rem; color:#666;">국가 GDP</div>
                     <div style="font-size:1.5rem; font-weight:bold;">{gdp_value:,.1f}</div>
-                    <div style="font-size:0.9rem;">10억 달러 (2022년 기준)</div>
+                    <div style="font-size:0.9rem;">10억 달러</div>
                 </div>
                 """, unsafe_allow_html=True)
             
