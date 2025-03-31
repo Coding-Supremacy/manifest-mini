@@ -15,7 +15,7 @@ import re
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-TEST_MODE = True
+TEST_MODE = False
 
 def clean_text(text):
     # 유니코드 이모지 및 특수기호 제거
@@ -100,6 +100,62 @@ def run_prediction_region():
         "기아": os.path.join(CURRENT_DIR,"..", "data", "기아_시장구분별_수출실적.csv")
     }
 
+    # CSS 스타일 적용
+    st.markdown("""
+    <style>
+    .report-header {
+        color: #2E86C1;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #2E86C1;
+        padding-bottom: 10px;
+    }
+    .report-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-left: 5px solid #2E86C1;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .section-title {
+        color: #2E86C1;
+        font-weight: bold;
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+    .report-content {
+        line-height: 1.6;
+        font-size: 15px;
+    }
+    .download-btn {
+        background-color: #2E86C1 !important;
+        color: white !important;
+        border: none !important;
+        padding: 10px 20px !important;
+        border-radius: 5px !important;
+    }
+    .download-btn:hover {
+        background-color: #1B4F72 !important;
+    }
+    .news-card {
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 15px;
+        height: 300px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: transform 0.3s;
+    }
+    .news-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     channel = option_menu(None, ["현대", "기아"], default_index=0, orientation="horizontal",
         icons=["car-front-fill", "truck-front-fill"],
         styles={"container": {"padding": "0!important", "background-color": "#f9f9f9"},
@@ -115,13 +171,14 @@ def run_prediction_region():
     selected_label = st.selectbox("국가를 선택하세요", list(market_label_map.keys()))
     selected_market = market_label_map[selected_label]
 
-    st.title(f"{channel} - 국가별 수출실적 예측")
+    st.markdown(f'<div class="report-header">{channel} - 국가별 수출실적 예측</div>', unsafe_allow_html=True)
     st.markdown(f"""
-### 수출 실적 예측 대시보드
-이 페이지는 {channel}차의 **2021년~2025년 1월 까지의 국가별 수출 실적** 데이터를 기반으로,
-**향후 18개월간 예측된 수출 추세**를 시각화하고,
-**관련 뉴스 기사**를 통해 최근 이슈와 전망을 함께 제공합니다.
-""")
+    <div style="font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
+    이 페이지는 {channel}차의 <strong>2021년~2025년 1월 까지의 국가별 수출 실적</strong> 데이터를 기반으로,
+    <strong>향후 18개월간 예측된 수출 추세</strong>를 시각화하고,
+    <strong>관련 뉴스 기사</strong>를 통해 최근 이슈와 전망을 함께 제공합니다.
+    </div>
+    """, unsafe_allow_html=True)
 
     if selected_market:
         model = load_model(channel, selected_market, MODEL_DIR)
@@ -132,7 +189,7 @@ def run_prediction_region():
         st.plotly_chart(plot_forecast(df_actual, forecast, selected_market), use_container_width=True)
 
         # 뉴스 섹션 추가
-        st.subheader(f"[{selected_label}] 관련 최신 뉴스")
+        st.markdown('<div class="section-title">📰 관련 최신 뉴스</div>', unsafe_allow_html=True)
         query = f"{selected_label} 자동차 수출"
         news_items = fetch_news(query)
         if news_items:
@@ -143,18 +200,21 @@ def run_prediction_region():
                     description = news.get("description", "").replace("<b>", "").replace("</b>", "")
                     link = news["link"]
                     st.markdown(f"""
-                    <div style="border:1px solid #ddd; border-radius:10px; padding:10px; text-align:center; height: 300px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
+                    <div class="news-card">
                         <div style="flex-grow: 1;">
-                            <a href="{link}" target="_blank" style="text-decoration:none;"><strong>{title}</strong></a>
+                            <a href="{link}" target="_blank" style="text-decoration:none; color: #2E86C1; font-weight: bold;">{title}</a>
                             <hr style="border: 0; height: 1px; background-color: #ccc; margin: 10px 0;">
                             <p style="font-size:14px; color:#555; margin-top:10px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical;">{description}</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <a href="{link}" target="_blank" style="font-size:12px; color:#888;">원문 보기 →</a>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
         else:
             st.info("뉴스 데이터를 불러올 수 없습니다.")
 
-        st.markdown("#### 분석을 원하는 분기를 선택해주세요")
+        st.markdown('<div class="section-title">📊 분석을 원하는 분기를 선택해주세요</div>', unsafe_allow_html=True)
         quarter_options = {
             "2025년 1분기 (1~3월)": datetime.date(2025, 1, 1),
             "2025년 2분기 (4~6월)": datetime.date(2025, 4, 1),
@@ -163,7 +223,7 @@ def run_prediction_region():
             "2026년 1분기 (1~3월)": datetime.date(2026, 1, 1),
             "2026년 2분기 (4~6월)": datetime.date(2026, 4, 1)
         }
-        selected_q_label = st.selectbox("분기를 선택하세요", list(quarter_options.keys()))
+        selected_q_label = st.selectbox("분기를 선택하세요", list(quarter_options.keys()), label_visibility="collapsed")
         selected_date = pd.to_datetime(quarter_options[selected_q_label])
 
         start_range = selected_date - pd.DateOffset(months=3)
@@ -184,7 +244,7 @@ def run_prediction_region():
             else:
                 return [''] * len(row)
 
-        st.markdown(f"#### {selected_q_label} 예측 데이터")
+        st.markdown(f'<div class="section-title">📈 {selected_q_label} 예측 데이터</div>', unsafe_allow_html=True)
         st.dataframe(
             forecast_selected[["월", "예측치", "하한", "상한"]].style
                 .apply(highlight_selected_quarter, axis=1)
@@ -192,11 +252,11 @@ def run_prediction_region():
             use_container_width=True, hide_index=True
         )
 
-        st.subheader("AI 분석가의 시장 분석과 예측")
+        st.markdown('<div class="section-title">🤖 AI 분석가의 시장 분석과 예측</div>', unsafe_allow_html=True)
         if "report_text" not in st.session_state:
             st.session_state.report_text = None
 
-        if st.button("AI 분석 실행"):
+        if st.button("AI 분석 실행", key="analyze_btn"):
             if forecast_selected.empty:
                 st.warning("예측 데이터가 충분하지 않아 AI 분석을 생성할 수 없습니다.")
                 return
@@ -281,14 +341,40 @@ def run_prediction_region():
             except Exception as e:
                 st.error(f"AI 분석 중 오류 발생: {e}")
 
-        # 세션 상태에 보고서가 있다면 출력 및 PDF 저장 가능하도록
+        # 세션 상태에 보고서가 있다면 출력
         if st.session_state.get("report_text"):
-            st.markdown("### 📄 AI 분석 보고서")
-            st.text_area("보고서 내용", st.session_state.report_text, height=400, label_visibility="collapsed")
+            st.markdown('<div class="report-header">📄 AI 분석 보고서</div>', unsafe_allow_html=True)
+            
+            # 보고서 내용을 섹션별로 분리하여 스타일 적용
+            sections = st.session_state.report_text.split("\n\n### ")
+            
+            for i, section in enumerate(sections):
+                if not section.strip():
+                    continue
+                    
+                # 섹션 제목 추출 (첫 번째 줄)
+                title = section.split("\n")[0].strip()
+                content = "\n".join(section.split("\n")[1:]).strip() if "\n" in section else ""
+                
+                # 제목에서 ** 강조 표시 제거 (있는 경우)
+                title = title.replace("**", "")
+                
+                # 모든 섹션을 동일한 스타일로 표시
+                st.markdown(f"""
+                <div class="report-section">
+                    <div class="section-title">{title}</div>
+                    <div class="report-content">{content}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # 섹션 간 구분선 추가 (마지막 섹션 제외)
+                if i < len(sections) - 1:
+                    st.markdown('<hr style="border-top: 1px solid #eee; margin: 20px 0;">', unsafe_allow_html=True)
             
             st.markdown("---")
-            st.markdown("#### 📀 보고서를 PDF로 저장하기")
+            st.markdown('<div class="section-title">📀 보고서를 PDF로 저장하기</div>', unsafe_allow_html=True)
             
+            # PDF 생성 함수 (기존과 동일)
             def generate_pdf():
                 import shutil
 
@@ -324,5 +410,6 @@ def run_prediction_region():
                 data=generate_pdf(),
                 file_name=f"{selected_label}_시장_분석_보고서.pdf",
                 mime="application/pdf",
-                key="pdf_download"
+                key="pdf_download",
+                use_container_width=True
             )
