@@ -15,7 +15,7 @@ import re
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-TEST_MODE = True  # 테스트 모드 설정
+TEST_MODE = True
 
 def clean_text(text):
     # 유니코드 이모지 및 특수기호 제거
@@ -351,35 +351,30 @@ def run_prediction_region():
             for i, section in enumerate(sections):
                 if not section.strip():
                     continue
-
-                        # 섹션 제목 추출 (첫 번째 줄)
+                    
+                # 섹션 제목 추출 (첫 번째 줄)
                 title = section.split("\n")[0].strip()
                 content = "\n".join(section.split("\n")[1:]).strip() if "\n" in section else ""
-        
-                    
-                # 첫 번째 섹션은 제목이 없을 수 있으므로 처리
-                if i == 0 and not section.startswith("1. "):
-                    st.markdown(f"""
-                    <div class="report-section">
-                        <div class="report-content">{section}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    # 섹션 제목과 내용 분리
-                    parts = section.split("\n", 1)
-                    title = parts[0]
-                    content = parts[1] if len(parts) > 1 else ""
-                    
-                    st.markdown(f"""
-                    <div class="report-section">
-                        <div class="section-title">{title}</div>
-                        <div class="report-content">{content}</div>
-                    </div>
-                    """, unsafe_allow_html=True)
+                
+                # 제목에서 ** 강조 표시 제거 (있는 경우)
+                title = title.replace("**", "")
+                
+                # 모든 섹션을 동일한 스타일로 표시
+                st.markdown(f"""
+                <div class="report-section">
+                    <div class="section-title">{title}</div>
+                    <div class="report-content">{content}</div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # 섹션 간 구분선 추가 (마지막 섹션 제외)
+                if i < len(sections) - 1:
+                    st.markdown('<hr style="border-top: 1px solid #eee; margin: 20px 0;">', unsafe_allow_html=True)
             
             st.markdown("---")
             st.markdown('<div class="section-title">📀 보고서를 PDF로 저장하기</div>', unsafe_allow_html=True)
             
+            # PDF 생성 함수 (기존과 동일)
             def generate_pdf():
                 import shutil
 
