@@ -1,6 +1,5 @@
 import os
 import tempfile
-import time
 from fpdf import FPDF
 import streamlit as st
 import pandas as pd
@@ -100,62 +99,6 @@ def run_prediction_region():
         "기아": os.path.join(CURRENT_DIR,"..", "data", "기아_시장구분별_수출실적.csv")
     }
 
-    # CSS 스타일 적용
-    st.markdown("""
-    <style>
-    .report-header {
-        color: #2E86C1;
-        font-size: 24px;
-        font-weight: bold;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #2E86C1;
-        padding-bottom: 10px;
-    }
-    .report-section {
-        background-color: #f8f9fa;
-        border-radius: 10px;
-        padding: 20px;
-        margin-bottom: 20px;
-        border-left: 5px solid #2E86C1;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .section-title {
-        color: #2E86C1;
-        font-weight: bold;
-        font-size: 18px;
-        margin-bottom: 10px;
-    }
-    .report-content {
-        line-height: 1.6;
-        font-size: 15px;
-    }
-    .download-btn {
-        background-color: #2E86C1 !important;
-        color: white !important;
-        border: none !important;
-        padding: 10px 20px !important;
-        border-radius: 5px !important;
-    }
-    .download-btn:hover {
-        background-color: #1B4F72 !important;
-    }
-    .news-card {
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        padding: 15px;
-        height: 300px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        transition: transform 0.3s;
-    }
-    .news-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
     channel = option_menu(None, ["현대", "기아"], default_index=0, orientation="horizontal",
         icons=["car-front-fill", "truck-front-fill"],
         styles={"container": {"padding": "0!important", "background-color": "#f9f9f9"},
@@ -171,14 +114,13 @@ def run_prediction_region():
     selected_label = st.selectbox("국가를 선택하세요", list(market_label_map.keys()))
     selected_market = market_label_map[selected_label]
 
-    st.markdown(f'<div class="report-header">{channel} - 국가별 수출실적 예측</div>', unsafe_allow_html=True)
+    st.title(f"{channel} - 국가별 수출실적 예측")
     st.markdown(f"""
-    <div style="font-size: 16px; line-height: 1.6; margin-bottom: 30px;">
-    이 페이지는 {channel}차의 <strong>2021년~2025년 1월 까지의 국가별 수출 실적</strong> 데이터를 기반으로,
-    <strong>향후 18개월간 예측된 수출 추세</strong>를 시각화하고,
-    <strong>관련 뉴스 기사</strong>를 통해 최근 이슈와 전망을 함께 제공합니다.
-    </div>
-    """, unsafe_allow_html=True)
+### 수출 실적 예측 대시보드
+이 페이지는 {channel}차의 **2021년~2025년 1월 까지의 국가별 수출 실적** 데이터를 기반으로,
+**향후 18개월간 예측된 수출 추세**를 시각화하고,
+**관련 뉴스 기사**를 통해 최근 이슈와 전망을 함께 제공합니다.
+""")
 
     if selected_market:
         model = load_model(channel, selected_market, MODEL_DIR)
@@ -189,7 +131,7 @@ def run_prediction_region():
         st.plotly_chart(plot_forecast(df_actual, forecast, selected_market), use_container_width=True)
 
         # 뉴스 섹션 추가
-        st.markdown('<div class="section-title">📰 관련 최신 뉴스</div>', unsafe_allow_html=True)
+        st.subheader(f"[{selected_label}] 관련 최신 뉴스")
         query = f"{selected_label} 자동차 수출"
         news_items = fetch_news(query)
         if news_items:
@@ -200,21 +142,18 @@ def run_prediction_region():
                     description = news.get("description", "").replace("<b>", "").replace("</b>", "")
                     link = news["link"]
                     st.markdown(f"""
-                    <div class="news-card">
+                    <div style="border:1px solid #ddd; border-radius:10px; padding:10px; text-align:center; height: 300px; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden;">
                         <div style="flex-grow: 1;">
-                            <a href="{link}" target="_blank" style="text-decoration:none; color: #2E86C1; font-weight: bold;">{title}</a>
+                            <a href="{link}" target="_blank" style="text-decoration:none;"><strong>{title}</strong></a>
                             <hr style="border: 0; height: 1px; background-color: #ccc; margin: 10px 0;">
                             <p style="font-size:14px; color:#555; margin-top:10px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical;">{description}</p>
-                        </div>
-                        <div style="text-align: right;">
-                            <a href="{link}" target="_blank" style="font-size:12px; color:#888;">원문 보기 →</a>
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
         else:
             st.info("뉴스 데이터를 불러올 수 없습니다.")
 
-        st.markdown('<div class="section-title">📊 분석을 원하는 분기를 선택해주세요</div>', unsafe_allow_html=True)
+        st.markdown("#### 분석을 원하는 분기를 선택해주세요")
         quarter_options = {
             "2025년 1분기 (1~3월)": datetime.date(2025, 1, 1),
             "2025년 2분기 (4~6월)": datetime.date(2025, 4, 1),
@@ -223,7 +162,7 @@ def run_prediction_region():
             "2026년 1분기 (1~3월)": datetime.date(2026, 1, 1),
             "2026년 2분기 (4~6월)": datetime.date(2026, 4, 1)
         }
-        selected_q_label = st.selectbox("분기를 선택하세요", list(quarter_options.keys()), label_visibility="collapsed")
+        selected_q_label = st.selectbox("분기를 선택하세요", list(quarter_options.keys()))
         selected_date = pd.to_datetime(quarter_options[selected_q_label])
 
         start_range = selected_date - pd.DateOffset(months=3)
@@ -244,7 +183,7 @@ def run_prediction_region():
             else:
                 return [''] * len(row)
 
-        st.markdown(f'<div class="section-title">📈 {selected_q_label} 예측 데이터</div>', unsafe_allow_html=True)
+        st.markdown(f"#### {selected_q_label} 예측 데이터")
         st.dataframe(
             forecast_selected[["월", "예측치", "하한", "상한"]].style
                 .apply(highlight_selected_quarter, axis=1)
@@ -252,11 +191,11 @@ def run_prediction_region():
             use_container_width=True, hide_index=True
         )
 
-        st.markdown('<div class="section-title">🤖 AI 분석가의 시장 분석과 예측</div>', unsafe_allow_html=True)
+        st.subheader("AI 분석가의 시장 분석과 예측")
         if "report_text" not in st.session_state:
             st.session_state.report_text = None
 
-        if st.button("AI 분석 실행", key="analyze_btn"):
+        if st.button("AI 분석 실행"):
             if forecast_selected.empty:
                 st.warning("예측 데이터가 충분하지 않아 AI 분석을 생성할 수 없습니다.")
                 return
@@ -289,7 +228,7 @@ def run_prediction_region():
 
 보고서 형식은 다음과 같이 작성해주세요:
 
-1. **{selected_label} 시장 예측 분석**  
+1. {selected_label} 시장 예측 분석
 {selected_label} 시장의 특징과 현재 상황을 분석합니다.
 
 2. **최근 동향 요약**  
@@ -307,27 +246,7 @@ def run_prediction_region():
 """
             try:
                 if TEST_MODE:
-                    with st.spinner("AI 분석 중입니다..."):
-                        time.sleep(2)
-                        st.session_state.report_text = """### 미국 시장 예측 분석
-
-미국 자동차 시장은 전 세계에서 가장 크고 영향력 있는 시장 중 하나입니다. 연간 판매량, 소비자 다양성, 기술 혁신에서 미국 시장은 주요 자동차 제조사들에게 중요한 역할을 합니다. 최근 몇 년 동안, 미국 시장의 자동차 소비 패턴은 친환경 차량의 선호도 증가, SUV와 픽업 트럭에 대한 높은 수요, 그리고 디지털 기술과 연결성을 중시하는 경향을 보였습니다.
-
-### 최근 동향 요약
-
-최근 뉴스에 따르면, "도요타, 25% 관세 부과시 영업이익 30% 감소 전망"과 같은 보도가 나왔고, "트럼프 무차별 관세속 한·중·일 만남 3국 FTA 및 경제통상 협력 확대"에 대한 논의가 있었습니다. 이러한 뉴스는 현재 글로벌 무역 환경이 매우 불확실하며, 높은 관세와 무역 전쟁이 전 세계 자동차 산업에 큰 부정적 영향을 미칠 수 있음을 시사합니다. 특히, 미국 내에서의 고관세는 자동차 제조사의 비용을 증가시키고 최종 소비자 가격에 영향을 미쳐 수요 감소로 이어질 수 있습니다.
-
-### 선택된 시점 ±1분기 예측 분석
-
-2025년 1분기를 중심으로 한 6개월 간의 현대 자동차의 미국 시장 수출 예측은 전반적인 감소세를 보여주고 있습니다. 예측된 수출량은 2024년 10월 59,286대에서 2025년 3월 58,093대로 점차 감소세를 나타내고 있으며, 이는 글로벌 무역 환경의 불확실성, 높은 관세 부과의 가능성, 그리고 미국 내 자동차 시장의 수요 변화에 대한 반응으로 해석할 수 있습니다. 특히, 고관세로 인한 비용 증가와 소비자 구매력 저하가 수출 감소에 주요한 영향을 미칠 것으로 예상됩니다.
-
-### 전략적 제안
-
-1. **관세 회피 전략 수립**: 현대는 관세 부담 최소화를 위해 미국 내 현지 생산을 확대하고, 북미 지역에서의 부품 조달 비중을 증가시킬 필요가 있습니다.
-2. **제품 포트폴리오 다양화**: 미국 시장의 수요 변화에 유연하게 대응하기 위해, 현대는 친환경 차량과 SUV, 픽업 트럭 등 다양한 범위의 제품을 제공할 필요가 있습니다.
-3. **디지털 마케팅 강화**: 온라인 판매 채널과 소셜미디어 마케팅을 강화하여 변화하는 소비자 구매 행태에 적응하고, 소비자와의 직접적인 소통을 늘릴 필요가 있습니다.
-4. **경제적 불확실성에 대비한 유연한 가격 정책**: 고관세와 같은 경제적 요인으로 인한 비용 증가에도 불구하고, 소비자 수요를 유지하기 위해 가격 인상을 최소화하고 다양한 프로모션과 구매 유인책을 마련해야 합니다.
-5. **국제 협력 및 로비 활동 강화**: 무역 환경과 관련된 정책의 변화에 적극적으로 대응하기 위해, 현대는 한국 및 기타 국제 기업들과의 협력을 강화하고, 미국 정부 및 관련 기관에 대한 로비 활동을 적극적으로 전개해야 합니다."""
+                    st.session_state.report_text = "🧪 [테스트 모드] 실제 보고서 대신 이 문구가 출력됩니다.\nPDF 저장 및 레이아웃 확인용입니다."
                 else:
                     with st.spinner("GPT-4 Turbo가 분석 중입니다..."):
                         response = client.chat.completions.create(
@@ -341,67 +260,111 @@ def run_prediction_region():
             except Exception as e:
                 st.error(f"AI 분석 중 오류 발생: {e}")
 
-        # 세션 상태에 보고서가 있다면 출력
+        # 세션 상태에 보고서가 있다면 출력 및 PDF 저장 가능하도록
         if st.session_state.get("report_text"):
-            st.markdown('<div class="report-header">📄 AI 분석 보고서</div>', unsafe_allow_html=True)
-            
-            # 보고서 내용을 섹션별로 분리하여 스타일 적용
-            sections = st.session_state.report_text.split("\n\n### ")
-            
-            for i, section in enumerate(sections):
-                if not section.strip():
-                    continue
-                    
-                # 섹션 제목 추출 (첫 번째 줄)
-                title = section.split("\n")[0].strip()
-                content = "\n".join(section.split("\n")[1:]).strip() if "\n" in section else ""
-                
-                # 제목에서 ** 강조 표시 제거 (있는 경우)
-                title = title.replace("**", "")
-                
-                # 모든 섹션을 동일한 스타일로 표시
-                st.markdown(f"""
-                <div class="report-section">
-                    <div class="section-title">{title}</div>
-                    <div class="report-content">{content}</div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # 섹션 간 구분선 추가 (마지막 섹션 제외)
-                if i < len(sections) - 1:
-                    st.markdown('<hr style="border-top: 1px solid #eee; margin: 20px 0;">', unsafe_allow_html=True)
-            
+            from markdown import markdown
+            st.markdown("### 📄 AI 분석 보고서")
+
+            # 마크다운 문법을 HTML로 변환
+            report_html = markdown(st.session_state.report_text)
+
+            # 변환된 HTML을 박스에 출력
+            st.markdown(f"""
+            <div style="
+                background-color: #FAFAFA;
+                border: 1px solid #D5DBDB;
+                padding: 20px;
+                border-radius: 10px;
+                margin-bottom: 20px;
+                font-size: 16px;
+            ">
+                {report_html}
+            </div>
+            """, unsafe_allow_html=True)
             st.markdown("---")
-            st.markdown('<div class="section-title">📀 보고서를 PDF로 저장하기</div>', unsafe_allow_html=True)
+            st.markdown("#### 📀 보고서를 PDF로 저장하기")
             
-            # PDF 생성 함수 (기존과 동일)
             def generate_pdf():
                 import shutil
 
-                pdf = FPDF()
+                # PDF 설정 (가로세로 A4, UTF-8 인코딩)
+                pdf = FPDF('P', 'mm', 'A4')
                 pdf.add_page()
-                pdf.set_auto_page_break(auto=True, margin=15)
-
-                FONT_PATH_ORIG = "/mount/src/manifest-mini/custom_fonts/NanumGothic.ttf"
-                TEMP_FONT_PATH = os.path.join(tempfile.gettempdir(), "NanumGothic.ttf")
-
-                # 임시 경로에 복사
+                pdf.set_auto_page_break(auto=True, margin=20)
+                pdf.set_left_margin(15)
+                
+                # 폰트 경로 설정
+                FONT_DIR = "custom_fonts"
+                FONT_REGULAR = os.path.join(FONT_DIR, "NanumGothic.ttf")
+                FONT_BOLD = os.path.join(FONT_DIR, "NanumGothicBold.ttf")
+                
+                # 임시 폰트 처리
                 try:
-                    shutil.copy(FONT_PATH_ORIG, TEMP_FONT_PATH)
+                    temp_dir = tempfile.gettempdir()
+                    temp_files = []
+                    for font_src, font_name in [(FONT_REGULAR, "NanumGothic.ttf"), 
+                                            (FONT_BOLD, "NanumGothicBold.ttf")]:
+                        temp_path = os.path.join(temp_dir, font_name)
+                        if os.path.exists(temp_path): os.remove(temp_path)
+                        shutil.copy(font_src, temp_path)
+                        temp_files.append(temp_path)
+                        
+                    # 폰트 등록
+                    pdf.add_font("NanumGothic", "", temp_files[0], uni=True)
+                    pdf.add_font("NanumGothic", "B", temp_files[1], uni=True)
                 except Exception as e:
-                    st.error(f"폰트 복사 중 오류 발생: {e}")
+                    st.error(f"폰트 로드 실패: {str(e)}")
                     return None
 
-                if os.path.exists(TEMP_FONT_PATH):
-                    pdf.add_font("NanumGothic", "", TEMP_FONT_PATH, uni=True)
-                    pdf.set_font("NanumGothic", size=10)
-                else:
-                    pdf.set_font("Arial", size=10)
+                # 텍스트 렌더링 함수 (글자 잘림 방지)
+                def render_text(text, style="", size=11, is_bold=False):
+                    text = text.replace("**", "").replace("##", "").strip()
+                    if not text: 
+                        pdf.ln(8)
+                        return
+                        
+                    pdf.set_font("NanumGothic", "B" if is_bold else style, size)
+                    
+                    # 효율적인 줄바꿈 처리 (한글 최적화)
+                    char_width = pdf.get_string_width("가")  # 한글 문자 너비 기준
+                    max_chars = int((pdf.w - 2*pdf.l_margin) / char_width) - 3
+                    
+                    lines = []
+                    current_line = ""
+                    for word in text.split():
+                        if pdf.get_string_width(current_line + word) < (pdf.w - 2*pdf.l_margin - 10):
+                            current_line += word + " "
+                        else:
+                            lines.append(current_line)
+                            current_line = word + " "
+                    lines.append(current_line)
+                    
+                    for line in lines:
+                        pdf.cell(0, 10, line.strip(), ln=True)
+                    pdf.ln(5)
 
-                lines = clean_text(st.session_state.report_text).split('\n')
-                for line in lines:
-                    for i in range(0, len(line), 60):
-                        pdf.cell(0, 10, line[i:i+60], ln=1)
+                # 본문 처리
+                for line in st.session_state.report_text.split('\n'):
+                    line = line.strip()
+                    
+                    # 1. 제목 처리 (#, ##)
+                    if line.startswith("#"):
+                        level = line.count("#")
+                        title = line.replace("#", "").strip()
+                        render_text(title, size=14-level*2, is_bold=True)
+                        
+                    # 2. 리스트 항목 (1., 2. 등)
+                    elif re.match(r'^\d+\.', line):
+                        pdf.set_font("NanumGothic", "B", 11)
+                        num_part = re.match(r'^\d+\.', line).group()
+                        pdf.cell(10, 10, num_part, ln=False)
+                        
+                        content = line[len(num_part):]
+                        render_text(content, is_bold=True)
+                        
+                    # 3. 일반 텍스트
+                    else:
+                        render_text(line)
 
                 return pdf.output(dest='S').encode('latin-1')
 
@@ -410,6 +373,5 @@ def run_prediction_region():
                 data=generate_pdf(),
                 file_name=f"{selected_label}_시장_분석_보고서.pdf",
                 mime="application/pdf",
-                key="pdf_download",
-                use_container_width=True
+                key="pdf_download"
             )
