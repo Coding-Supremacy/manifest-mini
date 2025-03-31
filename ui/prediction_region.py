@@ -15,7 +15,7 @@ import re
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-TEST_MODE = False
+TEST_MODE = True
 
 def clean_text(text):
     # 유니코드 이모지 및 특수기호 제거
@@ -346,7 +346,9 @@ def run_prediction_region():
             st.markdown('<div class="report-header">📄 AI 분석 보고서</div>', unsafe_allow_html=True)
             
             # 보고서 내용을 섹션별로 분리하여 스타일 적용
-            sections = st.session_state.report_text.split("\n\n### ")
+            cleaned_report = st.session_state.report_text.replace("### ", "")
+            sections = cleaned_report.split("\n\n")
+    
             
             for i, section in enumerate(sections):
                 if not section.strip():
