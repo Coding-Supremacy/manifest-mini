@@ -225,7 +225,7 @@ def run_description():
         )
         st.markdown("""**사용 모델**: `gpt-4-0125-preview`<br>
                     선정 이유: 리서치/분석/요약에 매우 적합, 긴 문서도 처리 가능 """,unsafe_allow_html=True)
-        st.image('image/ai분석결과_예시.png')
+        st.image('image/ai분석결과_예시.png', width=700)
         st.markdown("""
         프롬프트 엔지니어링을 토대로, 예측 지표와 뉴스 키워드를 결합한 **AI 기반 시장 보고서**가 자동 생성됩니다.  
         이 보고서는 수출 트렌드, 이슈 요약, 전략 제언까지 포함하여 의사결정자에게 **실질적인 인사이트**를 제공합니다.
