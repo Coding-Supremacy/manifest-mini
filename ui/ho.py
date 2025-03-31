@@ -251,7 +251,7 @@ def run_ho():
     model, scaler, model_columns, le_country, le_climate, le_car_type, le_model = load_models()
     df = pd.read_csv("hoyeon/기아.csv")
     
-    st.title("🚗 기아 자동차 수출량 분석 대시보드")
+    st.title("🚗 기후별 수출량 분석 대시보드")
     st.markdown("""
     <div style="margin-bottom: 2rem; color: #666;">
         기아 자동차의 글로벌 수출량을 분석하고 예측하는 대시보드입니다. 단일 국가 예측과 다중 국가 비교 기능을 제공합니다.

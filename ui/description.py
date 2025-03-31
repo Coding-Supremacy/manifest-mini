@@ -4,7 +4,7 @@ from streamlit_option_menu import option_menu
 
 def run_description():
     
-    options=["데이터 전처리", "데이터 분석 EDA","대륙별 판매량 예측모델", "기후별 판매량 예측모델"]
+    options=["원본데이터","데이터 전처리","대륙별 판매량 예측모델", "기후별 판매량 예측모델"]
     st.write("")
     st.write("")
     selected = option_menu(
@@ -20,47 +20,77 @@ def run_description():
         "nav-link-selected": {"background-color": "#2E86C1", "color": "white"},
     }
     )
-    st.title('개발 과정')
-    if selected ==options[0]: # 데이터 전처리 메뉴
-        st.markdown("<div class='tab-content'>", unsafe_allow_html=True)
-        st.subheader("🌍 지역별 수출 실적 변화")
-        df1=pd.read_csv('data/원본_기아_2023년 해외공장판매실적.CSV')
-        df2=pd.read_csv('data/원본_기아_2023년 해외현지판매.CSV')
-        df3=pd.read_csv('data/원본_기아_2024년_지역별수출실적.csv')
-        df4=pd.read_csv('data/원본_기아_2024년_차종별판매실적.csv')
-        df5=pd.read_csv('data/원본_hmc-global-plant-sales-december-y2023.csv')
-        df6=pd.read_csv('data/원본_hmc-eu-retail-sales-december-y2024.csv')
-        df7=pd.read_csv('data/원본hmc-export-by-region-december-y2023.csv')
-        df8=pd.read_csv('data/원본_hmc-sales-by-model-december-y2023.csv')
 
-        st.subheader('원본 데이터 확인')
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write('기아 2023년 해외공장 판매실적')
-            st.dataframe(df1.head(),hide_index=True)
-            st.write('기아 2023년 해외현지 판매실적')
-            st.dataframe(df2.head(),hide_index=True)
-            st.write('기아 2024년 지역별 판매실적')
-            st.dataframe(df3.head(),hide_index=True)
-            st.write('기아 2024년 차종별 판매실적')
-            st.dataframe(df4.head(),hide_index=True)
-        with col2:
-            st.write('현대 2023년 해외공장 판매실적')
-            st.dataframe(df5.head(),hide_index=True)
-            st.write('현대 2024년 유럽 판매실적')
-            st.dataframe(df6.head(),hide_index=True)
-            st.write('현대 2023년 지역별 판매실적')
-            st.dataframe(df7.head(),hide_index=True)
-            st.write('현대 2023년 차종별 판매실적')
-            st.dataframe(df8.head(),hide_index=True)
-
-
-
+    if selected == options[0]:
         st.markdown("""
-    기아차와 현대차의 **차종별, 지역별, 해외공장별 판매 실적 데이터**를 제공받아 활용하였습니다.  
-    모든 데이터는 **2023년, 2024년, 2025년 연도별로 제공**받았습니다.  
-        """, unsafe_allow_html=True)
+    ### 📊 원본 데이터 보기""")
 
+        file_map = {
+            "기아 2023년 해외공장 판매실적": "data/원본_기아_2023년 해외공장판매실적.CSV",
+            "기아 2023년 해외현지 판매": "data/원본_기아_2023년 해외현지판매.CSV",
+            "기아 2024년 지역별 수출실적": "data/원본_기아_2024년_지역별수출실적.csv",
+            "기아 2024년 차종별 판매실적": "data/원본_기아_2024년_차종별판매실적.csv",
+            "현대 2023년 해외공장 판매실적": "data/원본_hmc-global-plant-sales-december-y2023.csv",
+            "현대 2024년 EU 소매 판매실적": "data/원본_hmc-eu-retail-sales-december-y2024.csv",
+            "현대 2023년 지역별 수출실적": "data/원본hmc-export-by-region-december-y2023.csv",
+            "현대 2023년 차종별 판매실적": "data/원본_hmc-sales-by-model-december-y2023.csv",
+        }
+
+        st.markdown("데이터는 해당 형식으로 2023, 2024, 2025년 년도별로 제공받았습니다.")
+
+        selected_label = st.selectbox("확인할 원본 데이터를 선택하세요", list(file_map.keys()))
+        file_path = file_map[selected_label]
+
+        # 페이지 세션 상태 초기화
+        if 'page' not in st.session_state:
+            st.session_state.page = 1
+
+        try:
+            data = pd.read_csv(file_path)
+
+            st.subheader("📁 원본 데이터")
+
+            # 페이지네이션 설정
+            page_size = 7
+            total_pages = max(1, (len(data) // page_size) + (1 if len(data) % page_size else 0))
+
+            col1, col2, col3 = st.columns([1, 2, 1])
+
+            with col1:
+                if st.button('◀ 이전', disabled=(st.session_state.page <= 1)):
+                    st.session_state.page -= 1
+                    st.rerun()
+
+            with col2:
+                st.write(f"페이지 {st.session_state.page} / {total_pages}")
+
+            with col3:
+                if st.button('다음 ▶', disabled=(st.session_state.page >= total_pages)):
+                    st.session_state.page += 1
+                    st.rerun()
+
+            start_idx = (st.session_state.page - 1) * page_size
+            end_idx = min(start_idx + page_size, len(data))
+            st.dataframe(data.iloc[start_idx:end_idx], height=300)
+
+            # 데이터 요약
+            with st.expander("📊 데이터 요약 정보 보기"):
+                st.write(f"• 총 행 수: {len(data):,}")
+                st.write("• 컬럼 구조:")
+                st.json({col: str(dtype) for col, dtype in data.dtypes.items()})
+
+        except Exception as e:
+            st.error(f"❌ 파일을 불러오는 중 오류 발생: {e}")
+
+        st.markdown("---")
+        st.markdown("""
+**📌 데이터 출처**  
+- [기아 공식 홈페이지](https://worldwide.kia.com/kr/company/ir/archive/sales-results)  
+- [현대 공식 홈페이지](https://www.hyundai.com/worldwide/ko/company/ir/ir-resources/sales-results)  
+- [협력사 제공 데이터](https://block-edu.s3.ap-northeast-2.amazonaws.com/%ED%94%84%EB%A1%9C%EC%A0%9D%ED%8A%B8+%EB%8D%B0%EC%9D%B4%ED%84%B0.zip)
+""")
+
+    if selected ==options[1]: # 데이터 전처리 메뉴
         st.markdown("""
     ### 🛠 데이터 전처리 및 통합 과정
 
@@ -201,28 +231,55 @@ def run_description():
         이 보고서는 수출 트렌드, 이슈 요약, 전략 제언까지 포함하여 의사결정자에게 **실질적인 인사이트**를 제공합니다.
         """)
 
-    if selected ==options[1]: # 데이터 분석 EDA
-        st.markdown("")
-        st.markdown("""
-
-        """)
-
     if selected ==options[3]: # 기후별 판매량 예측모델
             st.markdown("")
             st.subheader("🚗 차량구분 재분류")
+
+            st.image('image/climate3.png')
             st.markdown("""
-    기존의 차량 분류를 수출 전략을 세분화라기위해 더욱 세밀하게 분류했습니다. ‘'상업용차', '상업용차(CKD)', '전기차', '미니밴', '미니밴(전기차)', '미니밴(CKD)', '세단',
-    'SUV', '세단(CKD)', '특수차', '특수차(CKD)', '소형차', 'SUV(CKD)'13 가지로 재구성했습니다.
+    기존의 차량 분류를 수출 전략을 세분화라기위해 더욱 세밀하게 분류했습니다.  
+    `'상업용차', '상업용차(CKD)', '전기차', '미니밴', '미니밴(전기차)', '미니밴(CKD)', '세단','SUV', '세단(CKD)', '특수차', '특수차(CKD)', '소형차', 'SUV(CKD)'`13 가지로 재구성했습니다.
             """, unsafe_allow_html=True)
             st.subheader("🌍 기후대 컬럼 추가")
             st.markdown("""
     국가별 자동차 수요에 영향을 주는 기후 특성을 반영하기 위해, 각 국가에 대표 기후대를 지정했습니다.
-    **한대, 냉대, 온대, 건조, 열대**의 5개 범주로 구분하였으며, 이는 예측 모델의 설명력을 높이는 데 기여했습니다.
+    `한대, 냉대, 온대, 건조, 열대`의 5개 범주로 구분하였습니다.
             """, unsafe_allow_html=True)
             st.subheader("💰 GDP 컬럼 추가")
             st.markdown("""
-    국가별 구매력 반영을 위해 GDP 데이터를 검색을 통해 찾아 컬럼을 추가하였습니다.
+    국가별 구매력 반영을 위해 **GDP 데이터**를 검색을 통해 찾아 컬럼을 추가하였습니다.
     결측치 처리: 유사국 기반 보정
     일부 누락된 수출실적은 **GDP 수준과 기후대가 유사한 국가군의 평균값을 기반으로 보완**했습니다.
     단순 평균보다 현실적인 방식으로, 데이터 신뢰도와 모델 성능을 동시에 향상시켰습니다.
         """, unsafe_allow_html=True)
+            st.markdown("**GDP+기후별 전처리 후 데이터**")
+            df1=pd.read_csv('data/기아_gdp.csv')
+            st.dataframe(df1.head(),hide_index=True)
+
+            st.markdown("""
+### 🔄 데이터 구조 변환 및 전처리  
+월별 데이터를 Long 형식으로 변환하고, **날짜 컬럼** 생성  
+**전월 수출량(lag), 다음달 수출량(target)** 파생  
+결측값 제거 후, **예측에 필요한 컬럼**만 추출  
+**범주형 변수**
+- `'국가명', '기후대', '차종', '차량 구분'`은 **One-Hot Encoding** 처리  
+**수치형 변수**
+- `수출량, 전월_수출량, 연도, 월, GDP`는 **StandardScaler를 적용해 스케일 정규화 수행**  
+(모델 학습의 안정성과 일관성을 위해 적용)
+            """)
+
+            st.image('image/climate2.png')
+            st.markdown("""
+ 🎯 예측 변수(X)와 타겟(y)  
+✅ X (입력 피처): `수출량, 전월_수출량, 연도, 월, GDP, 국가명, 기후대 , 차종 구분 ,차량 구분`   
+🎯 y (타겟): `다음달_수출`
+
+예측 정확도를 높이기 위해         
+**[LinearRegression, RandomForest, XGBoost, LightGBM]** 4개의 회귀모델을 트레이닝 데이터와 학습 데이터는 80%:20% 비율로 나누어 학습 및 검증을 진행""")
+            st.image('image/climate1.png')
+
+            
+
+            st.markdown("""
+R2 스코어 결과는 0.84~0.86으로 비슷하였고, 그 중 가장 높은 정확성을 보인 LightGBM 모델을 채택하였습니다.
+            """)

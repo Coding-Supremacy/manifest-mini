@@ -1,10 +1,9 @@
 import streamlit as st
 
-from ui.raw_data import run_raw_data
 
 # set_page_config는 반드시 첫 번째 Streamlit 명령이어야 함
 st.set_page_config(
-    page_title="자동차 판매 분석 시스템",
+    page_title="현대, 기아 글로벌 자동차 판매 분석 시스템",
     page_icon="🚗",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -63,7 +62,6 @@ def main_menu():
         "현대 분석",        # 4
         "시장 트렌드",      # 5
         "프로젝트 개발과정", # 6
-        "원본 데이터 확인"   # 7
     ],
     icons=[
         "house",           # 홈
@@ -73,7 +71,6 @@ def main_menu():
         "car-front",       # 현대 분석 (차량 중심)
         "graph-up-arrow",  # 시장 트렌드 (그래프)
         "tools",           # 프로젝트 개발과정 (공구/도구)
-        "table"            # 원본 데이터 확인 (표)
     ],
             default_index=0,
             styles={
@@ -92,7 +89,6 @@ def route_pages(selected_page):
         "지역별 예측": run_prediction_region,
         "기후별 예측": run_ho,
         "프로젝트 개발과정": run_description,
-        "원본 데이터 확인":run_raw_data
     }
     
     if selected_page in page_functions:
