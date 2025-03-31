@@ -1,5 +1,6 @@
 import os
 import tempfile
+import time
 from fpdf import FPDF
 import streamlit as st
 import pandas as pd
@@ -246,7 +247,9 @@ def run_prediction_region():
 """
             try:
                 if TEST_MODE:
-                    st.session_state.report_text = """### 미국 시장 예측 분석
+                    with st.spinner("AI 분석 중입니다..."):
+                        time.sleep(2)
+                        st.session_state.report_text = """### 미국 시장 예측 분석
 
 미국 자동차 시장은 전 세계에서 가장 크고 영향력 있는 시장 중 하나입니다. 연간 판매량, 소비자 다양성, 기술 혁신에서 미국 시장은 주요 자동차 제조사들에게 중요한 역할을 합니다. 최근 몇 년 동안, 미국 시장의 자동차 소비 패턴은 친환경 차량의 선호도 증가, SUV와 픽업 트럭에 대한 높은 수요, 그리고 디지털 기술과 연결성을 중시하는 경향을 보였습니다.
 
