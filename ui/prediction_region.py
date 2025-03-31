@@ -15,7 +15,7 @@ import re
 
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-TEST_MODE = True
+TEST_MODE = True  # 테스트 모드 설정
 
 def clean_text(text):
     # 유니코드 이모지 및 특수기호 제거
@@ -342,57 +342,44 @@ def run_prediction_region():
                 st.error(f"AI 분석 중 오류 발생: {e}")
 
         # 세션 상태에 보고서가 있다면 출력
-        # 세션 상태에 보고서가 있다면 출력 부분 수정
         if st.session_state.get("report_text"):
             st.markdown('<div class="report-header">📄 AI 분석 보고서</div>', unsafe_allow_html=True)
             
-            # 보고서 내용을 라인 단위로 처리
-            lines = st.session_state.report_text.split('\n')
-            current_section = []
+            # 보고서 내용을 섹션별로 분리하여 스타일 적용
+            sections = st.session_state.report_text.split("\n\n### ")
             
-            for line in lines:
-                # ###로 시작하는 줄은 제목으로 처리 (### 제거)
-                if line.startswith('### '):
-                    # 현재 섹션이 있으면 먼저 출력
-                    if current_section:
-                        content = '\n'.join(current_section[1:]).strip()
-                        st.markdown(f"""
-                        <div class="report-section">
-                            <div class="section-title">{current_section[0]}</div>
-                            <div class="report-content">{content}</div>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        current_section = []
-                    # 새 제목 추가 (### 제거)
-                    current_section.append(line[4:].strip())
-                elif line.strip() == '' and current_section:
-                    # 빈 줄이고 현재 섹션이 있으면 섹션 종료
-                    content = '\n'.join(current_section[1:]).strip()
+            for i, section in enumerate(sections):
+                if not section.strip():
+                    continue
+
+                        # 섹션 제목 추출 (첫 번째 줄)
+                title = section.split("\n")[0].strip()
+                content = "\n".join(section.split("\n")[1:]).strip() if "\n" in section else ""
+        
+                    
+                # 첫 번째 섹션은 제목이 없을 수 있으므로 처리
+                if i == 0 and not section.startswith("1. "):
                     st.markdown(f"""
                     <div class="report-section">
-                        <div class="section-title">{current_section[0]}</div>
+                        <div class="report-content">{section}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    # 섹션 제목과 내용 분리
+                    parts = section.split("\n", 1)
+                    title = parts[0]
+                    content = parts[1] if len(parts) > 1 else ""
+                    
+                    st.markdown(f"""
+                    <div class="report-section">
+                        <div class="section-title">{title}</div>
                         <div class="report-content">{content}</div>
                     </div>
                     """, unsafe_allow_html=True)
-                    current_section = []
-                elif current_section:
-                    # 내용 추가
-                    current_section.append(line)
-            
-            # 마지막 섹션 처리
-            if current_section:
-                content = '\n'.join(current_section[1:]).strip()
-                st.markdown(f"""
-                <div class="report-section">
-                    <div class="section-title">{current_section[0]}</div>
-                    <div class="report-content">{content}</div>
-                </div>
-                """, unsafe_allow_html=True)
             
             st.markdown("---")
             st.markdown('<div class="section-title">📀 보고서를 PDF로 저장하기</div>', unsafe_allow_html=True)
             
-            # PDF 생성 함수 (기존과 동일)
             def generate_pdf():
                 import shutil
 
