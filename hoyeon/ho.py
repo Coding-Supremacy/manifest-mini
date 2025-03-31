@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import joblib
-
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
@@ -10,8 +9,9 @@ import requests
 from PIL import Image
 import yfinance as yf
 import matplotlib.colors as mcolors
+from sklearn.preprocessing import LabelEncoder
 
-# CSS 스타일 (간결한 버전)
+# CSS 스타일 설정
 st.markdown("""
 <style>
     .main {
@@ -63,8 +63,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-def reset_form():
-    st.session_state.clear()
+# 국가명 매핑 및 유틸리티 함수
+country_kor_map = {
+    "US": "미국", "Canada": "캐나다", "Mexico": "멕시코",
+    "EU+EFTA": "유럽연합+EFTA", "E.Europe/CIS": "동유럽/CIS",
+    "Latin America": "라틴아메리카", "Middle East/Africa": "중동/아프리카",
+    "Asia / Pacific": "아시아/태평양", "China": "중국", "India": "인도"
+}
 
 def get_country_flag(country_name):
     flag_mapping = {
@@ -75,6 +80,21 @@ def get_country_flag(country_name):
         '네덜란드': '🇳🇱', '스위스': '🇨🇭', '사우디아라비아': '🇸🇦', '아르헨티나': '🇦🇷'
     }
     return flag_mapping.get(country_name, '')
+
+def get_english_country(kor_name):
+    for eng, kor in country_kor_map.items():
+        if kor_name == kor:
+            return eng
+    return kor_name
+
+def get_climate_for_country(country):
+    climate_mapping = {
+        "US": "온대", "Canada": "한랭", "Mexico": "열대",
+        "EU+EFTA": "온대", "E.Europe/CIS": "한랭",
+        "Latin America": "열대", "Middle East/Africa": "건조",
+        "Asia / Pacific": "열대", "China": "온대", "India": "열대"
+    }
+    return climate_mapping.get(country, "Unknown")
 
 def fetch_gdp_data(country_name):
     country_code_map = {
@@ -173,11 +193,62 @@ def create_gdp_export_scatter(df, selected_country):
     fig.update_layout(hovermode="closest")
     return fig
 
+def filter_car_model_by_category(car_type_category, df):
+    filtered_data = df[df["차량 구분"] == car_type_category]
+    return sorted(filtered_data["차종"].unique())
+
+def load_models():
+    model = joblib.load('hoyeon/lgbm_tuned_model.pkl')
+    scaler = joblib.load('hoyeon/scaler.pkl')
+    model_columns = joblib.load('hoyeon/model_columns.pkl')
+    
+    # LabelEncoder 인스턴스 생성 및 학습
+    le_country = LabelEncoder()
+    le_climate = LabelEncoder()
+    le_car_type = LabelEncoder()
+    le_model = LabelEncoder()
+    
+    df = pd.read_csv("hoyeon/기아.csv")
+    le_country.fit(df['국가명'].unique())
+    le_climate.fit(df['기후대'].unique())
+    le_car_type.fit(df['차량 구분'].unique())
+    le_model.fit(df['차종'].unique())
+    
+    return model, scaler, model_columns, le_country, le_climate, le_car_type, le_model
+
+def predict(model, scaler, model_columns, le_country, le_climate, le_car_type, le_model,
+            country, climate, car_type, car_model, year, month, gdp):
+    try:
+        input_data = {
+            "국가명": le_country.transform([country])[0],
+            "기후대": le_climate.transform([climate])[0],
+            "차량 구분": le_car_type.transform([car_type])[0],
+            "차종": le_model.transform([car_model])[0],
+            "연도": year,
+            "월": month,
+            "GDP": gdp
+        }
+        
+        input_df = pd.DataFrame([input_data])
+        input_encoded = pd.get_dummies(input_df, columns=["국가명", "기후대", "차량 구분", "차종"])
+        
+        # 모델이 요구하는 컬럼이 모두 존재하는지 확인 후 없으면 0으로 채움
+        for col in model_columns:
+            if col not in input_encoded.columns:
+                input_encoded[col] = 0
+        
+        input_encoded = input_encoded[model_columns]
+        input_scaled = scaler.transform(input_encoded)
+        prediction = model.predict(input_scaled)[0]
+        return max(0, prediction)
+    
+    except Exception as e:
+        st.error(f"예측 중 오류 발생: {str(e)}")
+        return None
+
 def run_ho():
     # 모델 및 데이터 로드
-    model = joblib.load("hoyeon/lgbm_tuned_model.pkl")
-    scaler = joblib.load("hoyeon/scaler.pkl")
-    model_columns = joblib.load("hoyeon/model_columns.pkl")
+    model, scaler, model_columns, le_country, le_climate, le_car_type, le_model = load_models()
     df = pd.read_csv("hoyeon/기아.csv")
     
     st.title("🚗 기아 자동차 수출량 분석 대시보드")
@@ -187,8 +258,8 @@ def run_ho():
     </div>
     """, unsafe_allow_html=True)
     
-    # 데이터 전처리
-    id_vars = ['국가명', '연도', '기후대', 'GDP', '차종 구분', '차량 구분']
+    # 데이터 전처리: df_long 생성
+    id_vars = ['국가명', '연도', '기후대', 'GDP', '차량 구분', '차종']
     month_cols = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월']
     df_long = pd.melt(df, id_vars=id_vars, value_vars=month_cols, var_name='월', value_name='수출량')
     df_long['월'] = df_long['월'].str.replace('월','').astype(int)
@@ -198,10 +269,10 @@ def run_ho():
     
     current_tab = create_tab_buttons()
     
-    if 'prediction_made' not in st.session_state:
-        st.session_state.prediction_made = False
-    if 'comparison_made' not in st.session_state:
-        st.session_state.comparison_made = False
+    # "초기화" 버튼: 클릭 시 세션 상태를 모두 초기화하고 앱 재실행
+    if st.button("🔄 초기화"):
+        st.session_state.clear()
+        st.experimental_rerun()
     
     if current_tab == "📊 단일 국가 예측":
         st.markdown("### 📊 단일 국가 수출량 예측")
@@ -217,137 +288,104 @@ def run_ho():
                 target_month = st.number_input("📆 예측 월", min_value=1, max_value=12,
                                                value=datetime.now().month, key='month_select')
             with col2:
-                selected_car_type = st.selectbox("🚘 차종 구분", sorted(df["차종 구분"].unique()), key='car_type_select')
-                if "차종" in df.columns:
-                    filtered_car_options = sorted(df[df["차종 구분"] == selected_car_type]["차종"].unique())
-                else:
-                    filtered_car_options = sorted(df[df["차종 구분"] == selected_car_type]["차량 구분"].unique())
-                selected_car = st.selectbox("🚗 차량 구분", filtered_car_options, key='car_select')
+                selected_car_type = st.selectbox("🚘 차량 구분", sorted(df["차량 구분"].unique()), key='car_type_select')
+                filtered_car_options = filter_car_model_by_category(selected_car_type, df)
+                selected_car = st.selectbox("🚗 차종", filtered_car_options, key='car_select')
         
-        col1, col2 = st.columns([4,1])
-        with col1:
-            predict_btn = st.button("🔮 예측 실행", type="primary", use_container_width=True)
-        with col2:
-            reset_btn = st.button("🔄 초기화", on_click=reset_form, use_container_width=True)
+        predict_btn = st.button("🔮 예측 실행", type="primary")
         
         if predict_btn:
-            st.session_state.prediction_made = True
-        
-        if st.session_state.prediction_made or ('prediction_result' in st.session_state and not reset_btn):
-            # 단일 국가 데이터 (AND 조건)
             country_data = df_long[
-                (df_long["국가명"] == selected_country) |
-                (df_long["차종 구분"] == selected_car_type) &
-                (df_long["차량 구분"] == selected_car)
+                (df_long["국가명"] == selected_country) &
+                (df_long["차량 구분"] == selected_car_type) &
+                (df_long["차종"] == selected_car)
             ].sort_values(by="날짜", ascending=False)
             
             if country_data.empty:
                 st.warning("⚠️ 선택한 조건에 맞는 데이터가 없습니다. 다른 조건을 선택해주세요.")
-                st.session_state.prediction_made = False
-                return
-            
-            if predict_btn:
+            else:
                 auto_current_export = country_data["수출량"].iloc[0]
                 auto_prev_export = country_data["수출량"].iloc[1] if len(country_data) >= 2 else 0.0
+
                 prev_year_data = df_long[
-                    (df_long["국가명"] == selected_country) |
-                    (df_long["차종 구분"] == selected_car_type) &
-                    (df_long["차량 구분"] == selected_car) &
-                    (df_long["날짜"].dt.year == target_year-1) &
+                    (df_long["국가명"] == selected_country) &
+                    (df_long["차량 구분"] == selected_car_type) &
+                    (df_long["차종"] == selected_car) &
+                    (df_long["날짜"].dt.year == target_year - 1) &
                     (df_long["날짜"].dt.month == target_month)
                 ]
-                prev_year_export = prev_year_data["수출량"].values[0] if not prev_year_data.empty else 0
-                input_data = {
-                    "수출량": [auto_current_export],
-                    "전월_수출량": [auto_prev_export],
-                    "연도": [target_year],
-                    "월": [target_month],
-                    "GDP": [df[df["국가명"] == selected_country]["GDP"].iloc[0]],
-                    "국가명": [selected_country],
-                    "기후대": [selected_climate],
-                    "차종 구분": [selected_car_type],
-                    "차량 구분": [selected_car]
-                }
-                input_df = pd.DataFrame(input_data)
-                input_encoded = pd.get_dummies(input_df, columns=["국가명", "기후대", "차종 구분", "차량 구분"])
-                input_encoded = input_encoded.reindex(columns=model_columns, fill_value=0)
-                input_scaled = scaler.transform(input_encoded)
-                prediction = model.predict(input_scaled)[0]
-                st.session_state.prediction_result = {
-                    'selected_country': selected_country,
-                    'selected_car_type': selected_car_type,
-                    'selected_car': selected_car,
-                    'auto_current_export': auto_current_export,
-                    'auto_prev_export': auto_prev_export,
-                    'prev_year_export': prev_year_export,
-                    'prediction': prediction,
-                    'target_year': target_year,
-                    'target_month': target_month,
-                    'selected_climate': selected_climate
-                }
-            else:
-                result = st.session_state.prediction_result
-                selected_country = result['selected_country']
-                selected_car_type = result['selected_car_type']
-                selected_car = result['selected_car']
-                auto_current_export = result['auto_current_export']
-                auto_prev_export = result['auto_prev_export']
-                prev_year_export = result['prev_year_export']
-                prediction = result['prediction']
-                target_year = result['target_year']
-                target_month = result['target_month']
-                selected_climate = result['selected_climate']
-            
-            # 예측 결과 계산
+                prev_year_export = prev_year_data["수출량"].iloc[0] if not prev_year_data.empty else 0
+
+                gdp_series = df[df["국가명"] == selected_country]["GDP"]
+                gdp_value = gdp_series.iloc[0] if not gdp_series.empty else 0
+
+                prediction = predict(
+                    model, scaler, model_columns, le_country, le_climate, le_car_type, le_model,
+                    selected_country, selected_climate, selected_car_type, selected_car,
+                    target_year, target_month, gdp_value
+                )
+                if prediction is not None:
+                    st.session_state.prediction_result = {
+                        'selected_country': selected_country,
+                        'selected_car_type': selected_car_type,
+                        'selected_car': selected_car,
+                        'auto_current_export': auto_current_export,
+                        'auto_prev_export': auto_prev_export,
+                        'prev_year_export': prev_year_export,
+                        'prediction': prediction,
+                        'target_year': target_year,
+                        'target_month': target_month,
+                        'selected_climate': selected_climate,
+                        'gdp_value': gdp_value
+                    }
+        
+        if 'prediction_result' in st.session_state:
+            result = st.session_state.prediction_result
+            selected_country = result.get('selected_country', '')
+            selected_car_type = result.get('selected_car_type', '')
+            selected_car = result.get('selected_car', '')
+            auto_current_export = result.get('auto_current_export', 0)
+            auto_prev_export = result.get('auto_prev_export', 0)
+            prev_year_export = result.get('prev_year_export', 0)
+            prediction = result.get('prediction', 0)
+            target_year = result.get('target_year', datetime.now().year)
+            target_month = result.get('target_month', datetime.now().month)
+            selected_climate = result.get('selected_climate', '')
+            gdp_value = result.get('gdp_value', 0)
+
             yearly_change = ((prediction - prev_year_export) / prev_year_export * 100) if prev_year_export != 0 else 0
             change_info = get_change_reason(yearly_change)
-            gdp_value = fetch_gdp_data(selected_country) or df[df["국가명"] == selected_country]["GDP"].iloc[0]
-            st.write("")
-            st.write("")
-            # 예측 결과 표시
+
             st.markdown("### 📌 예측 결과 요약")
-
-            st.markdown("""
-    <div style="background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%); 
-                border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;
-                border-left: 5px solid #4a6fa5;">
-        <h3 style="color: #2a3f5f; margin-top: 0;">✨ 핵심 예측 지표</h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
-            <div style="background: white; border-radius: 10px; padding: 1.5rem; 
-                        box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center;">
-                <div style="font-size: 1rem; color: #666; margin-bottom: 0.5rem;">예상 수출량</div>
-                <div style="font-size: 2.5rem; font-weight: bold; color: #2a3f5f;">
-                    {prediction:,.0f}
-                </div>
-                <div style="font-size: 0.9rem; color: #666;">
-                    {target_year}년 {target_month}월 예측
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%); 
+                        border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0;
+                        border-left: 5px solid #4a6fa5;">
+                <h3 style="color: #2a3f5f; margin-top: 0;">✨ 핵심 예측 지표</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                    <div style="background: white; border-radius: 10px; padding: 1.5rem; 
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center;">
+                        <div style="font-size: 1rem; color: #666; margin-bottom: 0.5rem;">예상 수출량</div>
+                        <div style="font-size: 2.5rem; font-weight: bold; color: #2a3f5f;">
+                            {prediction:,.0f}
+                        </div>
+                        <div style="font-size: 0.9rem; color: #666;">
+                            {target_year}년 {target_month}월 예측
+                        </div>
+                    </div>
+                    <div style="background: white; border-radius: 10px; padding: 1.5rem; 
+                                box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center;">
+                        <div style="font-size: 1rem; color: #666; margin-bottom: 0.5rem;">전년 동월 대비</div>
+                        <div style="font-size: 2.5rem; font-weight: bold; color: {"green" if yearly_change >= 5 else ("red" if yearly_change <= -5 else "orange")};">
+                            {yearly_change:+.1f}%
+                        </div>
+                        <div style="font-size: 0.9rem; color: #666;">
+                            {prev_year_export:,.0f} → {prediction:,.0f}
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div style="background: white; border-radius: 10px; padding: 1.5rem; 
-                        box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center;">
-                <div style="font-size: 1rem; color: #666; margin-bottom: 0.5rem;">전년 동월 대비</div>
-                <div style="font-size: 2.5rem; font-weight: bold; color: {color};">
-                    {yearly_change:+.1f}%
-                </div>
-                <div style="font-size: 0.9rem; color: #666;">
-                    {prev_year_export:,.0f} → {prediction:,.0f}
-                </div>
-            </div>
-        </div>
-    </div>
-    """.format(
-        prediction=prediction,
-        target_year=target_year,
-        target_month=target_month,
-        yearly_change=yearly_change,
-        prev_year_export=prev_year_export,
-        color="green" if yearly_change >= 5 else ("red" if yearly_change <= -5 else "orange")
-    ), unsafe_allow_html=True)
-
-
-
-
-
+            """, unsafe_allow_html=True)
 
             col1, col2, col3 = st.columns(3)
             with col1:
@@ -372,39 +410,6 @@ def run_ho():
                 </div>
                 """, unsafe_allow_html=True)
 
-            st.write("")   
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div style="font-size:0.9rem; color:#666;">예측 수출량</div>
-                    <div style="font-size:1.5rem; font-weight:bold;">{prediction:,.0f}</div>
-                    <div style="font-size:0.9rem;">{target_year}년 {target_month}월</div>
-                </div>
-                """, unsafe_allow_html=True)
-            with col2:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div style="font-size:0.9rem; color:#666;">전년 동월 대비</div>
-                    <div style="font-size:1.5rem; font-weight:bold; class="{change_info['class']}">{yearly_change:.1f}%</div>
-                    <div style="font-size:0.9rem;">{change_info['text']}</div>
-                </div>
-                """, unsafe_allow_html=True)
-            with col3:
-                st.markdown(f"""
-                <div class="metric-card">
-                    <div style="font-size:0.9rem; color:#666;">국가 GDP</div>
-                    <div style="font-size:1.5rem; font-weight:bold;">{gdp_value:,.1f}</div>
-                    <div style="font-size:0.9rem;">10억 달러 (2022년 기준)</div>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            st.write("")
-            st.write("")
-            st.write("")
-            st.write("")
-            # 분석 인사이트 섹션
             st.markdown("### 🔍 분석 인사이트")
             with st.container():
                 st.markdown(f"""
@@ -415,24 +420,16 @@ def run_ho():
                     <p><strong>제안 사항:</strong> {change_info['suggestion']}</p>
                 </div>
                 """, unsafe_allow_html=True)
-            st.write("")
-            st.write("")
-            # 차트 분석 섹션
-            st.write("")
-            st.write("")
-            st.markdown("### 📊 차트 분석")
             
-            # 첫 번째 행 차트
+            st.markdown("### 📊 차트 분석")
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown("#### 기후대별 수출량 비교")
                 climate_data = df_long[
-                    (df_long["국가명"] == selected_country) |
-                    (df_long["차종 구분"] == selected_car_type) |
-                    (df_long["차량 구분"] == selected_car) &
-                    (df_long["날짜"].dt.year == target_year-1)
+                    (df_long["차량 구분"] == selected_car_type) &
+                    (df_long["차종"] == selected_car) &
+                    (df_long["날짜"].dt.year == target_year - 1)
                 ].groupby("기후대")["수출량"].sum().reset_index()
-                
                 if not climate_data.empty:
                     fig_climate = px.bar(
                         climate_data,
@@ -448,13 +445,12 @@ def run_ho():
                     st.plotly_chart(fig_climate, use_container_width=True)
                     st.caption("""
                     **해석 방법:**  
-                    - 각 기후대에서 선택한 차량의 총 수출량을 비교  
-                    - 높은 막대는 해당 기후대에서 수출이 활발함을 의미  
-                    - 기후 특성에 따른 수출 패턴 파악 가능
+                    - 각 기후대에서 선택한 차량의 총 수출량 비교  
+                    - 높은 막대는 해당 기후대에서 수출 활발함을 의미  
+                    - 기후 특성에 따른 패턴 파악 가능
                     """)
                 else:
                     st.warning("기후대별 데이터가 없습니다.")
-            
             with col2:
                 st.markdown("#### GDP 대비 수출량")
                 bubble_fig = create_gdp_export_scatter(df_long, selected_country)
@@ -465,21 +461,18 @@ def run_ho():
                     - Y축: 총 수출량  
                     - 버블 크기: 수출량 규모  
                     - 선택 국가는 강조 표시됨  
-                    - GDP 대비 수출 효율성 분석 가능
+                    - GDP 대비 수출 효율성 분석
                     """)
-            
-            # 두 번째 행 차트
             col1, col2 = st.columns(2)
             with col1:
                 st.markdown("#### 차량 종류별 수출 비중")
                 country_car_data = df_long[
                     (df_long["국가명"] == selected_country) &
                     (df_long["날짜"].dt.year == latest_year)
-                ].groupby(["차종 구분", "차량 구분"])["수출량"].sum().reset_index()
-                
+                ].groupby(["차량 구분", "차종"])["수출량"].sum().reset_index()
                 if not country_car_data.empty:
                     country_car_data = country_car_data.sort_values("수출량", ascending=False).head(10)
-                    fig_pie = px.pie(country_car_data, names="차량 구분", values="수출량",
+                    fig_pie = px.pie(country_car_data, names="차종", values="수출량",
                                      title=f"{selected_country}의 차량 종류별 수출량 비중",
                                      height=400, color_discrete_sequence=px.colors.qualitative.Pastel)
                     fig_pie.update_traces(textposition='inside', textinfo='percent+label')
@@ -487,20 +480,18 @@ def run_ho():
                     st.plotly_chart(fig_pie, use_container_width=True)
                     st.caption("""
                     **해석 방법:**  
-                    - 선택 국가에서 어떤 차량이 많이 수출되는지 비중 확인  
-                    - 전체 판매에서 차량별 점유율 파악  
-                    - 주력 모델과 마이너 모델 식별 가능
+                    - 선택 국가 내 차량별 수출 비중 확인  
+                    - 주력/마이너 모델 식별
                     """)
                 else:
                     st.warning("차량 종류별 데이터가 없습니다.")
-            
             with col2:
                 st.markdown("#### 국가별 수출량 순위")
                 car_data = df_long[
-                    ((df_long["차종 구분"] == selected_car_type) | (df_long["차량 구분"] == selected_car)) &
+                    (df_long["차량 구분"] == selected_car_type) &
+                    (df_long["차종"] == selected_car) &
                     (df_long["날짜"].dt.year == latest_year)
                 ].groupby("국가명")["수출량"].sum().reset_index()
-                
                 if not car_data.empty:
                     fig_bar = px.bar(
                         car_data,
@@ -516,14 +507,17 @@ def run_ho():
                     st.plotly_chart(fig_bar, use_container_width=True)
                     st.caption("""
                     **해석 방법:**  
-                    - 선택 차량의 국가별 수출량 순위  
-                    - 글로벌 시장에서의 상대적 위치 파악  
-                    - 경쟁 국가와의 비교 가능  
-                    - 높은 막대는 주요 시장을 의미
+                    - 국가별 수출량 순위 확인  
+                    - 글로벌 시장 내 상대적 위치 파악  
+                    - 높은 막대: 주요 시장
                     """)
                 else:
                     st.warning("국가별 데이터가 없습니다.")
-    
+
+
+
+
+
     elif current_tab == "🌍 다중 국가 비교":
         st.markdown("### 🌍 다중 국가 비교 분석")
         
@@ -857,13 +851,13 @@ country_iso = {
 # 7) 모델 로딩, 예측 함수
 # ---------------------------
 def load_models():
-    model = joblib.load('hoyeon/rf_model.pkl')
-    scaler = joblib.load('hoyeon/scaler.pkl')
-    le_country = joblib.load('hoyeon/le_country.pkl')
-    le_climate = joblib.load('hoyeon/le_climate.pkl')
-    le_car_type = joblib.load('hoyeon/le_car_type.pkl')
-    le_model = joblib.load('hoyeon/le_model.pkl')
-    return model, scaler, le_country, le_climate, le_car_type, le_model
+    model = joblib.load('hoyeon\lgbm_model.pkl')
+    scaler = joblib.load('hoyeon/standard_scaler.pkl')
+   
+   
+   
+  
+    return model, scaler,  
 
 def predict(model, scaler, le_country, le_climate, le_car_type, le_model,
             country, climate, car_type, car_model, year, month, gdp, real_country):
